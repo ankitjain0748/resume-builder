@@ -1124,12 +1124,12 @@ export default function ResumeBuilder() {
       {/* 100% PURE CUSTOM CSS + MEDIA PRINT ISOLATION */}
       <style>{`
         * { box-sizing: border-box; }
-        body { margin: 0; padding: 0; background-color: #060b14; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+        body { margin: 0; padding: 0; background-color: #ffffff; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
         
         .app-wrapper { min-height: 100vh; background-color: #060b14; color: #f8fafc; display: flex; flex-direction: column; }
         
         /* Navbar */
-        .top-navbar { border-bottom: 1px solid #1a273f; background-color: rgba(9, 16, 30, 0.98); position: sticky; top: 0; z-index: 100; padding: 10px 24px; backdrop-filter: blur(12px); box-shadow: 0 4px 20px rgba(0,0,0,0.4); }
+        .top-navbar { border-bottom: 1px solid #1a273f; background-color: #ffffff; position: sticky; top: 0; z-index: 100; padding: 10px 24px; backdrop-filter: blur(12px); box-shadow: 0 4px 20px rgba(0,0,0,0.4); }
         .top-navbar-inner { max-width: 1720px; margin: 0 auto; display: flex; justify-content: flex-start; align-items: center; }
         .brand-box { display: flex; align-items: center; }
         .brand-logo-img { height: 42px; width: auto; max-width: 190px; object-fit: contain; }
