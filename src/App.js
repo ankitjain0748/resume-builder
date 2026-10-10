@@ -1,25 +1,1627 @@
-import logo from './logo.svg';
-import './App.css';
+'use client';
 
-function App() {
-  return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+import React, { useState, useRef, useEffect } from 'react';
+import { 
+  User, Briefcase, GraduationCap, Award, Code, 
+  Download, CheckCircle2, Trash2, Plus, Image as ImageIcon, 
+  Palette, Eye, EyeOff, Layers, Mail, Phone, MapPin, ZoomIn, ZoomOut, Smartphone, Monitor, Printer
+} from 'lucide-react';
+import { FaGithub, FaLinkedin } from 'react-icons/fa';
+
+// 100% Reliable Base64 Encoded Avatar
+const DEFAULT_AVATAR = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48Y2lyY2xlIGN4PSI1MCIgY3k9IjUwIiByPSI1MCIgZmlsbD0iI2UyZThmMCIvPjxjaXJjbGUgY3g9IjUwIiBjeT0iMzgiIHI9IjE4IiBmaWxsPSIjNjQ3NDhiIi8+PHBhdGggZD0iTTIwIDg2YzAtMTYuNSAxMy41LTMwIDMwLTMwczMwIDEzLjUgMzAgMzB6IiBmaWxsPSIjNjQ3NDhiIi8+PC9zdmc+";
+
+export default function ResumeBuilder() {
+  const [activeTab, setActiveTab] = useState('personal');
+  const [selectedTemplate, setSelectedTemplate] = useState('ankit_harvard'); 
+  const [accentColor, setAccentColor] = useState('#1e3a8a'); 
+  const [showPhoto, setShowPhoto] = useState(true);
+  const [isExporting, setIsExporting] = useState(false);
+  const [mobileView, setMobileView] = useState('editor'); // 'editor' | 'preview'
+  const [previewScale, setPreviewScale] = useState(0.85);
+
+  const resumeRef = useRef(null);
+  const previewWrapperRef = useRef(null);
+
+  // Section Visibility Toggles
+  const [visibility, setVisibility] = useState({
+    summary: true,
+    metrics: true,
+    experience: true,
+    education: true,
+    skills: true,
+    projects: true,
+    certifications: true,
+    declaration: true
+  });
+
+  const toggleVisibility = (key) => {
+    setVisibility((prev) => ({ ...prev, [key]: !prev[key] }));
+  };
+
+  // Master State matching screenshot data
+  const [resumeData, setResumeData] = useState({
+    personalInfo: {
+      fullName: 'ANKIT KUMAR JAIN',
+      jobTitle: 'MERN Stack Developer & Cloud Engineer',
+      email: 'ankitjain0748@gmail.com',
+      phone: '8306615173',
+      address: 'House no.2, Suraj Pole Gate, Jaipur, Rajasthan',
+      city: 'Jaipur, Rajasthan',
+      country: 'India',
+      linkedin: 'linkedin.com/in/ankit-kumar-jain-9b736824a',
+      github: 'github.com/ankitjain0748',
+      portfolio: 'ankit-jain-mern-portfolio.vercel.app',
+      licenseNo: 'REG-IN-849204',
+      declaration: 'I hereby declare that all the information provided above is authentic and true to the best of my knowledge.',
+      photo: DEFAULT_AVATAR,
+    },
+    summary: 'Results-driven professional with proven expertise in developing scalable web applications, integrating secure payment gateways, and delivering high-performance digital solutions with 99.9% uptime.',
+    metrics: [
+      { id: 'm-1', label: 'Revenue Impact', val: '$1.4M+' },
+      { id: 'm-2', label: 'Performance Gain', val: '40%' },
+      { id: 'm-3', label: 'Team Led', val: '8 Engineers' }
+    ],
+    education: [
+      {
+        id: 'edu-1',
+        degree: "Bachelor's Degree (First Division with Distinction)",
+        institution: 'Riet College Jaipur (RTU)',
+        location: 'Jaipur, Rajasthan',
+        duration: 'Apr. 2020 – Apr. 2022',
+        grade: '8.8 CGPA'
+      },
+      {
+        id: 'edu-2',
+        degree: 'Higher Secondary (First Division)',
+        institution: 'Commerce College Jaipur (RU)',
+        location: 'Jaipur, Rajasthan',
+        duration: 'Apr. 2019 – Apr. 2021',
+        grade: '86%'
+      }
+    ],
+    experience: [
+      {
+        id: 'exp-1',
+        role: 'MERN Stack Developer',
+        company: 'Future Profilez',
+        location: 'Jaipur, India',
+        duration: 'July 2023 – Present',
+        description: '– Designed and developed full-stack web applications using MongoDB, Express, React, and Node.js, delivering scalable solutions.\n– Implemented secure payment systems with gateways like razorpay, safeguarding user data and reducing transaction times by 40%.\n– Optimized application performance through caching and database tuning, reducing page load times by 25%.'
+      }
+    ],
+    skillCategories: {
+      languages: 'HTML, CSS, JavaScript (ES6+), SQL, MongoDB, Node.js, Express.js, React.js, Next.js',
+      tools: 'VS Code, Postman, Git, GitHub, Docker, Amazon EC2, Google Cloud Platform',
+      frameworks: 'Windows, REST APIs, JWT Auth, Redux Toolkit, Tailwind CSS, Bootstrap',
+      softSkills: 'Jira, Responsive Design, Agile / Scrum, Problem Solving'
+    },
+    projects: [
+      {
+        id: 'proj-1',
+        title: 'Japanese For Me',
+        tech: 'React.js, Node.js, MongoDB, ChatGPT, Stripe, PayPal',
+        duration: '2025/04 – current',
+        description: '– Developed an interactive web platform to enhance user learning experience.\n– Implemented student and teacher registration, lesson booking with calendar integration, payments via Stripe and PayPal, and Zoom-based video lessons.\n– Created separate dashboards for students, teachers (with earnings and payout management), and admins (with user approvals, reports, and content moderation).\n– Tech stack: React.js, Node.js, Express.js, MongoDB, JWT authentication; integrated Stripe, PayPal, Zoom APIs; supported multiple languages (English/Japanese).'
+      },
+      {
+        id: 'proj-2',
+        title: 'SafeGent Services Platform',
+        tech: 'React.js, Node.js, MongoDB, ChatGPT, Stripe',
+        duration: '2024/09 – Present',
+        description: '– Developed a web platform for booking home maintenance and repair services, enhanced with AI-powered ChatGPT assistance.\n– Integrated secure Stripe payments for both one-time bookings (e.g., $69 for a 30-minute session) and monthly subscriptions.\n– Enabled users to interact with SafeGent AI for basic queries and to schedule appointments directly through the chat.'
+      },
+      {
+        id: 'proj-3',
+        title: 'Event Management Platform',
+        tech: 'Next.js, Node.js, MongoDB, Google APIs, Stripe, ChatGPT',
+        duration: '2024/08 – 2025/02',
+        description: '– Developed a full-stack platform to book event spaces, leveraging Google APIs (Places, Details, and Geolocation) for venue discovery.\n– Integrated Google Places and Open API to enable users to browse and book nearby event organizers.'
+      },
+      {
+        id: 'proj-4',
+        title: 'Quaint Space',
+        tech: 'React.js, Node.js, MongoDB, Razorpay',
+        duration: '2023 – 2024',
+        description: '– Quaint Space is a property booking platform that streamlines the entire process — from discovery and booking to payments and admin management — all in one place.'
+      }
+    ],
+    certifications: [
+      { id: 'c-1', name: 'Full Stack MERN Developer Certified', issuer: 'Udemy', year: '2023' },
+      { id: 'c-2', name: 'AWS Certified Cloud Practitioner', issuer: 'Amazon Web Services', year: '2023' }
+    ]
+  });
+
+  // Preload PDF Libraries on Mount & Setup Valid React SEO
+  useEffect(() => {
+    // 1. Dynamic SEO Injection (No bare JSX tags, 100% React Safe)
+    document.title = "Ankit Kumar Jain | ATS Pro Resume Builder & 1-Page CV Generator";
+    
+    const setMetaTag = (name, content) => {
+      let meta = document.querySelector(`meta[name="${name}"]`);
+      if (!meta) {
+        meta = document.createElement('meta');
+        meta.setAttribute('name', name);
+        document.head.appendChild(meta);
+      }
+      meta.setAttribute('content', content);
+    };
+
+    setMetaTag('description', 'Free ATS-Friendly 1-Page Resume Builder for MERN Stack Developers, Software Engineers, and Executives.');
+    setMetaTag('keywords', 'ATS resume builder, Harvard resume, software engineer resume, single page resume, Ankit Kumar Jain');
+    setMetaTag('robots', 'index, follow');
+
+    // Schema.org JSON-LD Script
+    const schemaScript = document.createElement('script');
+    schemaScript.type = 'application/ld+json';
+    schemaScript.text = JSON.stringify({
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "ATS Pro Resume Builder",
+      "applicationCategory": "BusinessApplication",
+      "operatingSystem": "All",
+      "author": { "@type": "Person", "name": "Ankit Kumar Jain" }
+    });
+    document.head.appendChild(schemaScript);
+
+    // 2. Preload html2pdf / jsPDF bundle for instantaneous downloads
+    if (!window.html2canvas || !window.jspdf) {
+      const script = document.createElement('script');
+      script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
+      script.async = true;
+      document.head.appendChild(script);
+    }
+
+    return () => {
+      if (schemaScript.parentNode) {
+        schemaScript.parentNode.removeChild(schemaScript);
+      }
+    };
+  }, []);
+
+  // Calculate live preview fit scale for phone and desktop
+  useEffect(() => {
+    const updateScale = () => {
+      if (previewWrapperRef.current) {
+        const containerWidth = previewWrapperRef.current.clientWidth - 24;
+        if (containerWidth > 0) {
+          const calculatedScale = Math.min(Math.max(containerWidth / 794, 0.35), 1);
+          setPreviewScale(calculatedScale);
+        }
+      }
+    };
+    updateScale();
+    window.addEventListener('resize', updateScale);
+    return () => window.removeEventListener('resize', updateScale);
+  }, [mobileView]);
+
+  // Form Handlers
+  const handlePersonalChange = (e) => {
+    const { name, value } = e.target;
+    setResumeData((prev) => ({
+      ...prev,
+      personalInfo: { ...prev.personalInfo, [name]: value }
+    }));
+  };
+
+  const handlePhotoUpload = (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (file) {
+      if (file.size > 3 * 1024 * 1024) {
+        alert('File size must be under 3MB');
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        if (event.target && event.target.result) {
+          setResumeData((prev) => ({
+            ...prev,
+            personalInfo: { ...prev.personalInfo, photo: event.target.result }
+          }));
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const removePhoto = () => {
+    setResumeData((prev) => ({
+      ...prev,
+      personalInfo: { ...prev.personalInfo, photo: '' }
+    }));
+  };
+
+  const handleExpChange = (id, field, value) => {
+    setResumeData((prev) => ({
+      ...prev,
+      experience: prev.experience.map(item => item.id === id ? { ...item, [field]: value } : item)
+    }));
+  };
+
+  const addExperience = () => {
+    setResumeData((prev) => ({
+      ...prev,
+      experience: [...prev.experience, { id: `exp-${Date.now()}`, role: '', company: '', location: '', duration: '', description: '' }]
+    }));
+  };
+
+  const removeExperience = (id) => {
+    setResumeData((prev) => ({
+      ...prev,
+      experience: prev.experience.filter(item => item.id !== id)
+    }));
+  };
+
+  const handleEduChange = (id, field, value) => {
+    setResumeData((prev) => ({
+      ...prev,
+      education: prev.education.map(item => item.id === id ? { ...item, [field]: value } : item)
+    }));
+  };
+
+  const addEducation = () => {
+    setResumeData((prev) => ({
+      ...prev,
+      education: [...prev.education, { id: `edu-${Date.now()}`, degree: '', institution: '', location: '', duration: '', grade: '' }]
+    }));
+  };
+
+  const removeEducation = (id) => {
+    setResumeData((prev) => ({
+      ...prev,
+      education: prev.education.filter(item => item.id !== id)
+    }));
+  };
+
+  const handleProjChange = (id, field, value) => {
+    setResumeData((prev) => ({
+      ...prev,
+      projects: prev.projects.map(item => item.id === id ? { ...item, [field]: value } : item)
+    }));
+  };
+
+  const addProject = () => {
+    setResumeData((prev) => ({
+      ...prev,
+      projects: [...prev.projects, { id: `proj-${Date.now()}`, title: '', tech: '', duration: '', description: '' }]
+    }));
+  };
+
+  const removeProject = (id) => {
+    setResumeData((prev) => ({
+      ...prev,
+      projects: prev.projects.filter(item => item.id !== id)
+    }));
+  };
+
+  // Helper to get PDF Libraries (html2canvas + jsPDF)
+  const getPdfLibraries = async () => {
+    if (typeof window !== 'undefined' && window.html2canvas && (window.jspdf || window.jsPDF)) {
+      return { html2canvas: window.html2canvas, jsPDF: window.jspdf?.jsPDF || window.jsPDF };
+    }
+    return new Promise((resolve, reject) => {
+      const script = document.createElement('script');
+      script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
+      script.onload = () => {
+        const jsPDFClass = window.jspdf?.jsPDF || window.jsPDF;
+        resolve({ html2canvas: window.html2canvas, jsPDF: jsPDFClass });
+      };
+      script.onerror = () => reject(new Error('Failed to load PDF libraries'));
+      document.head.appendChild(script);
+    });
+  };
+
+  // =========================================================================
+  // DIRECT PDF DOWNLOAD ENGINE (Direct File Download, No Print Dialog)
+  // =========================================================================
+  const handleDownloadPDF = async () => {
+    if (!resumeRef.current) return;
+    setIsExporting(true);
+
+    try {
+      const { html2canvas, jsPDF } = await getPdfLibraries();
+      const originalNode = resumeRef.current;
+      const clone = originalNode.cloneNode(true);
+
+      // Dedicated offscreen container at exact (0, 0) for perfect capture
+      const exportContainer = document.createElement('div');
+      exportContainer.style.position = 'fixed';
+      exportContainer.style.top = '0px';
+      exportContainer.style.left = '0px';
+      exportContainer.style.width = '794px';
+      exportContainer.style.height = '1122px';
+      exportContainer.style.zIndex = '-99999';
+      exportContainer.style.backgroundColor = '#ffffff';
+      exportContainer.style.overflow = 'hidden';
+      exportContainer.style.transform = 'none';
+
+      clone.style.margin = '0';
+      clone.style.transform = 'none';
+      clone.style.boxShadow = 'none';
+      exportContainer.appendChild(clone);
+      document.body.appendChild(exportContainer);
+
+      // High-res 2x canvas capture
+      const canvas = await html2canvas(clone, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        logging: false,
+        width: 794,
+        height: 1122,
+        scrollX: 0,
+        scrollY: 0,
+        windowWidth: 794,
+        windowHeight: 1122
+      });
+
+      document.body.removeChild(exportContainer);
+
+      // Generate standard A4 PDF (210mm x 297mm)
+      const imgData = canvas.toDataURL('image/jpeg', 0.98);
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4'
+      });
+
+      pdf.addImage(imgData, 'JPEG', 0, 0, 210, 297, undefined, 'FAST');
+      const safeName = (resumeData.personalInfo.fullName || 'Resume').replace(/\s+/g, '_');
+      const fileName = `${safeName}_Resume.pdf`;
+
+      // Direct download trigger via Blob & Link (Never opens print modal)
+      const pdfBlob = pdf.output('blob');
+      const blobUrl = URL.createObjectURL(pdfBlob);
+      const downloadAnchor = document.createElement('a');
+      downloadAnchor.href = blobUrl;
+      downloadAnchor.download = fileName;
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      document.body.removeChild(downloadAnchor);
+
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 2000);
+    } catch (err) {
+      console.error('Direct PDF export error:', err);
+      alert('PDF generation me issue aaya. Browser print option try karein.');
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const handleNativePrint = () => {
+    window.print();
+  };
+
+  const getSkillsList = () => {
+    return [
+      ...resumeData.skillCategories.languages.split(','),
+      ...resumeData.skillCategories.frameworks.split(','),
+      ...resumeData.skillCategories.tools.split(',')
+    ].map(s => s.trim()).filter(Boolean);
+  };
+
+  // Base A4 Locked Dimensions
+  const a4CanvasStyle = {
+    width: '794px',
+    height: '1122px',
+    minHeight: '1122px',
+    maxHeight: '1122px',
+    backgroundColor: '#ffffff',
+    color: '#000000',
+    boxSizing: 'border-box',
+    overflow: 'hidden',
+    position: 'relative'
+  };
+
+  // =========================================================================
+  // BRAND LOGO COMPONENT
+  // =========================================================================
+  const BrandLogo = () => (
+    <svg width="34" height="34" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="logoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#3b82f6" />
+          <stop offset="100%" stopColor="#1d4ed8" />
+        </linearGradient>
+      </defs>
+      <rect width="100" height="100" rx="22" fill="url(#logoGrad)" />
+      <rect x="24" y="24" width="52" height="6" rx="3" fill="#ffffff" />
+      <rect x="24" y="38" width="34" height="6" rx="3" fill="#93c5fd" />
+      <rect x="24" y="52" width="44" height="6" rx="3" fill="#ffffff" />
+      <circle cx="68" cy="68" r="16" fill="#10b981" stroke="#ffffff" strokeWidth="4" />
+      <path d="M62 68L66 72L74 64" stroke="#ffffff" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+
+  // =========================================================================
+  // 10 INDUSTRY TEMPLATES
+  // =========================================================================
+
+  // 01. ANKIT HARVARD ATS (SCREENSHOT 1:1 MATCH + PASSPORT PHOTO)
+  const renderAnkitHarvardATS = () => (
+    <div style={{ ...a4CanvasStyle, padding: '32px 42px', fontFamily: '"Times New Roman", Times, Georgia, serif', fontSize: '11px', lineHeight: '1.35', color: '#000000' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1.5px solid #000000', paddingBottom: '10px', marginBottom: '10px' }}>
+        <div style={{ flex: 1, textAlign: showPhoto && resumeData.personalInfo.photo ? 'left' : 'center' }}>
+          <h1 style={{ fontSize: '23px', fontWeight: 'bold', margin: '0 0 2px 0', letterSpacing: '0.8px', textTransform: 'uppercase' }}>
+            {resumeData.personalInfo.fullName}
+          </h1>
+          <div style={{ fontSize: '11px', color: '#222222', marginBottom: '4px' }}>
+            {resumeData.personalInfo.address}
+          </div>
+          <div style={{ display: 'flex', justifyContent: showPhoto && resumeData.personalInfo.photo ? 'flex-start' : 'center', alignItems: 'center', flexWrap: 'wrap', gap: '12px', fontSize: '10px', color: '#111111' }}>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+              <Phone size={11} /> {resumeData.personalInfo.phone}
+            </span>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+              <Mail size={11} /> {resumeData.personalInfo.email}
+            </span>
+            {resumeData.personalInfo.linkedin && (
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                <FaLinkedin size={11} /> {resumeData.personalInfo.linkedin}
+              </span>
+            )}
+            {resumeData.personalInfo.github && (
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                <FaGithub size={11} /> {resumeData.personalInfo.github}
+              </span>
+            )}
+          </div>
+        </div>
+
+        {showPhoto && resumeData.personalInfo.photo && (
+          <div style={{ width: '70px', height: '82px', border: '1.5px solid #000000', padding: '2px', backgroundColor: '#ffffff', marginLeft: '16px', flexShrink: 0 }}>
+            <img src={resumeData.personalInfo.photo} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} crossOrigin="anonymous" />
+          </div>
+        )}
+      </div>
+
+      {visibility.education && resumeData.education.length > 0 && (
+        <div style={{ marginBottom: '10px' }}>
+          <div style={{ fontSize: '13px', fontWeight: 'bold', borderBottom: '1px solid #000000', paddingBottom: '1px', marginBottom: '4px' }}>
+            Education
+          </div>
+          {resumeData.education.map((edu) => (
+            <div key={edu.id} style={{ marginBottom: '4px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11.5px' }}>
+                <strong>{edu.institution}</strong>
+                <strong>{edu.duration}</strong>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10.5px', fontStyle: 'italic', color: '#333333' }}>
+                <span>{edu.degree}</span>
+                <span>{edu.location}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {visibility.experience && resumeData.experience.length > 0 && (
+        <div style={{ marginBottom: '10px' }}>
+          <div style={{ fontSize: '13px', fontWeight: 'bold', borderBottom: '1px solid #000000', paddingBottom: '1px', marginBottom: '4px' }}>
+            Experience
+          </div>
+          {resumeData.experience.map((exp) => (
+            <div key={exp.id} style={{ marginBottom: '6px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11.5px' }}>
+                <strong>{exp.company}</strong>
+                <strong>{exp.duration}</strong>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10.5px', fontStyle: 'italic', color: '#333333', marginBottom: '2px' }}>
+                <span>{exp.role}</span>
+                <span>{exp.location}</span>
+              </div>
+              <div style={{ fontSize: '10px', whiteSpace: 'pre-line', lineHeight: '1.4', paddingLeft: '8px' }}>
+                {exp.description}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {visibility.skills && (
+        <div style={{ marginBottom: '10px' }}>
+          <div style={{ fontSize: '13px', fontWeight: 'bold', borderBottom: '1px solid #000000', paddingBottom: '1px', marginBottom: '4px' }}>
+            Technical Skills
+          </div>
+          <div style={{ fontSize: '10.5px', lineHeight: '1.5' }}>
+            <div><strong>Languages:</strong> {resumeData.skillCategories.languages}</div>
+            <div><strong>Developer Tools:</strong> {resumeData.skillCategories.tools}</div>
+            <div><strong>Technologies/Frameworks:</strong> {resumeData.skillCategories.frameworks}</div>
+            <div><strong>Others:</strong> {resumeData.skillCategories.softSkills}</div>
+          </div>
+        </div>
+      )}
+
+      {visibility.projects && resumeData.projects.length > 0 && (
+        <div>
+          <div style={{ fontSize: '13px', fontWeight: 'bold', borderBottom: '1px solid #000000', paddingBottom: '1px', marginBottom: '4px' }}>
+            Projects
+          </div>
+          {resumeData.projects.map((proj) => (
+            <div key={proj.id} style={{ marginBottom: '6px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11.5px' }}>
+                <span><strong>{proj.title}</strong> | <em>{proj.tech}</em></span>
+                <strong>{proj.duration}</strong>
+              </div>
+              <div style={{ fontSize: '10px', whiteSpace: 'pre-line', lineHeight: '1.38', marginTop: '1px', paddingLeft: '8px' }}>
+                {proj.description}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
-}
 
-export default App;
+  // 02. CLASSIC CORPORATE ATS
+  const renderClassicATS = () => (
+    <div style={{ ...a4CanvasStyle, padding: '34px 42px', fontFamily: 'Arial, Helvetica, sans-serif' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: `2.5px solid ${accentColor}`, paddingBottom: '10px', marginBottom: '12px' }}>
+        <div style={{ flex: 1 }}>
+          <h1 style={{ fontSize: '22px', fontWeight: 'bold', textTransform: 'uppercase', margin: 0, color: '#0f172a' }}>
+            {resumeData.personalInfo.fullName}
+          </h1>
+          <div style={{ fontSize: '11.5px', fontWeight: 'bold', color: accentColor, marginTop: '3px' }}>
+            {resumeData.personalInfo.jobTitle}
+          </div>
+          <div style={{ fontSize: '9.5px', color: '#475569', marginTop: '5px', display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+            <span>{resumeData.personalInfo.email}</span> •
+            <span>{resumeData.personalInfo.phone}</span> •
+            <span>{resumeData.personalInfo.city}</span> •
+            <span>{resumeData.personalInfo.linkedin}</span>
+          </div>
+        </div>
+        {showPhoto && resumeData.personalInfo.photo && (
+          <div style={{ width: '74px', height: '74px', borderRadius: '10px', overflow: 'hidden', border: `2px solid ${accentColor}`, flexShrink: 0 }}>
+            <img src={resumeData.personalInfo.photo} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} crossOrigin="anonymous" />
+          </div>
+        )}
+      </div>
+
+      {visibility.summary && (
+        <div style={{ marginBottom: '12px' }}>
+          <div style={{ fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', color: accentColor, borderBottom: '1px solid #cbd5e1', paddingBottom: '2px', marginBottom: '4px' }}>
+            Professional Summary
+          </div>
+          <p style={{ fontSize: '9.5px', lineHeight: '1.45', margin: 0, color: '#334155' }}>{resumeData.summary}</p>
+        </div>
+      )}
+
+      {visibility.skills && (
+        <div style={{ marginBottom: '12px' }}>
+          <div style={{ fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', color: accentColor, borderBottom: '1px solid #cbd5e1', paddingBottom: '2px', marginBottom: '4px' }}>
+            Core Competencies & Skills
+          </div>
+          <div style={{ fontSize: '9.5px', color: '#334155', lineHeight: '1.5' }}>{getSkillsList().join('  •  ')}</div>
+        </div>
+      )}
+
+      {visibility.experience && (
+        <div style={{ marginBottom: '12px' }}>
+          <div style={{ fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', color: accentColor, borderBottom: '1px solid #cbd5e1', paddingBottom: '2px', marginBottom: '6px' }}>
+            Work Experience
+          </div>
+          {resumeData.experience.map((exp) => (
+            <div key={exp.id} style={{ marginBottom: '8px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10.5px', fontWeight: 'bold' }}>
+                <span>{exp.role} — <span style={{ color: '#475569', fontWeight: 'normal' }}>{exp.company}</span></span>
+                <span style={{ fontSize: '9.5px', color: '#64748b' }}>{exp.duration}</span>
+              </div>
+              <div style={{ fontSize: '9.5px', color: '#334155', whiteSpace: 'pre-line', lineHeight: '1.4', marginTop: '2px' }}>{exp.description}</div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {visibility.education && (
+        <div>
+          <div style={{ fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', color: accentColor, borderBottom: '1px solid #cbd5e1', paddingBottom: '2px', marginBottom: '5px' }}>
+            Education
+          </div>
+          {resumeData.education.map((edu) => (
+            <div key={edu.id} style={{ marginBottom: '4px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', fontWeight: 'bold' }}>
+                <span>{edu.degree}</span>
+                <span style={{ fontSize: '9px', color: '#64748b' }}>{edu.duration}</span>
+              </div>
+              <div style={{ fontSize: '9px', color: '#475569' }}>{edu.institution} {edu.grade && `• ${edu.grade}`}</div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+
+  // 03. NOVORESUME MODERN 2-COL
+  const renderNovoresumeClean = () => (
+    <div style={{ ...a4CanvasStyle, padding: '32px 36px', fontFamily: '"Segoe UI", Tahoma, Geneva, Verdana, sans-serif' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 90px 180px', gap: '15px', alignItems: 'center', borderBottom: '1.5px solid #e2e8f0', paddingBottom: '14px', marginBottom: '14px' }}>
+        <div>
+          <h1 style={{ fontSize: '23px', fontWeight: '800', color: accentColor, margin: 0 }}>{resumeData.personalInfo.fullName}</h1>
+          <div style={{ fontSize: '11.5px', color: '#64748b', fontWeight: '600', marginTop: '2px' }}>{resumeData.personalInfo.jobTitle}</div>
+          <div style={{ fontSize: '9px', color: '#334155', lineHeight: '1.4', marginTop: '5px' }}>{resumeData.summary}</div>
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'center' }}>
+          {showPhoto && resumeData.personalInfo.photo && (
+            <div style={{ width: '80px', height: '80px', borderRadius: '12px', overflow: 'hidden', border: `2px solid ${accentColor}` }}>
+              <img src={resumeData.personalInfo.photo} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} crossOrigin="anonymous" />
+            </div>
+          )}
+        </div>
+        <div style={{ fontSize: '8.5px', color: '#475569', textAlign: 'right', display: 'flex', flexDirection: 'column', gap: '3px' }}>
+          <div>{resumeData.personalInfo.email} ✉</div>
+          <div>{resumeData.personalInfo.phone} 📞</div>
+          <div>{resumeData.personalInfo.city} 📍</div>
+          <div>{resumeData.personalInfo.linkedin} 🔗</div>
+          <div>{resumeData.personalInfo.github} 💻</div>
+        </div>
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: '1.3fr 1fr', gap: '22px' }}>
+        <div>
+          {visibility.experience && (
+            <div style={{ marginBottom: '14px' }}>
+              <div style={{ fontSize: '11px', fontWeight: '800', textTransform: 'uppercase', color: '#0f172a', borderBottom: '1px solid #cbd5e1', paddingBottom: '2px', marginBottom: '8px' }}>
+                Work Experience
+              </div>
+              {resumeData.experience.map((exp) => (
+                <div key={exp.id} style={{ marginBottom: '10px' }}>
+                  <div style={{ fontSize: '10.5px', fontWeight: 'bold' }}>{exp.role}</div>
+                  <div style={{ fontSize: '9.5px', color: accentColor, fontWeight: '600' }}>{exp.company}</div>
+                  <div style={{ fontSize: '8px', color: '#94a3b8', fontStyle: 'italic', marginBottom: '2px' }}>{exp.duration}</div>
+                  <div style={{ fontSize: '8.5px', color: '#334155', whiteSpace: 'pre-line', lineHeight: '1.4' }}>{exp.description}</div>
+                </div>
+              ))}
+            </div>
+          )}
+          {visibility.education && (
+            <div>
+              <div style={{ fontSize: '11px', fontWeight: '800', textTransform: 'uppercase', color: '#0f172a', borderBottom: '1px solid #cbd5e1', paddingBottom: '2px', marginBottom: '8px' }}>
+                Education
+              </div>
+              {resumeData.education.map((edu) => (
+                <div key={edu.id} style={{ marginBottom: '6px' }}>
+                  <div style={{ fontSize: '10px', fontWeight: 'bold' }}>{edu.degree}</div>
+                  <div style={{ fontSize: '9px', color: '#475569' }}>{edu.institution}</div>
+                  <div style={{ fontSize: '8px', color: '#94a3b8' }}>{edu.duration}</div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div>
+          {visibility.skills && (
+            <div style={{ marginBottom: '14px' }}>
+              <div style={{ fontSize: '11px', fontWeight: '800', textTransform: 'uppercase', color: '#0f172a', borderBottom: '1px solid #cbd5e1', paddingBottom: '2px', marginBottom: '8px' }}>
+                Skills & Tech
+              </div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginBottom: '10px' }}>
+                {getSkillsList().map((s, i) => (
+                  <span key={i} style={{ backgroundColor: '#e0f2fe', color: '#0369a1', fontSize: '8.5px', fontWeight: '600', padding: '2px 6px', borderRadius: '4px' }}>
+                    {s}
+                  </span>
+                ))}
+              </div>
+              <div style={{ fontSize: '10px', fontWeight: 'bold', color: '#334155', marginBottom: '4px' }}>Soft Skills</div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                {resumeData.skillCategories.softSkills.split(',').map((s, i) => (
+                  <span key={i} style={{ backgroundColor: '#f1f5f9', border: '1px solid #cbd5e1', color: '#475569', fontSize: '8px', padding: '1px 5px', borderRadius: '3px' }}>
+                    {s.trim()}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+          {visibility.projects && (
+            <div>
+              <div style={{ fontSize: '11px', fontWeight: '800', textTransform: 'uppercase', color: '#0f172a', borderBottom: '1px solid #cbd5e1', paddingBottom: '2px', marginBottom: '8px' }}>
+                Projects
+              </div>
+              {resumeData.projects.map((proj) => (
+                <div key={proj.id} style={{ marginBottom: '8px' }}>
+                  <div style={{ fontSize: '10px', fontWeight: 'bold' }}>{proj.title}</div>
+                  <div style={{ fontSize: '8px', color: accentColor, marginBottom: '2px' }}>{proj.tech}</div>
+                  <div style={{ fontSize: '8.5px', color: '#334155', lineHeight: '1.35' }}>{proj.description}</div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+
+  // 04. TECH LEAD & CLOUD ENGINEER
+  const renderModernDev = () => (
+    <div style={{ ...a4CanvasStyle, padding: 0, fontFamily: 'Consolas, "Courier New", monospace' }}>
+      <div style={{ backgroundColor: '#0f172a', color: '#f8fafc', padding: '22px 34px', borderBottom: `4px solid ${accentColor}` }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+            {showPhoto && resumeData.personalInfo.photo && (
+              <div style={{ width: '64px', height: '64px', borderRadius: '50%', overflow: 'hidden', border: '2.5px solid #38bdf8', flexShrink: 0 }}>
+                <img src={resumeData.personalInfo.photo} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} crossOrigin="anonymous" />
+              </div>
+            )}
+            <div>
+              <h1 style={{ fontSize: '22px', fontWeight: 'bold', margin: 0 }}>{resumeData.personalInfo.fullName}</h1>
+              <div style={{ fontSize: '11px', color: '#38bdf8', marginTop: '3px' }}>&lt;{resumeData.personalInfo.jobTitle} /&gt;</div>
+            </div>
+          </div>
+          <div style={{ textAlign: 'right', fontSize: '8.5px', color: '#94a3b8', lineHeight: '1.5' }}>
+            <div>{resumeData.personalInfo.email}</div>
+            <div>{resumeData.personalInfo.phone}</div>
+            <div>{resumeData.personalInfo.github}</div>
+          </div>
+        </div>
+      </div>
+      <div style={{ padding: '22px 34px' }}>
+        {visibility.skills && (
+          <div style={{ marginBottom: '12px' }}>
+            <div style={{ fontSize: '11px', fontWeight: 'bold', color: accentColor, borderBottom: '1px solid #cbd5e1', paddingBottom: '2px', marginBottom: '6px' }}>
+              // Core Tech Stack
+            </div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+              {getSkillsList().map((s, i) => (
+                <span key={i} style={{ backgroundColor: '#f1f5f9', border: '1px solid #cbd5e1', fontSize: '8.5px', padding: '2px 6px', borderRadius: '4px', fontWeight: '600' }}>
+                  {s}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+        {visibility.experience && (
+          <div style={{ marginBottom: '12px' }}>
+            <div style={{ fontSize: '11px', fontWeight: 'bold', color: accentColor, borderBottom: '1px solid #cbd5e1', paddingBottom: '2px', marginBottom: '6px' }}>
+              // Work Experience
+            </div>
+            {resumeData.experience.map((exp) => (
+              <div key={exp.id} style={{ marginBottom: '8px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10.5px', fontWeight: 'bold' }}>
+                  <span>{exp.role} @ <span style={{ color: accentColor }}>{exp.company}</span></span>
+                  <span style={{ fontSize: '9px', color: '#64748b' }}>{exp.duration}</span>
+                </div>
+                <div style={{ fontSize: '9px', color: '#334155', whiteSpace: 'pre-line', lineHeight: '1.4', marginTop: '2px' }}>{exp.description}</div>
+              </div>
+            ))}
+          </div>
+        )}
+        {visibility.projects && (
+          <div>
+            <div style={{ fontSize: '11px', fontWeight: 'bold', color: accentColor, borderBottom: '1px solid #cbd5e1', paddingBottom: '2px', marginBottom: '6px' }}>
+              // Production Projects
+            </div>
+            {resumeData.projects.map((proj) => (
+              <div key={proj.id} style={{ marginBottom: '6px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', fontWeight: 'bold' }}>
+                  <span>{proj.title} <span style={{ color: '#64748b', fontSize: '8.5px' }}>[{proj.tech}]</span></span>
+                  <span style={{ fontSize: '8.5px', color: '#64748b' }}>{proj.duration}</span>
+                </div>
+                <div style={{ fontSize: '9px', color: '#334155' }}>{proj.description}</div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
+  // 05. EXECUTIVE LEADERSHIP
+  const renderExecutive = () => (
+    <div style={{ ...a4CanvasStyle, padding: '34px 40px', fontFamily: 'Georgia, serif' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+        <div style={{ flex: 1 }}>
+          <h1 style={{ fontSize: '24px', letterSpacing: '1px', textTransform: 'uppercase', margin: 0, color: '#0f172a' }}>
+            {resumeData.personalInfo.fullName}
+          </h1>
+          <div style={{ fontSize: '11.5px', fontWeight: 'bold', color: accentColor, marginTop: '2px', textTransform: 'uppercase' }}>
+            {resumeData.personalInfo.jobTitle}
+          </div>
+          <div style={{ fontSize: '9px', color: '#64748b', marginTop: '4px' }}>
+            {[resumeData.personalInfo.email, resumeData.personalInfo.phone, resumeData.personalInfo.city].join('  |  ')}
+          </div>
+        </div>
+        {showPhoto && resumeData.personalInfo.photo && (
+          <div style={{ width: '76px', height: '88px', borderRadius: '6px', overflow: 'hidden', border: `2px solid ${accentColor}`, marginLeft: '16px', flexShrink: 0 }}>
+            <img src={resumeData.personalInfo.photo} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} crossOrigin="anonymous" />
+          </div>
+        )}
+      </div>
+      <div style={{ borderTop: `2px solid ${accentColor}`, borderBottom: '1px solid #cbd5e1', padding: '6px 0', marginBottom: '12px', display: 'flex', justifyContent: 'space-around' }}>
+        {resumeData.metrics.map((m) => (
+          <div key={m.id} style={{ textAlign: 'center' }}>
+            <div style={{ fontSize: '14px', fontWeight: 'bold', color: accentColor }}>{m.val}</div>
+            <div style={{ fontSize: '8px', color: '#64748b', textTransform: 'uppercase' }}>{m.label}</div>
+          </div>
+        ))}
+      </div>
+      {visibility.summary && (
+        <div style={{ marginBottom: '12px' }}>
+          <div style={{ fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', color: accentColor, borderBottom: '1px solid #cbd5e1', paddingBottom: '2px', marginBottom: '4px' }}>
+            Executive Summary
+          </div>
+          <p style={{ fontSize: '9.5px', lineHeight: '1.45', margin: 0, color: '#334155' }}>{resumeData.summary}</p>
+        </div>
+      )}
+      {visibility.experience && (
+        <div>
+          <div style={{ fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', color: accentColor, borderBottom: '1px solid #cbd5e1', paddingBottom: '2px', marginBottom: '6px' }}>
+            Leadership & Track Record
+          </div>
+          {resumeData.experience.map((exp) => (
+            <div key={exp.id} style={{ marginBottom: '8px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10.5px', fontWeight: 'bold' }}>
+                <span>{exp.role} — <span style={{ color: '#475569' }}>{exp.company}</span></span>
+                <span style={{ fontSize: '9.5px', color: '#64748b' }}>{exp.duration}</span>
+              </div>
+              <div style={{ fontSize: '9.5px', color: '#334155', whiteSpace: 'pre-line', lineHeight: '1.4', marginTop: '2px' }}>{exp.description}</div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+
+  // 06. BANKING & FINANCE
+  const renderFinanceConsulting = () => (
+    <div style={{ ...a4CanvasStyle, padding: '36px 42px', fontFamily: '"Times New Roman", Times, serif', color: '#0f172a' }}>
+      <div style={{ borderBottom: '2px solid #0f2942', paddingBottom: '10px', marginBottom: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div>
+          <h1 style={{ fontSize: '23px', fontWeight: 'bold', textTransform: 'uppercase', margin: 0, color: '#0f2942' }}>
+            {resumeData.personalInfo.fullName}
+          </h1>
+          <div style={{ fontSize: '11px', fontStyle: 'italic', color: '#475569', marginTop: '2px' }}>
+            {resumeData.personalInfo.jobTitle}
+          </div>
+          <div style={{ fontSize: '9px', color: '#475569', marginTop: '4px', lineHeight: '1.4' }}>
+            <div>{resumeData.personalInfo.phone} | {resumeData.personalInfo.email}</div>
+            <div>{resumeData.personalInfo.city}</div>
+          </div>
+        </div>
+        {showPhoto && resumeData.personalInfo.photo && (
+          <div style={{ width: '70px', height: '82px', border: '1.5px solid #0f2942', padding: '2px', backgroundColor: '#ffffff', flexShrink: 0 }}>
+            <img src={resumeData.personalInfo.photo} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} crossOrigin="anonymous" />
+          </div>
+        )}
+      </div>
+      {visibility.summary && (
+        <div style={{ marginBottom: '12px' }}>
+          <div style={{ fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', color: '#0f2942', borderBottom: '1px solid #94a3b8', paddingBottom: '1px', marginBottom: '4px' }}>
+            Profile Overview
+          </div>
+          <p style={{ fontSize: '9.5px', lineHeight: '1.45', margin: 0, color: '#334155' }}>{resumeData.summary}</p>
+        </div>
+      )}
+      {visibility.experience && (
+        <div style={{ marginBottom: '12px' }}>
+          <div style={{ fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', color: '#0f2942', borderBottom: '1px solid #94a3b8', paddingBottom: '1px', marginBottom: '6px' }}>
+            Professional Engagements
+          </div>
+          {resumeData.experience.map((exp) => (
+            <div key={exp.id} style={{ marginBottom: '8px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10.5px', fontWeight: 'bold' }}>
+                <span>{exp.company} — <span style={{ fontWeight: 'normal', fontStyle: 'italic' }}>{exp.role}</span></span>
+                <span style={{ fontSize: '9.5px', color: '#64748b' }}>{exp.duration}</span>
+              </div>
+              <div style={{ fontSize: '9.5px', color: '#334155', whiteSpace: 'pre-line', lineHeight: '1.4', marginTop: '2px' }}>{exp.description}</div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+
+  // 07. HEALTHCARE & MEDICAL
+  const renderHealthcare = () => (
+    <div style={{ ...a4CanvasStyle, padding: '34px 40px', fontFamily: '"Segoe UI", Tahoma, sans-serif' }}>
+      <div style={{ borderBottom: `3px solid ${accentColor}`, paddingBottom: '12px', marginBottom: '14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div>
+          <h1 style={{ fontSize: '23px', fontWeight: 'bold', color: '#0f172a', margin: 0 }}>{resumeData.personalInfo.fullName}</h1>
+          <div style={{ fontSize: '11px', fontWeight: 'bold', color: accentColor, marginTop: '2px' }}>{resumeData.personalInfo.jobTitle}</div>
+          <div style={{ fontSize: '9px', color: '#64748b', marginTop: '2px' }}>Reg ID / Medical License: <strong>{resumeData.personalInfo.licenseNo}</strong></div>
+          <div style={{ fontSize: '8.5px', color: '#475569', marginTop: '4px' }}>
+            {resumeData.personalInfo.email} • {resumeData.personalInfo.phone} • {resumeData.personalInfo.city}
+          </div>
+        </div>
+        {showPhoto && resumeData.personalInfo.photo && (
+          <div style={{ width: '74px', height: '85px', borderRadius: '6px', overflow: 'hidden', border: `2px solid ${accentColor}`, flexShrink: 0 }}>
+            <img src={resumeData.personalInfo.photo} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} crossOrigin="anonymous" />
+          </div>
+        )}
+      </div>
+      {visibility.summary && (
+        <div style={{ marginBottom: '12px' }}>
+          <div style={{ fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', color: accentColor, borderBottom: '1px solid #cbd5e1', paddingBottom: '2px', marginBottom: '4px' }}>
+            Clinical & Professional Profile
+          </div>
+          <p style={{ fontSize: '9.5px', lineHeight: '1.45', margin: 0, color: '#334155' }}>{resumeData.summary}</p>
+        </div>
+      )}
+      {visibility.experience && (
+        <div>
+          <div style={{ fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', color: accentColor, borderBottom: '1px solid #cbd5e1', paddingBottom: '2px', marginBottom: '6px' }}>
+            Clinical Experience
+          </div>
+          {resumeData.experience.map((exp) => (
+            <div key={exp.id} style={{ marginBottom: '8px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10.5px', fontWeight: 'bold' }}>
+                <span>{exp.role} — <span style={{ color: accentColor }}>{exp.company}</span></span>
+                <span style={{ fontSize: '9.5px', color: '#64748b' }}>{exp.duration}</span>
+              </div>
+              <div style={{ fontSize: '9.5px', color: '#334155', whiteSpace: 'pre-line', lineHeight: '1.4', marginTop: '2px' }}>{exp.description}</div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+
+  // 08. FRESHER / CAMPUS
+  const renderFresher = () => (
+    <div style={{ ...a4CanvasStyle, padding: '36px 42px', fontFamily: '"Trebuchet MS", sans-serif' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+        <div>
+          <h1 style={{ fontSize: '24px', fontWeight: 'bold', color: accentColor, margin: 0 }}>{resumeData.personalInfo.fullName}</h1>
+          <div style={{ fontSize: '11px', color: '#334155', marginTop: '3px' }}>{resumeData.personalInfo.jobTitle}</div>
+          <div style={{ fontSize: '9px', color: '#64748b', marginTop: '4px' }}>
+            {resumeData.personalInfo.email} • {resumeData.personalInfo.phone} • {resumeData.personalInfo.city}
+          </div>
+        </div>
+        {showPhoto && resumeData.personalInfo.photo && (
+          <div style={{ width: '70px', height: '70px', borderRadius: '50%', overflow: 'hidden', border: `2px solid ${accentColor}`, flexShrink: 0 }}>
+            <img src={resumeData.personalInfo.photo} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} crossOrigin="anonymous" />
+          </div>
+        )}
+      </div>
+      <div style={{ height: '2px', backgroundColor: accentColor, marginBottom: '14px' }}></div>
+      {visibility.education && (
+        <div style={{ marginBottom: '12px' }}>
+          <div style={{ fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', color: accentColor, borderBottom: '1px solid #cbd5e1', paddingBottom: '2px', marginBottom: '6px' }}>
+            Educational Qualifications
+          </div>
+          {resumeData.education.map((edu) => (
+            <div key={edu.id} style={{ marginBottom: '6px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10.5px', fontWeight: 'bold' }}>
+                <span>{edu.degree} — <span style={{ color: '#475569' }}>{edu.institution}</span></span>
+                <span style={{ fontSize: '9.5px', color: '#64748b' }}>{edu.duration}</span>
+              </div>
+              <div style={{ fontSize: '9px', color: '#16a34a', fontWeight: 'bold' }}>Score: {edu.grade}</div>
+            </div>
+          ))}
+        </div>
+      )}
+      {visibility.skills && (
+        <div style={{ marginBottom: '12px' }}>
+          <div style={{ fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', color: accentColor, borderBottom: '1px solid #cbd5e1', paddingBottom: '2px', marginBottom: '4px' }}>
+            Technical & Soft Skills
+          </div>
+          <div style={{ fontSize: '9.5px', color: '#334155', lineHeight: '1.5' }}>{getSkillsList().join('  •  ')}</div>
+        </div>
+      )}
+      {visibility.projects && (
+        <div>
+          <div style={{ fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', color: accentColor, borderBottom: '1px solid #cbd5e1', paddingBottom: '2px', marginBottom: '6px' }}>
+            Key Projects
+          </div>
+          {resumeData.projects.map((proj) => (
+            <div key={proj.id} style={{ marginBottom: '6px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', fontWeight: 'bold' }}>
+                <span>{proj.title} <span style={{ fontWeight: 'normal', color: '#64748b' }}>({proj.tech})</span></span>
+              </div>
+              <div style={{ fontSize: '9px', color: '#334155' }}>{proj.description}</div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+
+  // 09. CREATIVE DESIGNER
+  const renderCreativePurple = () => (
+    <div style={{ ...a4CanvasStyle, padding: '28px 34px', fontFamily: '"Segoe UI", sans-serif' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: showPhoto && resumeData.personalInfo.photo ? '95px 1fr' : '1fr', gap: '18px', alignItems: 'center', marginBottom: '16px' }}>
+        {showPhoto && resumeData.personalInfo.photo && (
+          <div style={{ width: '85px', height: '85px', borderRadius: '50%', overflow: 'hidden', border: '3px solid #7c3aed' }}>
+            <img src={resumeData.personalInfo.photo} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} crossOrigin="anonymous" />
+          </div>
+        )}
+        <div style={{ backgroundColor: '#581c87', color: '#ffffff', padding: '16px 20px', borderRadius: '8px' }}>
+          <h1 style={{ fontSize: '23px', fontWeight: 'bold', margin: 0, textTransform: 'uppercase' }}>{resumeData.personalInfo.fullName}</h1>
+          <div style={{ fontSize: '12px', color: '#d8b4fe', fontWeight: '500', marginTop: '2px' }}>{resumeData.personalInfo.jobTitle}</div>
+          <div style={{ fontSize: '8.5px', color: '#f3e8ff', marginTop: '4px', lineHeight: '1.4' }}>{resumeData.summary}</div>
+        </div>
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: '200px 1fr', gap: '22px' }}>
+        <div style={{ borderRight: '1.5px solid #f3e8ff', paddingRight: '16px' }}>
+          <div style={{ fontSize: '9px', color: '#4b5563', marginBottom: '14px', lineHeight: '1.6' }}>
+            <div>✉ {resumeData.personalInfo.email}</div>
+            <div>📞 {resumeData.personalInfo.phone}</div>
+            <div>📍 {resumeData.personalInfo.city}</div>
+          </div>
+          <div style={{ fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', color: '#581c87', borderBottom: '1.5px solid #581c87', paddingBottom: '2px', marginBottom: '6px' }}>
+            Competencies
+          </div>
+          <div style={{ fontSize: '9px', color: '#374151', lineHeight: '1.6' }}>
+            {getSkillsList().slice(0, 8).map((s, i) => <div key={i}>• {s}</div>)}
+          </div>
+        </div>
+        <div>
+          {visibility.experience && (
+            <div style={{ marginBottom: '14px' }}>
+              <div style={{ fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', color: '#581c87', borderBottom: '1.5px solid #581c87', paddingBottom: '2px', marginBottom: '6px' }}>
+                Experience
+              </div>
+              {resumeData.experience.map((exp) => (
+                <div key={exp.id} style={{ marginBottom: '8px' }}>
+                  <div style={{ fontSize: '10.5px', fontWeight: 'bold', color: '#581c87' }}>{exp.role}</div>
+                  <div style={{ fontSize: '9.5px', fontWeight: '600', color: '#4b5563' }}>{exp.company} — <span style={{ fontSize: '8.5px', color: '#9ca3af' }}>{exp.duration}</span></div>
+                  <div style={{ fontSize: '9px', color: '#374151', whiteSpace: 'pre-line', lineHeight: '1.4', marginTop: '2px' }}>{exp.description}</div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+
+  // 10. GOVERNMENT OFFICIAL CV
+  const renderGovtFormal = () => (
+    <div style={{ ...a4CanvasStyle, padding: '34px 42px', fontFamily: '"Times New Roman", serif' }}>
+      <div style={{ border: '1.5px solid #000000', padding: '10px 14px', marginBottom: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div style={{ flex: 1 }}>
+          <h1 style={{ fontSize: '19px', fontWeight: 'bold', textTransform: 'uppercase', margin: 0 }}>CURRICULUM VITAE</h1>
+          <div style={{ fontSize: '12px', fontWeight: 'bold', marginTop: '3px' }}>{resumeData.personalInfo.fullName}</div>
+          <div style={{ fontSize: '9.5px', marginTop: '2px' }}>Application for: {resumeData.personalInfo.jobTitle}</div>
+        </div>
+        {showPhoto && resumeData.personalInfo.photo && (
+          <div style={{ width: '68px', height: '80px', border: '1px solid #000000', padding: '2px', backgroundColor: '#ffffff', flexShrink: 0 }}>
+            <img src={resumeData.personalInfo.photo} alt="Passport Photo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} crossOrigin="anonymous" />
+          </div>
+        )}
+      </div>
+      <div style={{ fontSize: '9px', marginBottom: '12px', lineHeight: '1.5' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+          <tbody>
+            <tr>
+              <td style={{ width: '25%', fontWeight: 'bold' }}>Email Address:</td>
+              <td style={{ width: '25%' }}>{resumeData.personalInfo.email}</td>
+              <td style={{ width: '25%', fontWeight: 'bold' }}>Contact Number:</td>
+              <td style={{ width: '25%' }}>{resumeData.personalInfo.phone}</td>
+            </tr>
+            <tr>
+              <td style={{ fontWeight: 'bold' }}>Location:</td>
+              <td>{resumeData.personalInfo.city}</td>
+              <td style={{ fontWeight: 'bold' }}>Registration ID:</td>
+              <td>{resumeData.personalInfo.licenseNo}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      {visibility.education && (
+        <div style={{ marginBottom: '12px' }}>
+          <div style={{ fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', borderBottom: '1px solid #000', paddingBottom: '2px', marginBottom: '6px' }}>
+            1. Educational Qualifications
+          </div>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '9px', border: '1px solid #000' }}>
+            <thead>
+              <tr style={{ backgroundColor: '#f1f5f9' }}>
+                <th style={{ border: '1px solid #000', padding: '4px', textAlign: 'left' }}>Degree</th>
+                <th style={{ border: '1px solid #000', padding: '4px', textAlign: 'left' }}>Board / University</th>
+                <th style={{ border: '1px solid #000', padding: '4px', textAlign: 'left' }}>Year</th>
+                <th style={{ border: '1px solid #000', padding: '4px', textAlign: 'left' }}>Score</th>
+              </tr>
+            </thead>
+            <tbody>
+              {resumeData.education.map((edu) => (
+                <tr key={edu.id}>
+                  <td style={{ border: '1px solid #000', padding: '4px' }}>{edu.degree}</td>
+                  <td style={{ border: '1px solid #000', padding: '4px' }}>{edu.institution}</td>
+                  <td style={{ border: '1px solid #000', padding: '4px' }}>{edu.duration}</td>
+                  <td style={{ border: '1px solid #000', padding: '4px' }}>{edu.grade}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+      {visibility.declaration && (
+        <div style={{ marginTop: '16px', borderTop: '1px solid #000', paddingTop: '8px' }}>
+          <div style={{ fontSize: '10px', fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '2px' }}>Declaration</div>
+          <p style={{ fontSize: '8.5px', fontStyle: 'italic', margin: 0 }}>{resumeData.personalInfo.declaration}</p>
+          <div style={{ marginTop: '14px', display: 'flex', justifyContent: 'space-between', fontSize: '9px' }}>
+            <span>Place: {resumeData.personalInfo.city}</span>
+            <span>Signature: ______________________</span>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+
+  return (
+    <>
+      {/* 100% PURE CUSTOM CSS + MEDIA PRINT ISOLATION */}
+      <style>{`
+        * { box-sizing: border-box; }
+        body { margin: 0; padding: 0; background-color: #070d18; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        
+        .app-wrapper { min-height: 100vh; background-color: #070d18; color: #f8fafc; display: flex; flex-direction: column; }
+        
+        /* Navbar */
+        .top-navbar { border-bottom: 1px solid #1e293b; background-color: rgba(11, 19, 36, 0.96); position: sticky; top: 0; z-index: 50; padding: 10px 18px; backdrop-filter: blur(10px); }
+        .top-navbar-inner { max-width: 1720px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
+        .brand-box { display: flex; align-items: center; gap: 10px; }
+        .brand-title { font-size: 13.5px; font-weight: 700; color: #ffffff; letter-spacing: -0.2px; }
+        .brand-sub { font-size: 10.5px; color: #94a3b8; }
+        .action-group { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+        
+        .custom-select { background-color: #131f37; color: white; border: 1px solid #293956; padding: 7px 11px; border-radius: 8px; font-size: 11.5px; font-weight: 600; outline: none; cursor: pointer; transition: all 0.2s; }
+        .custom-select:hover { border-color: #3b82f6; }
+        
+        .custom-btn { display: inline-flex; align-items: center; gap: 5px; padding: 7px 12px; border-radius: 8px; font-size: 11.5px; font-weight: 600; cursor: pointer; border: 1px solid #293956; background-color: #131f37; color: #f8fafc; transition: all 0.2s; }
+        .custom-btn:hover { background-color: #1e2e4e; border-color: #3b82f6; }
+        
+        .custom-btn-primary { background: linear-gradient(135deg, #2563eb, #1d4ed8); border-color: #2563eb; color: white; box-shadow: 0 4px 14px rgba(37,99,235,0.3); }
+        .custom-btn-primary:hover { background: #1d4ed8; }
+
+        /* Mobile View Toggle Bar */
+        .mobile-mode-bar { display: none; background-color: #0b1324; border-bottom: 1px solid #1e293b; padding: 6px 12px; justify-content: center; gap: 8px; }
+        .mobile-mode-btn { flex: 1; max-width: 180px; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 8px 12px; border-radius: 8px; font-size: 12px; font-weight: 600; border: 1px solid #1e293b; background-color: #131f37; color: #94a3b8; cursor: pointer; }
+        .mobile-mode-btn.active { background-color: #2563eb; color: #ffffff; border-color: #2563eb; }
+
+        /* Workspace Grid */
+        .main-workspace { flex: 1; max-width: 1720px; margin: 0 auto; width: 100%; padding: 14px; display: flex; gap: 16px; overflow: hidden; height: calc(100vh - 65px); }
+        
+        /* Editor Panel */
+        .editor-container { width: 44%; min-width: 380px; background-color: #0e172a; border: 1px solid #1c2a44; border-radius: 12px; display: flex; flex-direction: column; overflow: hidden; }
+        .nav-tabs { display: flex; background-color: #070d18; border-bottom: 1px solid #1c2a44; padding: 6px 4px; gap: 4px; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+        .nav-tab-btn { display: flex; align-items: center; gap: 5px; padding: 8px 12px; border-radius: 7px; font-size: 11.5px; font-weight: 500; border: none; background: transparent; color: #94a3b8; cursor: pointer; white-space: nowrap; transition: all 0.2s; }
+        .nav-tab-btn.active { background-color: #2563eb; color: white; font-weight: 600; }
+        .nav-tab-btn:hover:not(.active) { color: white; background-color: rgba(255,255,255,0.05); }
+
+        .form-scroller { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 14px; font-size: 12px; }
+        .form-field { display: flex; flex-direction: column; gap: 4px; }
+        .form-label { font-weight: 600; color: #94a3b8; font-size: 11px; text-transform: uppercase; letter-spacing: 0.4px; }
+        
+        .form-input, .form-textarea { background-color: #070d18; border: 1px solid #1c2a44; border-radius: 8px; padding: 10px 12px; font-size: 13.5px; color: white; outline: none; width: 100%; font-family: inherit; transition: border-color 0.2s; }
+        .form-input:focus, .form-textarea:focus { border-color: #3b82f6; }
+        
+        .form-card { background-color: #070d18; border: 1px solid #1c2a44; border-radius: 9px; padding: 12px; margin-bottom: 8px; position: relative; }
+        .form-row { display: flex; gap: 10px; }
+        .form-row > * { flex: 1; }
+
+        /* Preview Panel */
+        .preview-container { width: 56%; background-color: #0e172a; border: 1px solid #1c2a44; border-radius: 12px; display: flex; flex-direction: column; overflow: hidden; position: relative; }
+        .preview-topbar { display: flex; justify-content: space-between; align-items: center; background-color: #070d18; border-bottom: 1px solid #1c2a44; padding: 8px 14px; font-size: 11.5px; color: #94a3b8; }
+        .zoom-controls { display: flex; align-items: center; gap: 6px; }
+        .zoom-btn { background: #131f37; border: 1px solid #1c2a44; color: #cbd5e1; border-radius: 6px; width: 26px; height: 26px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+        .zoom-btn:hover { background: #1e2e4e; color: white; }
+
+        .canvas-scroll-viewport { flex: 1; overflow-y: auto; overflow-x: auto; padding: 16px; display: flex; justify-content: center; align-items: flex-start; }
+        .canvas-scale-wrapper { display: flex; justify-content: center; transform-origin: top center; transition: all 0.2s ease-out; }
+        .canvas-shadow { box-shadow: 0 16px 36px rgba(0, 0, 0, 0.75); border-radius: 3px; }
+
+        /* RESPONSIVE MEDIA QUERIES (Phone Spacing & Padding Solved) */
+        @media (max-width: 1080px) {
+          .mobile-mode-bar { display: flex; }
+          .main-workspace { height: auto; padding: 8px; }
+          .editor-container { width: 100%; min-width: 100%; height: calc(100vh - 115px); display: none; }
+          .preview-container { width: 100%; min-width: 100%; height: calc(100vh - 115px); display: none; }
+          
+          .editor-container.mobile-active { display: flex; }
+          .preview-container.mobile-active { display: flex; }
+          .canvas-scroll-viewport { padding: 10px 4px; }
+          .form-scroller { padding: 12px; gap: 12px; }
+        }
+
+        @media (max-width: 640px) {
+          .top-navbar { padding: 8px 12px; }
+          .top-navbar-inner { flex-direction: column; align-items: stretch; gap: 8px; }
+          .action-group { justify-content: space-between; }
+          .action-group select { flex: 1; }
+          .form-row { flex-direction: column; gap: 8px; }
+          .form-input, .form-textarea { font-size: 14px; padding: 9px 11px; }
+        }
+
+        /* 100% CLEAN BROWSER PRINT ENGINE (ZERO BORDERS, EXACT A4) */
+        @media print {
+          @page {
+            size: 210mm 297mm;
+            margin: 0mm;
+          }
+          body, html {
+            background-color: #ffffff !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+          }
+          .top-navbar, .mobile-mode-bar, .editor-container, .preview-topbar, .zoom-controls {
+            display: none !important;
+          }
+          .app-wrapper, .main-workspace, .preview-container, .canvas-scroll-viewport {
+            display: block !important;
+            background: transparent !important;
+            border: none !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            overflow: visible !important;
+            height: auto !important;
+            width: 100% !important;
+          }
+          .canvas-scale-wrapper {
+            transform: none !important;
+            width: 210mm !important;
+            height: 297mm !important;
+          }
+          .canvas-shadow {
+            box-shadow: none !important;
+            margin: 0 auto !important;
+            width: 210mm !important;
+            height: 297mm !important;
+          }
+        }
+      `}</style>
+
+      <main className="app-wrapper">
+        {/* Top Navbar */}
+        <header className="top-navbar">
+          <div className="top-navbar-inner">
+            <div className="brand-box">
+              <BrandLogo />
+              <div>
+                <div className="brand-title">ATS Pro Resume Builder</div>
+                <div className="brand-sub">Strict 1-Page A4 Lock • Responsive on Mobile • Direct PDF Download</div>
+              </div>
+            </div>
+
+            <div className="action-group">
+              {/* Template Selector */}
+              <select 
+                value={selectedTemplate} 
+                onChange={(e) => setSelectedTemplate(e.target.value)} 
+                className="custom-select"
+                aria-label="Select Resume Template"
+              >
+                <option value="ankit_harvard">01. Ankit Harvard ATS (Screenshot Match + Photo)</option>
+                <option value="classic_ats">02. Classic Corporate ATS (Universal MNC)</option>
+                <option value="novoresume_clean">03. Novoresume Modern 2-Col (Recommended)</option>
+                <option value="modern_dev">04. Tech Lead & Cloud Engineer (Developer Header)</option>
+                <option value="executive">05. Executive Leadership (With KPI Banner)</option>
+                <option value="finance_consulting">06. Banking, Finance & Consulting (Navy)</option>
+                <option value="healthcare">07. Healthcare & Medical (With Reg ID)</option>
+                <option value="fresher">08. Fresher & Graduate (Education First)</option>
+                <option value="creative_purple">09. Creative & UI/UX Designer</option>
+                <option value="govt_formal">10. Government Official CV Format</option>
+              </select>
+
+              {/* Accent Color Picker */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '5px', backgroundColor: '#131f37', padding: '3px 8px', borderRadius: '8px', border: '1px solid #293956' }}>
+                <Palette size={13} color="#94a3b8" />
+                <input 
+                  type="color" 
+                  value={accentColor} 
+                  onChange={(e) => setAccentColor(e.target.value)}
+                  style={{ width: '20px', height: '20px', border: 'none', background: 'transparent', cursor: 'pointer' }}
+                  title="Choose Accent Color"
+                />
+              </div>
+
+              {/* Photo Toggle */}
+              <button onClick={() => setShowPhoto(!showPhoto)} className="custom-btn" type="button">
+                {showPhoto ? <Eye size={13} color="#22c55e" /> : <EyeOff size={13} color="#94a3b8" />}
+                <span>{showPhoto ? 'Photo On' : 'Photo Off'}</span>
+              </button>
+
+              {/* Native Print / Save PDF Button */}
+              <button onClick={handleNativePrint} className="custom-btn" title="Open Native 1-Page Print Window" type="button">
+                <Printer size={13} />
+                <span>Print</span>
+              </button>
+
+              {/* Direct Instant PDF Download (Directly saves file, no print modal) */}
+              <button onClick={handleDownloadPDF} disabled={isExporting} className="custom-btn custom-btn-primary" type="button">
+                {isExporting ? <CheckCircle2 size={14} /> : <Download size={14} />}
+                <span>{isExporting ? 'Downloading...' : 'Download PDF'}</span>
+              </button>
+            </div>
+          </div>
+        </header>
+
+        {/* Mobile / Tablet Screen Switcher */}
+        <div className="mobile-mode-bar">
+          <button 
+            onClick={() => setMobileView('editor')} 
+            className={`mobile-mode-btn ${mobileView === 'editor' ? 'active' : ''}`}
+            type="button"
+          >
+            <Smartphone size={13} /> Edit Details
+          </button>
+          <button 
+            onClick={() => setMobileView('preview')} 
+            className={`mobile-mode-btn ${mobileView === 'preview' ? 'active' : ''}`}
+            type="button"
+          >
+            <Monitor size={13} /> Live Preview
+          </button>
+        </div>
+
+        {/* Main Work Area */}
+        <div className="main-workspace">
+          {/* Left Form Editor Panel */}
+          <section className={`editor-container ${mobileView === 'editor' ? 'mobile-active' : ''}`} aria-label="Resume Content Editor">
+            <div className="nav-tabs">
+              {[
+                { id: 'personal', label: 'Personal', icon: User },
+                { id: 'experience', label: 'Experience', icon: Briefcase },
+                { id: 'education', label: 'Education', icon: GraduationCap },
+                { id: 'skills', label: 'Skills', icon: Award },
+                { id: 'projects', label: 'Projects', icon: Code },
+                { id: 'visibility', label: 'Visibility', icon: Layers },
+              ].map((tab) => {
+                const Icon = tab.icon;
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id)}
+                    className={`nav-tab-btn ${activeTab === tab.id ? 'active' : ''}`}
+                    type="button"
+                  >
+                    <Icon size={13} /> <span>{tab.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="form-scroller">
+              {/* 1. PERSONAL INFO WITH PHOTO MANAGEMENT */}
+              {activeTab === 'personal' && (
+                <>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#070d18', padding: '10px 12px', borderRadius: '9px', border: '1px solid #1c2a44' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <div style={{ width: '48px', height: '48px', borderRadius: '7px', overflow: 'hidden', backgroundColor: '#131f37', border: '1px solid #293956', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        {resumeData.personalInfo.photo ? (
+                          <img src={resumeData.personalInfo.photo} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} crossOrigin="anonymous" />
+                        ) : (
+                          <ImageIcon size={20} color="#94a3b8" />
+                        )}
+                      </div>
+                      <div>
+                        <div className="form-label" style={{ marginBottom: '2px' }}>Profile Photo</div>
+                        <input type="file" accept="image/*" onChange={handlePhotoUpload} style={{ fontSize: '11px', color: '#94a3b8' }} />
+                      </div>
+                    </div>
+                    {resumeData.personalInfo.photo && (
+                      <button onClick={removePhoto} className="custom-btn" style={{ padding: '4px 7px', fontSize: '10px', color: '#ef4444', borderColor: '#7f1d1d' }} type="button">
+                        Remove
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="form-field">
+                    <label className="form-label">Full Name</label>
+                    <input className="form-input" type="text" name="fullName" value={resumeData.personalInfo.fullName} onChange={handlePersonalChange} />
+                  </div>
+                  <div className="form-field">
+                    <label className="form-label">Job Title / Role</label>
+                    <input className="form-input" type="text" name="jobTitle" value={resumeData.personalInfo.jobTitle} onChange={handlePersonalChange} />
+                  </div>
+                  <div className="form-row">
+                    <div className="form-field">
+                      <label className="form-label">Email</label>
+                      <input className="form-input" type="email" name="email" value={resumeData.personalInfo.email} onChange={handlePersonalChange} />
+                    </div>
+                    <div className="form-field">
+                      <label className="form-label">Phone</label>
+                      <input className="form-input" type="text" name="phone" value={resumeData.personalInfo.phone} onChange={handlePersonalChange} />
+                    </div>
+                  </div>
+                  <div className="form-row">
+                    <div className="form-field">
+                      <label className="form-label">Address / Location</label>
+                      <input className="form-input" type="text" name="address" value={resumeData.personalInfo.address} onChange={handlePersonalChange} />
+                    </div>
+                    <div className="form-field">
+                      <label className="form-label">City, State</label>
+                      <input className="form-input" type="text" name="city" value={resumeData.personalInfo.city} onChange={handlePersonalChange} />
+                    </div>
+                  </div>
+                  <div className="form-row">
+                    <div className="form-field">
+                      <label className="form-label">LinkedIn</label>
+                      <input className="form-input" type="text" name="linkedin" value={resumeData.personalInfo.linkedin} onChange={handlePersonalChange} />
+                    </div>
+                    <div className="form-field">
+                      <label className="form-label">GitHub</label>
+                      <input className="form-input" type="text" name="github" value={resumeData.personalInfo.github} onChange={handlePersonalChange} />
+                    </div>
+                  </div>
+                  <div className="form-field">
+                    <label className="form-label">Professional Summary</label>
+                    <textarea className="form-textarea" rows={3} value={resumeData.summary} onChange={(e) => setResumeData({ ...resumeData, summary: e.target.value })} />
+                  </div>
+                </>
+              )}
+
+              {/* 2. EXPERIENCE */}
+              {activeTab === 'experience' && (
+                <>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div className="form-label">Work Experience</div>
+                    <button onClick={addExperience} className="custom-btn custom-btn-primary" style={{ padding: '4px 8px', fontSize: '11px' }} type="button">
+                      <Plus size={11} /> Add Role
+                    </button>
+                  </div>
+                  {resumeData.experience.map((exp) => (
+                    <div key={exp.id} className="form-card">
+                      <button onClick={() => removeExperience(exp.id)} style={{ position: 'absolute', top: '8px', right: '8px', background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer' }} type="button">
+                        <Trash2 size={13} />
+                      </button>
+                      <div className="form-row" style={{ marginBottom: '6px', paddingRight: '18px' }}>
+                        <input className="form-input" placeholder="Company" value={exp.company} onChange={(e) => handleExpChange(exp.id, 'company', e.target.value)} />
+                        <input className="form-input" placeholder="Role" value={exp.role} onChange={(e) => handleExpChange(exp.id, 'role', e.target.value)} />
+                      </div>
+                      <div className="form-row" style={{ marginBottom: '6px' }}>
+                        <input className="form-input" placeholder="Duration (e.g. July 2023 – Present)" value={exp.duration} onChange={(e) => handleExpChange(exp.id, 'duration', e.target.value)} />
+                        <input className="form-input" placeholder="Location" value={exp.location} onChange={(e) => handleExpChange(exp.id, 'location', e.target.value)} />
+                      </div>
+                      <textarea className="form-textarea" rows={3} placeholder="Key Responsibilities / Bullet points" value={exp.description} onChange={(e) => handleExpChange(exp.id, 'description', e.target.value)} />
+                    </div>
+                  ))}
+                </>
+              )}
+
+              {/* 3. EDUCATION */}
+              {activeTab === 'education' && (
+                <>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div className="form-label">Education</div>
+                    <button onClick={addEducation} className="custom-btn custom-btn-primary" style={{ padding: '4px 8px', fontSize: '11px' }} type="button">
+                      <Plus size={11} /> Add Degree
+                    </button>
+                  </div>
+                  {resumeData.education.map((edu) => (
+                    <div key={edu.id} className="form-card">
+                      <button onClick={() => removeEducation(edu.id)} style={{ position: 'absolute', top: '8px', right: '8px', background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer' }}>
+                        <Trash2 size={13} />
+                      </button>
+                      <div className="form-field" style={{ marginBottom: '6px' }}>
+                        <input className="form-input" placeholder="Institution Name" value={edu.institution} onChange={(e) => handleEduChange(edu.id, 'institution', e.target.value)} />
+                      </div>
+                      <div className="form-field" style={{ marginBottom: '6px' }}>
+                        <input className="form-input" placeholder="Degree / Qualification" value={edu.degree} onChange={(e) => handleEduChange(edu.id, 'degree', e.target.value)} />
+                      </div>
+                      <div className="form-row">
+                        <input className="form-input" placeholder="Duration (e.g. 2020 – 2022)" value={edu.duration} onChange={(e) => handleEduChange(edu.id, 'duration', e.target.value)} />
+                        <input className="form-input" placeholder="Location" value={edu.location} onChange={(e) => handleEduChange(edu.id, 'location', e.target.value)} />
+                      </div>
+                    </div>
+                  ))}
+                </>
+              )}
+
+              {/* 4. TECHNICAL & SOFT SKILLS */}
+              {activeTab === 'skills' && (
+                <>
+                  <div className="form-field">
+                    <label className="form-label">Languages (Comma separated)</label>
+                    <input className="form-input" value={resumeData.skillCategories.languages} onChange={(e) => setResumeData({ ...resumeData, skillCategories: { ...resumeData.skillCategories, languages: e.target.value } })} />
+                  </div>
+                  <div className="form-field">
+                    <label className="form-label">Developer Tools</label>
+                    <input className="form-input" value={resumeData.skillCategories.tools} onChange={(e) => setResumeData({ ...resumeData, skillCategories: { ...resumeData.skillCategories, tools: e.target.value } })} />
+                  </div>
+                  <div className="form-field">
+                    <label className="form-label">Technologies / Frameworks</label>
+                    <input className="form-input" value={resumeData.skillCategories.frameworks} onChange={(e) => setResumeData({ ...resumeData, skillCategories: { ...resumeData.skillCategories, frameworks: e.target.value } })} />
+                  </div>
+                  <div className="form-field">
+                    <label className="form-label">Soft Skills / Others</label>
+                    <input className="form-input" value={resumeData.skillCategories.softSkills} onChange={(e) => setResumeData({ ...resumeData, skillCategories: { ...resumeData.skillCategories, softSkills: e.target.value } })} />
+                  </div>
+                </>
+              )}
+
+              {/* 5. PROJECTS */}
+              {activeTab === 'projects' && (
+                <>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div className="form-label">Projects & Portfolio</div>
+                    <button onClick={addProject} className="custom-btn custom-btn-primary" style={{ padding: '4px 8px', fontSize: '11px' }} type="button">
+                      <Plus size={11} /> Add Project
+                    </button>
+                  </div>
+                  {resumeData.projects.map((proj) => (
+                    <div key={proj.id} className="form-card">
+                      <button onClick={() => removeProject(proj.id)} style={{ position: 'absolute', top: '8px', right: '8px', background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer' }} type="button">
+                        <Trash2 size={13} />
+                      </button>
+                      <div className="form-row" style={{ marginBottom: '6px', paddingRight: '18px' }}>
+                        <input className="form-input" placeholder="Title" value={proj.title} onChange={(e) => handleProjChange(proj.id, 'title', e.target.value)} />
+                        <input className="form-input" placeholder="Duration (e.g. 2025/04 – current)" value={proj.duration} onChange={(e) => handleProjChange(proj.id, 'duration', e.target.value)} />
+                      </div>
+                      <div className="form-field" style={{ marginBottom: '6px' }}>
+                        <input className="form-input" placeholder="Tech Stack" value={proj.tech} onChange={(e) => handleProjChange(proj.id, 'tech', e.target.value)} />
+                      </div>
+                      <textarea className="form-textarea" rows={3} placeholder="Description" value={proj.description} onChange={(e) => handleProjChange(proj.id, 'description', e.target.value)} />
+                    </div>
+                  ))}
+                </>
+              )}
+
+              {/* 6. VISIBILITY TOGGLES */}
+              {activeTab === 'visibility' && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  {[
+                    { key: 'summary', label: 'Professional Summary' },
+                    { key: 'experience', label: 'Work Experience Section' },
+                    { key: 'education', label: 'Education Section' },
+                    { key: 'skills', label: 'Technical Skills Section' },
+                    { key: 'projects', label: 'Projects Section' },
+                    { key: 'declaration', label: 'Government Declaration' },
+                  ].map((sec) => (
+                    <div key={sec.key} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#070d18', padding: '9px 12px', borderRadius: '7px', border: '1px solid #1c2a44' }}>
+                      <span style={{ fontSize: '11.5px' }}>{sec.label}</span>
+                      <button onClick={() => toggleVisibility(sec.key)} className="custom-btn" style={{ fontSize: '10.5px', padding: '3px 8px', backgroundColor: visibility[sec.key] ? '#2563eb' : '#131f37', color: 'white' }} type="button">
+                        {visibility[sec.key] ? 'Visible' : 'Hidden'}
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </section>
+
+          {/* Right Live Preview Canvas with Clean Scaler Wrapper */}
+          <section ref={previewWrapperRef} className={`preview-container ${mobileView === 'preview' ? 'mobile-active' : ''}`} aria-label="Resume Live Preview">
+            <div className="preview-topbar">
+              <span>Live A4 Preview (794×1122)</span>
+              <div className="zoom-controls">
+                <button onClick={() => setPreviewScale((s) => Math.max(s - 0.05, 0.35))} className="zoom-btn" title="Zoom Out" type="button">
+                  <ZoomOut size={13} />
+                </button>
+                <span>{Math.round(previewScale * 100)}%</span>
+                <button onClick={() => setPreviewScale((s) => Math.min(s + 0.05, 1.2))} className="zoom-btn" title="Zoom In" type="button">
+                  <ZoomIn size={13} />
+                </button>
+              </div>
+            </div>
+
+            <div className="canvas-scroll-viewport">
+              <div 
+                className="canvas-scale-wrapper"
+                style={{ 
+                  width: `${794 * previewScale}px`,
+                  height: `${1122 * previewScale}px`,
+                  overflow: 'hidden'
+                }}
+              >
+                <div 
+                  style={{ 
+                    transform: `scale(${previewScale})`,
+                    transformOrigin: 'top left',
+                    width: '794px',
+                    height: '1122px'
+                  }}
+                >
+                  <div ref={resumeRef} className="canvas-shadow" style={{ width: '794px', height: '1122px', backgroundColor: '#ffffff', overflow: 'hidden' }}>
+                    {selectedTemplate === 'ankit_harvard' && renderAnkitHarvardATS()}
+                    {selectedTemplate === 'classic_ats' && renderClassicATS()}
+                    {selectedTemplate === 'novoresume_clean' && renderNovoresumeClean()}
+                    {selectedTemplate === 'modern_dev' && renderModernDev()}
+                    {selectedTemplate === 'executive' && renderExecutive()}
+                    {selectedTemplate === 'finance_consulting' && renderFinanceConsulting()}
+                    {selectedTemplate === 'healthcare' && renderHealthcare()}
+                    {selectedTemplate === 'fresher' && renderFresher()}
+                    {selectedTemplate === 'creative_purple' && renderCreativePurple()}
+                    {selectedTemplate === 'govt_formal' && renderGovtFormal()}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+        </div>
+      </main>
+    </>
+  );
+}
