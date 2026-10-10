@@ -4,11 +4,11 @@ import React, { useState, useRef, useEffect } from 'react';
 import { 
   User, Briefcase, GraduationCap, Award, Code, 
   Download, CheckCircle2, Trash2, Plus, Image as ImageIcon, 
-  Palette, Eye, EyeOff, Layers, Mail, Phone, ZoomIn, ZoomOut, Smartphone, Monitor, Printer
+  Palette, Eye, EyeOff, Layers, Mail, Phone, MapPin, ZoomIn, ZoomOut, Smartphone, Monitor, Printer, Maximize2, Sparkles, FileText
 } from 'lucide-react';
 import { FaGithub, FaLinkedin } from 'react-icons/fa';
 
-// Reliable Base64 Avatar
+// 100% Reliable Base64 Avatar
 const DEFAULT_AVATAR = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48Y2lyY2xlIGN4PSI1MCIgY3k9IjUwIiByPSI1MCIgZmlsbD0iI2UyZThmMCIvPjxjaXJjbGUgY3g9IjUwIiBjeT0iMzgiIHI9IjE4IiBmaWxsPSIjNjQ3NDhiIi8+PHBhdGggZD0iTTIwIDg2YzAtMTYuNSAxMy41LTMwIDMwLTMwczMwIDEzLjUgMzAgMzB6IiBmaWxsPSIjNjQ3NDhiIi8+PC9zdmc+";
 
 export default function ResumeBuilder() {
@@ -132,9 +132,25 @@ export default function ResumeBuilder() {
     ]
   });
 
+  // Calculate live preview fit scale for phone and desktop
+  const autoFitScale = () => {
+    if (previewWrapperRef.current) {
+      const containerWidth = previewWrapperRef.current.clientWidth - 28;
+      if (containerWidth > 0) {
+        const calculatedScale = Math.min(Math.max(containerWidth / 794, 0.32), 1);
+        setPreviewScale(calculatedScale);
+      }
+    }
+  };
+
+  useEffect(() => {
+    autoFitScale();
+    window.addEventListener('resize', autoFitScale);
+    return () => window.removeEventListener('resize', autoFitScale);
+  }, [mobileView]);
+
   // Preload html2canvas & jsPDF independently
   useEffect(() => {
-    // 1. Dynamic SEO Injection (No React JSX warnings)
     document.title = "Ankit Kumar Jain | ATS Pro Resume Builder & 1-Page CV Generator";
     
     const setMetaTag = (name, content) => {
@@ -150,7 +166,6 @@ export default function ResumeBuilder() {
     setMetaTag('description', 'Free ATS-Friendly 1-Page Resume Builder for MERN Stack Developers and Software Engineers.');
     setMetaTag('keywords', 'ATS resume builder, Harvard resume, software engineer resume, single page resume, Ankit Kumar Jain');
 
-    // 2. Preload Standalone html2canvas
     if (!window.html2canvas) {
       const h2cScript = document.createElement('script');
       h2cScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
@@ -158,7 +173,6 @@ export default function ResumeBuilder() {
       document.head.appendChild(h2cScript);
     }
 
-    // 3. Preload Standalone jsPDF
     if (!window.jspdf && !window.jsPDF) {
       const jspdfScript = document.createElement('script');
       jspdfScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
@@ -166,22 +180,6 @@ export default function ResumeBuilder() {
       document.head.appendChild(jspdfScript);
     }
   }, []);
-
-  // Calculate live preview fit scale for phone and desktop
-  useEffect(() => {
-    const updateScale = () => {
-      if (previewWrapperRef.current) {
-        const containerWidth = previewWrapperRef.current.clientWidth - 24;
-        if (containerWidth > 0) {
-          const calculatedScale = Math.min(Math.max(containerWidth / 794, 0.35), 1);
-          setPreviewScale(calculatedScale);
-        }
-      }
-    };
-    updateScale();
-    window.addEventListener('resize', updateScale);
-    return () => window.removeEventListener('resize', updateScale);
-  }, [mobileView]);
 
   // Form Handlers
   const handlePersonalChange = (e) => {
@@ -282,9 +280,8 @@ export default function ResumeBuilder() {
     }));
   };
 
-  // Helper function to safely ensure standalone html2canvas & jsPDF are loaded
+  // Safe Loader for Standalone html2canvas & jsPDF
   const ensurePdfTools = async () => {
-    // 1. Check or load html2canvas
     const getHtml2Canvas = () => {
       return new Promise((resolve, reject) => {
         if (typeof window !== 'undefined' && typeof window.html2canvas === 'function') {
@@ -298,7 +295,6 @@ export default function ResumeBuilder() {
       });
     };
 
-    // 2. Check or load jsPDF
     const getJsPDF = () => {
       return new Promise((resolve, reject) => {
         const existingClass = window.jspdf?.jsPDF || window.jsPDF;
@@ -320,20 +316,16 @@ export default function ResumeBuilder() {
     return { html2canvasFn, jsPdfClass };
   };
 
-  // =========================================================================
-  // DIRECT PDF DOWNLOAD (Zero Print Modal, Instant .pdf File Save)
-  // =========================================================================
+  // Direct PDF Download without print prompt
   const handleDownloadPDF = async () => {
     if (!resumeRef.current) return;
     setIsExporting(true);
 
     try {
       const { html2canvasFn, jsPdfClass } = await ensurePdfTools();
-
       const originalNode = resumeRef.current;
       const clone = originalNode.cloneNode(true);
 
-      // Clean offscreen container at exact (0, 0)
       const exportContainer = document.createElement('div');
       exportContainer.style.position = 'fixed';
       exportContainer.style.top = '0px';
@@ -351,7 +343,6 @@ export default function ResumeBuilder() {
       exportContainer.appendChild(clone);
       document.body.appendChild(exportContainer);
 
-      // High-resolution 2x canvas capture
       const canvas = await html2canvasFn(clone, {
         scale: 2,
         useCORS: true,
@@ -367,7 +358,6 @@ export default function ResumeBuilder() {
 
       document.body.removeChild(exportContainer);
 
-      // Construct standard A4 PDF (210mm x 297mm) edge-to-edge
       const imgData = canvas.toDataURL('image/jpeg', 0.98);
       const pdf = new jsPdfClass({
         orientation: 'portrait',
@@ -379,7 +369,6 @@ export default function ResumeBuilder() {
       const safeName = (resumeData.personalInfo.fullName || 'Resume').replace(/\s+/g, '_');
       const fileName = `${safeName}_Resume.pdf`;
 
-      // Direct download trigger via Blob & Link (Never opens print modal)
       const pdfBlob = pdf.output('blob');
       const blobUrl = URL.createObjectURL(pdfBlob);
       const downloadAnchor = document.createElement('a');
@@ -423,23 +412,7 @@ export default function ResumeBuilder() {
     position: 'relative'
   };
 
-  // Brand Logo Component
-  const BrandLogo = () => (
-    <svg width="34" height="34" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        <linearGradient id="logoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#3b82f6" />
-          <stop offset="100%" stopColor="#1d4ed8" />
-        </linearGradient>
-      </defs>
-      <rect width="100" height="100" rx="22" fill="url(#logoGrad)" />
-      <rect x="24" y="24" width="52" height="6" rx="3" fill="#ffffff" />
-      <rect x="24" y="38" width="34" height="6" rx="3" fill="#93c5fd" />
-      <rect x="24" y="52" width="44" height="6" rx="3" fill="#ffffff" />
-      <circle cx="68" cy="68" r="16" fill="#10b981" stroke="#ffffff" strokeWidth="4" />
-      <path d="M62 68L66 72L74 64" stroke="#ffffff" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
+
 
   // =========================================================================
   // 10 INDUSTRY TEMPLATES
@@ -1151,84 +1124,94 @@ export default function ResumeBuilder() {
       {/* 100% PURE CUSTOM CSS + MEDIA PRINT ISOLATION */}
       <style>{`
         * { box-sizing: border-box; }
-        body { margin: 0; padding: 0; background-color: #070d18; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        body { margin: 0; padding: 0; background-color: #060b14; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
         
-        .app-wrapper { min-height: 100vh; background-color: #070d18; color: #f8fafc; display: flex; flex-direction: column; }
+        .app-wrapper { min-height: 100vh; background-color: #060b14; color: #f8fafc; display: flex; flex-direction: column; }
         
         /* Navbar */
-        .top-navbar { border-bottom: 1px solid #1e293b; background-color: rgba(11, 19, 36, 0.96); position: sticky; top: 0; z-index: 50; padding: 10px 18px; backdrop-filter: blur(10px); }
-        .top-navbar-inner { max-width: 1720px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
-        .brand-box { display: flex; align-items: center; gap: 10px; }
-        .brand-title { font-size: 13.5px; font-weight: 700; color: #ffffff; letter-spacing: -0.2px; }
-        .brand-sub { font-size: 10.5px; color: #94a3b8; }
-        .action-group { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+        .top-navbar { border-bottom: 1px solid #1a273f; background-color: rgba(9, 16, 30, 0.98); position: sticky; top: 0; z-index: 100; padding: 10px 24px; backdrop-filter: blur(12px); box-shadow: 0 4px 20px rgba(0,0,0,0.4); }
+        .top-navbar-inner { max-width: 1720px; margin: 0 auto; display: flex; justify-content: flex-start; align-items: center; }
+        .brand-box { display: flex; align-items: center; }
+        .brand-logo-img { height: 42px; width: auto; max-width: 190px; object-fit: contain; }
         
-        .custom-select { background-color: #131f37; color: white; border: 1px solid #293956; padding: 7px 11px; border-radius: 8px; font-size: 11.5px; font-weight: 600; outline: none; cursor: pointer; transition: all 0.2s; }
+        .action-group { display: flex; align-items: center; justify-content: center; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
+        
+        .custom-select { background-color: #0e192d; color: #ffffff; border: 1px solid #243552; padding: 8px 12px; border-radius: 8px; font-size: 12px; font-weight: 600; outline: none; cursor: pointer; transition: all 0.2s; }
         .custom-select:hover { border-color: #3b82f6; }
+        .custom-select option { background-color: #0e192d; color: #ffffff; }
         
-        .custom-btn { display: inline-flex; align-items: center; gap: 5px; padding: 7px 12px; border-radius: 8px; font-size: 11.5px; font-weight: 600; cursor: pointer; border: 1px solid #293956; background-color: #131f37; color: #f8fafc; transition: all 0.2s; }
-        .custom-btn:hover { background-color: #1e2e4e; border-color: #3b82f6; }
+        .custom-btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; border: 1px solid #243552; background-color: #0e192d; color: #f8fafc; transition: all 0.2s; }
+        .custom-btn:hover { background-color: #172744; border-color: #3b82f6; }
         
-        .custom-btn-primary { background: linear-gradient(135deg, #2563eb, #1d4ed8); border-color: #2563eb; color: white; box-shadow: 0 4px 14px rgba(37,99,235,0.3); }
+        .custom-btn-primary { background: linear-gradient(135deg, #2563eb, #1d4ed8); border-color: #2563eb; color: #ffffff; box-shadow: 0 4px 14px rgba(37,99,235,0.3); }
         .custom-btn-primary:hover { background: #1d4ed8; }
 
         /* Mobile View Toggle Bar */
-        .mobile-mode-bar { display: none; background-color: #0b1324; border-bottom: 1px solid #1e293b; padding: 6px 12px; justify-content: center; gap: 8px; }
-        .mobile-mode-btn { flex: 1; max-width: 180px; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 8px 12px; border-radius: 8px; font-size: 12px; font-weight: 600; border: 1px solid #1e293b; background-color: #131f37; color: #94a3b8; cursor: pointer; }
+        .mobile-mode-bar { display: none; margin-top: 12px; justify-content: center; gap: 8px; width: 100%; }
+        .mobile-mode-btn { flex: 1; max-width: 180px; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 8px 12px; border-radius: 8px; font-size: 12px; font-weight: 600; border: 1px solid #1a273f; background-color: #0e192d; color: #94a3b8; cursor: pointer; }
         .mobile-mode-btn.active { background-color: #2563eb; color: #ffffff; border-color: #2563eb; }
 
+        /* Professional Resume Hero Section */
+        .resume-hero { text-align: center; padding: 22px 16px 18px 16px; background: linear-gradient(180deg, rgba(14, 25, 45, 0.7) 0%, rgba(6, 11, 20, 0) 100%); border-bottom: 1px solid rgba(26, 39, 63, 0.4); }
+        .resume-hero-badge { display: inline-flex; align-items: center; gap: 6px; background: rgba(37, 99, 235, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3); padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 10px; }
+        .resume-hero h1 { font-size: 24px; font-weight: 800; color: #ffffff; letter-spacing: -0.5px; margin: 0 0 8px 0; background: linear-gradient(135deg, #ffffff 30%, #93c5fd 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .resume-hero p { font-size: 12.5px; color: #94a3b8; max-width: 680px; margin: 0 auto; line-height: 1.5; font-weight: 400; }
+
         /* Workspace Grid */
-        .main-workspace { flex: 1; max-width: 1720px; margin: 0 auto; width: 100%; padding: 14px; display: flex; gap: 16px; overflow: hidden; height: calc(100vh - 65px); }
+        .main-workspace { flex: 1; max-width: 1720px; margin: 0 auto; width: 100%; padding: 14px 20px 20px 20px; display: flex; gap: 18px; overflow: hidden; min-height: 0; }
         
         /* Editor Panel */
-        .editor-container { width: 44%; min-width: 380px; background-color: #0e172a; border: 1px solid #1c2a44; border-radius: 12px; display: flex; flex-direction: column; overflow: hidden; }
-        .nav-tabs { display: flex; background-color: #070d18; border-bottom: 1px solid #1c2a44; padding: 6px 4px; gap: 4px; overflow-x: auto; -webkit-overflow-scrolling: touch; }
-        .nav-tab-btn { display: flex; align-items: center; gap: 5px; padding: 8px 12px; border-radius: 7px; font-size: 11.5px; font-weight: 500; border: none; background: transparent; color: #94a3b8; cursor: pointer; white-space: nowrap; transition: all 0.2s; }
-        .nav-tab-btn.active { background-color: #2563eb; color: white; font-weight: 600; }
-        .nav-tab-btn:hover:not(.active) { color: white; background-color: rgba(255,255,255,0.05); }
+        .editor-container { width: 44%; min-width: 380px; background-color: #0a1222; border: 1px solid #1a273f; border-radius: 12px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.3); }
+        .nav-tabs { display: flex; background-color: #060b14; border-bottom: 1px solid #1a273f; padding: 6px 4px; gap: 4px; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+        .nav-tab-btn { display: flex; align-items: center; gap: 5px; padding: 8px 12px; border-radius: 7px; font-size: 11.5px; font-weight: 600; border: none; background: transparent; color: #94a3b8; cursor: pointer; white-space: nowrap; transition: all 0.2s; }
+        .nav-tab-btn.active { background-color: #2563eb; color: #ffffff; font-weight: 700; }
+        .nav-tab-btn:hover:not(.active) { color: #ffffff; background-color: rgba(255,255,255,0.05); }
 
         .form-scroller { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 14px; font-size: 12px; }
         .form-field { display: flex; flex-direction: column; gap: 4px; }
-        .form-label { font-weight: 600; color: #94a3b8; font-size: 11px; text-transform: uppercase; letter-spacing: 0.4px; }
+        .form-label { font-weight: 700; color: #94a3b8; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; }
         
-        .form-input, .form-textarea { background-color: #070d18; border: 1px solid #1c2a44; border-radius: 8px; padding: 10px 12px; font-size: 13.5px; color: white; outline: none; width: 100%; font-family: inherit; transition: border-color 0.2s; }
-        .form-input:focus, .form-textarea:focus { border-color: #3b82f6; }
+        .form-input, .form-textarea { background-color: #060b14; border: 1px solid #1a273f; border-radius: 8px; padding: 10px 12px; font-size: 13.5px; color: #ffffff; outline: none; width: 100%; font-family: inherit; transition: border-color 0.2s, box-shadow 0.2s; }
+        .form-input:focus, .form-textarea:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2); }
         
-        .form-card { background-color: #070d18; border: 1px solid #1c2a44; border-radius: 9px; padding: 12px; margin-bottom: 8px; position: relative; }
+        .form-card { background-color: #060b14; border: 1px solid #1a273f; border-radius: 9px; padding: 12px; margin-bottom: 8px; position: relative; }
         .form-row { display: flex; gap: 10px; }
         .form-row > * { flex: 1; }
 
         /* Preview Panel */
-        .preview-container { width: 56%; background-color: #0e172a; border: 1px solid #1c2a44; border-radius: 12px; display: flex; flex-direction: column; overflow: hidden; position: relative; }
-        .preview-topbar { display: flex; justify-content: space-between; align-items: center; background-color: #070d18; border-bottom: 1px solid #1c2a44; padding: 8px 14px; font-size: 11.5px; color: #94a3b8; }
+        .preview-container { width: 56%; background-color: #0a1222; border: 1px solid #1a273f; border-radius: 12px; display: flex; flex-direction: column; overflow: hidden; position: relative; box-shadow: 0 10px 25px rgba(0,0,0,0.3); }
+        .preview-topbar { display: flex; justify-content: space-between; align-items: center; background-color: #060b14; border-bottom: 1px solid #1a273f; padding: 8px 14px; font-size: 11.5px; color: #94a3b8; }
         .zoom-controls { display: flex; align-items: center; gap: 6px; }
-        .zoom-btn { background: #131f37; border: 1px solid #1c2a44; color: #cbd5e1; border-radius: 6px; width: 26px; height: 26px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
-        .zoom-btn:hover { background: #1e2e4e; color: white; }
+        .zoom-btn { background: #0e192d; border: 1px solid #1a273f; color: #cbd5e1; border-radius: 6px; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+        .zoom-btn:hover { background: #172744; color: #ffffff; }
 
-        .canvas-scroll-viewport { flex: 1; overflow-y: auto; overflow-x: auto; padding: 16px; display: flex; justify-content: center; align-items: flex-start; }
-        .canvas-scale-wrapper { display: flex; justify-content: center; transform-origin: top center; transition: all 0.2s ease-out; }
-        .canvas-shadow { box-shadow: 0 16px 36px rgba(0, 0, 0, 0.75); border-radius: 3px; }
+        /* Mobile Responsive Viewport (Prevents cut off) */
+        .canvas-scroll-viewport { flex: 1; overflow-y: auto; overflow-x: auto; padding: 16px; display: flex; justify-content: center; align-items: flex-start; -webkit-overflow-scrolling: touch; }
+        .canvas-scale-wrapper { display: flex; justify-content: center; transform-origin: top center; transition: all 0.2s ease-out; margin: 0 auto; }
+        .canvas-shadow { box-shadow: 0 20px 45px rgba(0, 0, 0, 0.75); border-radius: 3px; }
 
-        /* RESPONSIVE MEDIA QUERIES (Phone Spacing & Padding Solved) */
+        /* RESPONSIVE MEDIA QUERIES */
         @media (max-width: 1080px) {
           .mobile-mode-bar { display: flex; }
           .main-workspace { height: auto; padding: 8px; }
-          .editor-container { width: 100%; min-width: 100%; height: calc(100vh - 115px); display: none; }
-          .preview-container { width: 100%; min-width: 100%; height: calc(100vh - 115px); display: none; }
+          .editor-container { width: 100%; min-width: 100%; height: calc(100vh - 120px); display: none; }
+          .preview-container { width: 100%; min-width: 100%; height: calc(100vh - 120px); display: none; }
           
           .editor-container.mobile-active { display: flex; }
           .preview-container.mobile-active { display: flex; }
-          .canvas-scroll-viewport { padding: 10px 4px; }
+          .canvas-scroll-viewport { padding: 12px 6px; }
           .form-scroller { padding: 12px; gap: 12px; }
         }
 
         @media (max-width: 640px) {
-          .top-navbar { padding: 8px 12px; }
-          .top-navbar-inner { flex-direction: column; align-items: stretch; gap: 8px; }
-          .action-group { justify-content: space-between; }
-          .action-group select { flex: 1; }
+          .top-navbar { padding: 8px 14px; }
+          .action-group { flex-direction: column; width: 100%; align-items: stretch; }
+          .action-group select, .action-group button { width: 100%; justify-content: center; }
           .form-row { flex-direction: column; gap: 8px; }
           .form-input, .form-textarea { font-size: 14px; padding: 9px 11px; }
+          .resume-hero h1 { font-size: 19px; }
+          .resume-hero p { font-size: 11.5px; }
+          .resume-hero { padding: 14px 12px 10px 12px; }
         }
 
         /* 100% CLEAN BROWSER PRINT ENGINE (ZERO BORDERS, EXACT A4) */
@@ -1244,7 +1227,7 @@ export default function ResumeBuilder() {
             -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
           }
-          .top-navbar, .mobile-mode-bar, .editor-container, .preview-topbar, .zoom-controls {
+          .top-navbar, .mobile-mode-bar, .resume-hero, .editor-container, .preview-topbar, .zoom-controls {
             display: none !important;
           }
           .app-wrapper, .main-workspace, .preview-container, .canvas-scroll-viewport {
@@ -1272,87 +1255,124 @@ export default function ResumeBuilder() {
       `}</style>
 
       <main className="app-wrapper">
-        {/* Top Navbar */}
+        {/* Top Navbar with Clean /logo.png only */}
         <header className="top-navbar">
           <div className="top-navbar-inner">
             <div className="brand-box">
-              <BrandLogo />
-              <div>
-                <div className="brand-title">ATS Pro Resume Builder</div>
-                <div className="brand-sub">Strict 1-Page A4 Lock • Responsive on Mobile • Direct PDF Download</div>
-              </div>
-            </div>
-
-            <div className="action-group">
-              {/* Template Selector */}
-              <select 
-                value={selectedTemplate} 
-                onChange={(e) => setSelectedTemplate(e.target.value)} 
-                className="custom-select"
-                aria-label="Select Resume Template"
-              >
-                <option value="ankit_harvard">01. Ankit Harvard ATS (Screenshot Match + Photo)</option>
-                <option value="classic_ats">02. Classic Corporate ATS (Universal MNC)</option>
-                <option value="novoresume_clean">03. Novoresume Modern 2-Col (Recommended)</option>
-                <option value="modern_dev">04. Tech Lead & Cloud Engineer (Developer Header)</option>
-                <option value="executive">05. Executive Leadership (With KPI Banner)</option>
-                <option value="finance_consulting">06. Banking, Finance & Consulting (Navy)</option>
-                <option value="healthcare">07. Healthcare & Medical (With Reg ID)</option>
-                <option value="fresher">08. Fresher & Graduate (Education First)</option>
-                <option value="creative_purple">09. Creative & UI/UX Designer</option>
-                <option value="govt_formal">10. Government Official CV Format</option>
-              </select>
-
-              {/* Accent Color Picker */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '5px', backgroundColor: '#131f37', padding: '3px 8px', borderRadius: '8px', border: '1px solid #293956' }}>
-                <Palette size={13} color="#94a3b8" />
-                <input 
-                  type="color" 
-                  value={accentColor} 
-                  onChange={(e) => setAccentColor(e.target.value)}
-                  style={{ width: '20px', height: '20px', border: 'none', background: 'transparent', cursor: 'pointer' }}
-                  title="Choose Accent Color"
-                />
-              </div>
-
-              {/* Photo Toggle */}
-              <button onClick={() => setShowPhoto(!showPhoto)} className="custom-btn" type="button">
-                {showPhoto ? <Eye size={13} color="#22c55e" /> : <EyeOff size={13} color="#94a3b8" />}
-                <span>{showPhoto ? 'Photo On' : 'Photo Off'}</span>
-              </button>
-
-              {/* Native Print / Save PDF Button */}
-              <button onClick={handleNativePrint} className="custom-btn" title="Open Native 1-Page Print Window" type="button">
-                <Printer size={13} />
-                <span>Print</span>
-              </button>
-
-              {/* Direct Instant PDF Download (Directly saves file, no print modal) */}
-              <button onClick={handleDownloadPDF} disabled={isExporting} className="custom-btn custom-btn-primary" type="button">
-                {isExporting ? <CheckCircle2 size={14} /> : <Download size={14} />}
-                <span>{isExporting ? 'Downloading...' : 'Download PDF'}</span>
-              </button>
+              <img 
+                src="/logo.png" 
+                alt="Logo" 
+                className="brand-logo-img" 
+                onError={(e) => {
+                  e.target.onerror = null;
+                  e.target.style.display = 'none';
+                  const fallback = e.target.parentElement.querySelector('.brand-logo-fallback');
+                  if (fallback) fallback.style.display = 'flex';
+                }}
+              />
+             {/* Top Navbar with PNG Logo */}
+   <header className="top-navbar">
+  <div className="top-navbar-inner">
+    <div className="brand-box">
+      <img 
+        src="/logo.png" 
+        alt="Brand Logo" 
+        className="app-main-logo"
+        onError={(e) => {
+          console.error("Logo file /logo.png nahi mili! Check public folder.");
+          // Agar file missing hogi toh visually pata lag jayega
+          e.currentTarget.style.border = "1px dashed #ef4444";
+        }}
+      />
+    </div>
+  </div>
+</header>
             </div>
           </div>
         </header>
 
-        {/* Mobile / Tablet Screen Switcher */}
-        <div className="mobile-mode-bar">
-          <button 
-            onClick={() => setMobileView('editor')} 
-            className={`mobile-mode-btn ${mobileView === 'editor' ? 'active' : ''}`}
-            type="button"
-          >
-            <Smartphone size={13} /> Edit Details
-          </button>
-          <button 
-            onClick={() => setMobileView('preview')} 
-            className={`mobile-mode-btn ${mobileView === 'preview' ? 'active' : ''}`}
-            type="button"
-          >
-            <Monitor size={13} /> Live Preview
-          </button>
-        </div>
+        {/* Hero Section with Heading & Controls directly underneath */}
+        <section className={`resume-hero ${mobileView === 'preview' ? 'hide-on-preview' : ''}`}>
+          <span className="resume-hero-badge">
+            <Sparkles size={12} /> Professional Resume Builder
+          </span>
+          <h1>Free ATS-Friendly Resume Builder</h1>
+          <p>
+            Build a professional, job-ready resume in minutes with ATS-friendly templates. 
+            Customize your experience, education, skills, and projects, preview your resume instantly, 
+            and download it directly as a 1-page PDF.
+          </p>
+
+          {/* Action Group placed directly under heading */}
+          <div className="action-group">
+            {/* Template Selector */}
+            <select 
+              value={selectedTemplate} 
+              onChange={(e) => setSelectedTemplate(e.target.value)} 
+              className="custom-select"
+              aria-label="Select Resume Template"
+            >
+              <option value="ankit_harvard">01. Ankit Harvard ATS (Screenshot Match + Photo)</option>
+              <option value="classic_ats">02. Classic Corporate ATS (Universal MNC)</option>
+              <option value="novoresume_clean">03. Novoresume Modern 2-Col (Recommended)</option>
+              <option value="modern_dev">04. Tech Lead & Cloud Engineer (Developer Header)</option>
+              <option value="executive">05. Executive Leadership (With KPI Banner)</option>
+              <option value="finance_consulting">06. Banking, Finance & Consulting (Navy)</option>
+              <option value="healthcare">07. Healthcare & Medical (With Reg ID)</option>
+              <option value="fresher">08. Fresher & Graduate (Education First)</option>
+              <option value="creative_purple">09. Creative & UI/UX Designer</option>
+              <option value="govt_formal">10. Government Official CV Format</option>
+            </select>
+
+            {/* Accent Color Picker */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '5px', backgroundColor: '#0e192d', padding: '3px 8px', borderRadius: '8px', border: '1px solid #243552' }}>
+              <Palette size={13} color="#94a3b8" />
+              <input 
+                type="color" 
+                value={accentColor} 
+                onChange={(e) => setAccentColor(e.target.value)}
+                style={{ width: '20px', height: '20px', border: 'none', background: 'transparent', cursor: 'pointer' }}
+                title="Choose Accent Color"
+              />
+            </div>
+
+            {/* Photo Toggle */}
+            <button onClick={() => setShowPhoto(!showPhoto)} className="custom-btn" type="button">
+              {showPhoto ? <Eye size={13} color="#22c55e" /> : <EyeOff size={13} color="#94a3b8" />}
+              <span>{showPhoto ? 'Photo On' : 'Photo Off'}</span>
+            </button>
+
+            {/* Native Print / Save PDF Button */}
+            <button onClick={handleNativePrint} className="custom-btn" title="Open Native 1-Page Print Window" type="button">
+              <Printer size={13} />
+              <span>Print</span>
+            </button>
+
+            {/* Direct Instant PDF Download */}
+            <button onClick={handleDownloadPDF} disabled={isExporting} className="custom-btn custom-btn-primary" type="button">
+              {isExporting ? <CheckCircle2 size={14} /> : <Download size={14} />}
+              <span>{isExporting ? 'Downloading...' : 'Download PDF'}</span>
+            </button>
+          </div>
+
+          {/* Mobile / Tablet Screen Switcher */}
+          <div className="mobile-mode-bar">
+            <button 
+              onClick={() => setMobileView('editor')} 
+              className={`mobile-mode-btn ${mobileView === 'editor' ? 'active' : ''}`}
+              type="button"
+            >
+              <Smartphone size={13} /> Edit Details
+            </button>
+            <button 
+              onClick={() => setMobileView('preview')} 
+              className={`mobile-mode-btn ${mobileView === 'preview' ? 'active' : ''}`}
+              type="button"
+            >
+              <Monitor size={13} /> Live Preview
+            </button>
+          </div>
+        </section>
 
         {/* Main Work Area */}
         <div className="main-workspace">
@@ -1385,9 +1405,9 @@ export default function ResumeBuilder() {
               {/* 1. PERSONAL INFO WITH PHOTO MANAGEMENT */}
               {activeTab === 'personal' && (
                 <>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#070d18', padding: '10px 12px', borderRadius: '9px', border: '1px solid #1c2a44' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#060b14', padding: '10px 12px', borderRadius: '9px', border: '1px solid #1a273f' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                      <div style={{ width: '48px', height: '48px', borderRadius: '7px', overflow: 'hidden', backgroundColor: '#131f37', border: '1px solid #293956', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <div style={{ width: '48px', height: '48px', borderRadius: '7px', overflow: 'hidden', backgroundColor: '#0e192d', border: '1px solid #243552', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         {resumeData.personalInfo.photo ? (
                           <img src={resumeData.personalInfo.photo} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} crossOrigin="anonymous" />
                         ) : (
@@ -1408,45 +1428,45 @@ export default function ResumeBuilder() {
 
                   <div className="form-field">
                     <label className="form-label">Full Name</label>
-                    <input className="form-input" type="text" name="fullName" value={resumeData.personalInfo.fullName} onChange={handlePersonalChange} />
+                    <input className="form-input" type="text" name="fullName" value={resumeData.personalInfo.fullName} onChange={handlePersonalChange} placeholder="Enter Full Name" />
                   </div>
                   <div className="form-field">
-                    <label className="form-label">Job Title / Role</label>
-                    <input className="form-input" type="text" name="jobTitle" value={resumeData.personalInfo.jobTitle} onChange={handlePersonalChange} />
+                    <label className="form-label">Job Title / Designation</label>
+                    <input className="form-input" type="text" name="jobTitle" value={resumeData.personalInfo.jobTitle} onChange={handlePersonalChange} placeholder="e.g. MERN Stack Developer" />
                   </div>
                   <div className="form-row">
                     <div className="form-field">
-                      <label className="form-label">Email</label>
-                      <input className="form-input" type="email" name="email" value={resumeData.personalInfo.email} onChange={handlePersonalChange} />
+                      <label className="form-label">Email Address</label>
+                      <input className="form-input" type="email" name="email" value={resumeData.personalInfo.email} onChange={handlePersonalChange} placeholder="name@example.com" />
                     </div>
                     <div className="form-field">
-                      <label className="form-label">Phone</label>
-                      <input className="form-input" type="text" name="phone" value={resumeData.personalInfo.phone} onChange={handlePersonalChange} />
-                    </div>
-                  </div>
-                  <div className="form-row">
-                    <div className="form-field">
-                      <label className="form-label">Address / Location</label>
-                      <input className="form-input" type="text" name="address" value={resumeData.personalInfo.address} onChange={handlePersonalChange} />
-                    </div>
-                    <div className="form-field">
-                      <label className="form-label">City, State</label>
-                      <input className="form-input" type="text" name="city" value={resumeData.personalInfo.city} onChange={handlePersonalChange} />
+                      <label className="form-label">Phone Number</label>
+                      <input className="form-input" type="text" name="phone" value={resumeData.personalInfo.phone} onChange={handlePersonalChange} placeholder="+91 98765 43210" />
                     </div>
                   </div>
                   <div className="form-row">
                     <div className="form-field">
-                      <label className="form-label">LinkedIn</label>
-                      <input className="form-input" type="text" name="linkedin" value={resumeData.personalInfo.linkedin} onChange={handlePersonalChange} />
+                      <label className="form-label">Street / House Address</label>
+                      <input className="form-input" type="text" name="address" value={resumeData.personalInfo.address} onChange={handlePersonalChange} placeholder="Street Address" />
                     </div>
                     <div className="form-field">
-                      <label className="form-label">GitHub</label>
-                      <input className="form-input" type="text" name="github" value={resumeData.personalInfo.github} onChange={handlePersonalChange} />
+                      <label className="form-label">City, State / Country</label>
+                      <input className="form-input" type="text" name="city" value={resumeData.personalInfo.city} onChange={handlePersonalChange} placeholder="Jaipur, Rajasthan" />
+                    </div>
+                  </div>
+                  <div className="form-row">
+                    <div className="form-field">
+                      <label className="form-label">LinkedIn Profile URL</label>
+                      <input className="form-input" type="text" name="linkedin" value={resumeData.personalInfo.linkedin} onChange={handlePersonalChange} placeholder="linkedin.com/in/username" />
+                    </div>
+                    <div className="form-field">
+                      <label className="form-label">GitHub / Portfolio URL</label>
+                      <input className="form-input" type="text" name="github" value={resumeData.personalInfo.github} onChange={handlePersonalChange} placeholder="github.com/username" />
                     </div>
                   </div>
                   <div className="form-field">
                     <label className="form-label">Professional Summary</label>
-                    <textarea className="form-textarea" rows={3} value={resumeData.summary} onChange={(e) => setResumeData({ ...resumeData, summary: e.target.value })} />
+                    <textarea className="form-textarea" rows={3} value={resumeData.summary} onChange={(e) => setResumeData({ ...resumeData, summary: e.target.value })} placeholder="Describe your experience and key strengths..." />
                   </div>
                 </>
               )}
@@ -1455,7 +1475,7 @@ export default function ResumeBuilder() {
               {activeTab === 'experience' && (
                 <>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div className="form-label">Work Experience</div>
+                    <div className="form-label">Work Experience History</div>
                     <button onClick={addExperience} className="custom-btn custom-btn-primary" style={{ padding: '4px 8px', fontSize: '11px' }} type="button">
                       <Plus size={11} /> Add Role
                     </button>
@@ -1466,8 +1486,8 @@ export default function ResumeBuilder() {
                         <Trash2 size={13} />
                       </button>
                       <div className="form-row" style={{ marginBottom: '6px', paddingRight: '18px' }}>
-                        <input className="form-input" placeholder="Company" value={exp.company} onChange={(e) => handleExpChange(exp.id, 'company', e.target.value)} />
-                        <input className="form-input" placeholder="Role" value={exp.role} onChange={(e) => handleExpChange(exp.id, 'role', e.target.value)} />
+                        <input className="form-input" placeholder="Company Name" value={exp.company} onChange={(e) => handleExpChange(exp.id, 'company', e.target.value)} />
+                        <input className="form-input" placeholder="Job Title / Role" value={exp.role} onChange={(e) => handleExpChange(exp.id, 'role', e.target.value)} />
                       </div>
                       <div className="form-row" style={{ marginBottom: '6px' }}>
                         <input className="form-input" placeholder="Duration (e.g. July 2023 – Present)" value={exp.duration} onChange={(e) => handleExpChange(exp.id, 'duration', e.target.value)} />
@@ -1483,7 +1503,7 @@ export default function ResumeBuilder() {
               {activeTab === 'education' && (
                 <>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div className="form-label">Education</div>
+                    <div className="form-label">Education & Qualifications</div>
                     <button onClick={addEducation} className="custom-btn custom-btn-primary" style={{ padding: '4px 8px', fontSize: '11px' }} type="button">
                       <Plus size={11} /> Add Degree
                     </button>
@@ -1494,14 +1514,14 @@ export default function ResumeBuilder() {
                         <Trash2 size={13} />
                       </button>
                       <div className="form-field" style={{ marginBottom: '6px' }}>
-                        <input className="form-input" placeholder="Institution Name" value={edu.institution} onChange={(e) => handleEduChange(edu.id, 'institution', e.target.value)} />
+                        <input className="form-input" placeholder="College / University Name" value={edu.institution} onChange={(e) => handleEduChange(edu.id, 'institution', e.target.value)} />
                       </div>
                       <div className="form-field" style={{ marginBottom: '6px' }}>
-                        <input className="form-input" placeholder="Degree / Qualification" value={edu.degree} onChange={(e) => handleEduChange(edu.id, 'degree', e.target.value)} />
+                        <input className="form-input" placeholder="Degree / Course Name" value={edu.degree} onChange={(e) => handleEduChange(edu.id, 'degree', e.target.value)} />
                       </div>
                       <div className="form-row">
                         <input className="form-input" placeholder="Duration (e.g. 2020 – 2022)" value={edu.duration} onChange={(e) => handleEduChange(edu.id, 'duration', e.target.value)} />
-                        <input className="form-input" placeholder="Location" value={edu.location} onChange={(e) => handleEduChange(edu.id, 'location', e.target.value)} />
+                        <input className="form-input" placeholder="Grade / CGPA / Percentage" value={edu.grade} onChange={(e) => handleEduChange(edu.id, 'grade', e.target.value)} />
                       </div>
                     </div>
                   ))}
@@ -1513,19 +1533,19 @@ export default function ResumeBuilder() {
                 <>
                   <div className="form-field">
                     <label className="form-label">Languages (Comma separated)</label>
-                    <input className="form-input" value={resumeData.skillCategories.languages} onChange={(e) => setResumeData({ ...resumeData, skillCategories: { ...resumeData.skillCategories, languages: e.target.value } })} />
+                    <input className="form-input" value={resumeData.skillCategories.languages} onChange={(e) => setResumeData({ ...resumeData, skillCategories: { ...resumeData.skillCategories, languages: e.target.value } })} placeholder="e.g. JavaScript, Python, SQL" />
                   </div>
                   <div className="form-field">
                     <label className="form-label">Developer Tools</label>
-                    <input className="form-input" value={resumeData.skillCategories.tools} onChange={(e) => setResumeData({ ...resumeData, skillCategories: { ...resumeData.skillCategories, tools: e.target.value } })} />
+                    <input className="form-input" value={resumeData.skillCategories.tools} onChange={(e) => setResumeData({ ...resumeData, skillCategories: { ...resumeData.skillCategories, tools: e.target.value } })} placeholder="e.g. VS Code, Git, Docker, Postman" />
                   </div>
                   <div className="form-field">
                     <label className="form-label">Technologies / Frameworks</label>
-                    <input className="form-input" value={resumeData.skillCategories.frameworks} onChange={(e) => setResumeData({ ...resumeData, skillCategories: { ...resumeData.skillCategories, frameworks: e.target.value } })} />
+                    <input className="form-input" value={resumeData.skillCategories.frameworks} onChange={(e) => setResumeData({ ...resumeData, skillCategories: { ...resumeData.skillCategories, frameworks: e.target.value } })} placeholder="e.g. React.js, Node.js, Express" />
                   </div>
                   <div className="form-field">
                     <label className="form-label">Soft Skills / Others</label>
-                    <input className="form-input" value={resumeData.skillCategories.softSkills} onChange={(e) => setResumeData({ ...resumeData, skillCategories: { ...resumeData.skillCategories, softSkills: e.target.value } })} />
+                    <input className="form-input" value={resumeData.skillCategories.softSkills} onChange={(e) => setResumeData({ ...resumeData, skillCategories: { ...resumeData.skillCategories, softSkills: e.target.value } })} placeholder="e.g. Agile, Team Leadership, Problem Solving" />
                   </div>
                 </>
               )}
@@ -1534,7 +1554,7 @@ export default function ResumeBuilder() {
               {activeTab === 'projects' && (
                 <>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div className="form-label">Projects & Portfolio</div>
+                    <div className="form-label">Featured Projects & Portfolio</div>
                     <button onClick={addProject} className="custom-btn custom-btn-primary" style={{ padding: '4px 8px', fontSize: '11px' }} type="button">
                       <Plus size={11} /> Add Project
                     </button>
@@ -1545,13 +1565,13 @@ export default function ResumeBuilder() {
                         <Trash2 size={13} />
                       </button>
                       <div className="form-row" style={{ marginBottom: '6px', paddingRight: '18px' }}>
-                        <input className="form-input" placeholder="Title" value={proj.title} onChange={(e) => handleProjChange(proj.id, 'title', e.target.value)} />
+                        <input className="form-input" placeholder="Project Name" value={proj.title} onChange={(e) => handleProjChange(proj.id, 'title', e.target.value)} />
                         <input className="form-input" placeholder="Duration (e.g. 2025/04 – current)" value={proj.duration} onChange={(e) => handleProjChange(proj.id, 'duration', e.target.value)} />
                       </div>
                       <div className="form-field" style={{ marginBottom: '6px' }}>
-                        <input className="form-input" placeholder="Tech Stack" value={proj.tech} onChange={(e) => handleProjChange(proj.id, 'tech', e.target.value)} />
+                        <input className="form-input" placeholder="Tech Stack (e.g. React, Node, MongoDB)" value={proj.tech} onChange={(e) => handleProjChange(proj.id, 'tech', e.target.value)} />
                       </div>
-                      <textarea className="form-textarea" rows={3} placeholder="Description" value={proj.description} onChange={(e) => handleProjChange(proj.id, 'description', e.target.value)} />
+                      <textarea className="form-textarea" rows={3} placeholder="Project Description & Key Accomplishments" value={proj.description} onChange={(e) => handleProjChange(proj.id, 'description', e.target.value)} />
                     </div>
                   ))}
                 </>
@@ -1568,9 +1588,9 @@ export default function ResumeBuilder() {
                     { key: 'projects', label: 'Projects Section' },
                     { key: 'declaration', label: 'Government Declaration' },
                   ].map((sec) => (
-                    <div key={sec.key} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#070d18', padding: '9px 12px', borderRadius: '7px', border: '1px solid #1c2a44' }}>
-                      <span style={{ fontSize: '11.5px' }}>{sec.label}</span>
-                      <button onClick={() => toggleVisibility(sec.key)} className="custom-btn" style={{ fontSize: '10.5px', padding: '3px 8px', backgroundColor: visibility[sec.key] ? '#2563eb' : '#131f37', color: 'white' }} type="button">
+                    <div key={sec.key} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#060b14', padding: '9px 12px', borderRadius: '7px', border: '1px solid #1a273f' }}>
+                      <span style={{ fontSize: '11.5px', fontWeight: '600', color: '#cbd5e1' }}>{sec.label}</span>
+                      <button onClick={() => toggleVisibility(sec.key)} className="custom-btn" style={{ fontSize: '10.5px', padding: '3px 8px', backgroundColor: visibility[sec.key] ? '#2563eb' : '#0e192d', color: '#ffffff' }} type="button">
                         {visibility[sec.key] ? 'Visible' : 'Hidden'}
                       </button>
                     </div>
@@ -1580,17 +1600,20 @@ export default function ResumeBuilder() {
             </div>
           </section>
 
-          {/* Right Live Preview Canvas with Clean Scaler Wrapper */}
+          {/* Right Live Preview Canvas with Responsive Full Viewport */}
           <section ref={previewWrapperRef} className={`preview-container ${mobileView === 'preview' ? 'mobile-active' : ''}`} aria-label="Resume Live Preview">
             <div className="preview-topbar">
-              <span>Live A4 Preview (794×1122)</span>
+              <span style={{ fontWeight: '600', color: '#e2e8f0' }}>Live A4 Preview (794×1122 Standard)</span>
               <div className="zoom-controls">
-                <button onClick={() => setPreviewScale((s) => Math.max(s - 0.05, 0.35))} className="zoom-btn" title="Zoom Out" type="button">
+                <button onClick={() => setPreviewScale((s) => Math.max(s - 0.05, 0.3))} className="zoom-btn" title="Zoom Out" type="button">
                   <ZoomOut size={13} />
                 </button>
-                <span>{Math.round(previewScale * 100)}%</span>
+                <span style={{ fontWeight: '700', minWidth: '38px', textAlign: 'center' }}>{Math.round(previewScale * 100)}%</span>
                 <button onClick={() => setPreviewScale((s) => Math.min(s + 0.05, 1.2))} className="zoom-btn" title="Zoom In" type="button">
                   <ZoomIn size={13} />
+                </button>
+                <button onClick={autoFitScale} className="zoom-btn" title="Fit to Screen" type="button">
+                  <Maximize2 size={13} />
                 </button>
               </div>
             </div>
@@ -1600,14 +1623,15 @@ export default function ResumeBuilder() {
                 className="canvas-scale-wrapper"
                 style={{ 
                   width: `${794 * previewScale}px`,
+                  minHeight: `${1122 * previewScale}px`,
                   height: `${1122 * previewScale}px`,
-                  overflow: 'hidden'
+                  overflow: 'visible'
                 }}
               >
                 <div 
                   style={{ 
                     transform: `scale(${previewScale})`,
-                    transformOrigin: 'top left',
+                    transformOrigin: 'top center',
                     width: '794px',
                     height: '1122px'
                   }}
