@@ -1271,22 +1271,7 @@ export default function ResumeBuilder() {
                 }}
               />
              {/* Top Navbar with PNG Logo */}
-   <header className="top-navbar">
-  <div className="top-navbar-inner">
-    <div className="brand-box">
-      <img 
-        src="/logo.png" 
-        alt="Brand Logo" 
-        className="app-main-logo"
-        onError={(e) => {
-          console.error("Logo file /logo.png nahi mili! Check public folder.");
-          // Agar file missing hogi toh visually pata lag jayega
-          e.currentTarget.style.border = "1px dashed #ef4444";
-        }}
-      />
-    </div>
-  </div>
-</header>
+   
             </div>
           </div>
         </header>
