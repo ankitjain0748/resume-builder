@@ -4,11 +4,11 @@ import React, { useState, useRef, useEffect } from 'react';
 import { 
   User, Briefcase, GraduationCap, Award, Code, 
   Download, CheckCircle2, Trash2, Plus, Image as ImageIcon, 
-  Palette, Eye, EyeOff, Layers, Mail, Phone, MapPin, ZoomIn, ZoomOut, Smartphone, Monitor, Printer
+  Palette, Eye, EyeOff, Layers, Mail, Phone, ZoomIn, ZoomOut, Smartphone, Monitor, Printer
 } from 'lucide-react';
 import { FaGithub, FaLinkedin } from 'react-icons/fa';
 
-// 100% Reliable Base64 Encoded Avatar
+// Reliable Base64 Avatar
 const DEFAULT_AVATAR = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48Y2lyY2xlIGN4PSI1MCIgY3k9IjUwIiByPSI1MCIgZmlsbD0iI2UyZThmMCIvPjxjaXJjbGUgY3g9IjUwIiBjeT0iMzgiIHI9IjE4IiBmaWxsPSIjNjQ3NDhiIi8+PHBhdGggZD0iTTIwIDg2YzAtMTYuNSAxMy41LTMwIDMwLTMwczMwIDEzLjUgMzAgMzB6IiBmaWxsPSIjNjQ3NDhiIi8+PC9zdmc+";
 
 export default function ResumeBuilder() {
@@ -132,9 +132,9 @@ export default function ResumeBuilder() {
     ]
   });
 
-  // Preload PDF Libraries on Mount & Setup Valid React SEO
+  // Preload html2canvas & jsPDF independently
   useEffect(() => {
-    // 1. Dynamic SEO Injection (No bare JSX tags, 100% React Safe)
+    // 1. Dynamic SEO Injection (No React JSX warnings)
     document.title = "Ankit Kumar Jain | ATS Pro Resume Builder & 1-Page CV Generator";
     
     const setMetaTag = (name, content) => {
@@ -147,36 +147,24 @@ export default function ResumeBuilder() {
       meta.setAttribute('content', content);
     };
 
-    setMetaTag('description', 'Free ATS-Friendly 1-Page Resume Builder for MERN Stack Developers, Software Engineers, and Executives.');
+    setMetaTag('description', 'Free ATS-Friendly 1-Page Resume Builder for MERN Stack Developers and Software Engineers.');
     setMetaTag('keywords', 'ATS resume builder, Harvard resume, software engineer resume, single page resume, Ankit Kumar Jain');
-    setMetaTag('robots', 'index, follow');
 
-    // Schema.org JSON-LD Script
-    const schemaScript = document.createElement('script');
-    schemaScript.type = 'application/ld+json';
-    schemaScript.text = JSON.stringify({
-      "@context": "https://schema.org",
-      "@type": "WebApplication",
-      "name": "ATS Pro Resume Builder",
-      "applicationCategory": "BusinessApplication",
-      "operatingSystem": "All",
-      "author": { "@type": "Person", "name": "Ankit Kumar Jain" }
-    });
-    document.head.appendChild(schemaScript);
-
-    // 2. Preload html2pdf / jsPDF bundle for instantaneous downloads
-    if (!window.html2canvas || !window.jspdf) {
-      const script = document.createElement('script');
-      script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
-      script.async = true;
-      document.head.appendChild(script);
+    // 2. Preload Standalone html2canvas
+    if (!window.html2canvas) {
+      const h2cScript = document.createElement('script');
+      h2cScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+      h2cScript.async = true;
+      document.head.appendChild(h2cScript);
     }
 
-    return () => {
-      if (schemaScript.parentNode) {
-        schemaScript.parentNode.removeChild(schemaScript);
-      }
-    };
+    // 3. Preload Standalone jsPDF
+    if (!window.jspdf && !window.jsPDF) {
+      const jspdfScript = document.createElement('script');
+      jspdfScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+      jspdfScript.async = true;
+      document.head.appendChild(jspdfScript);
+    }
   }, []);
 
   // Calculate live preview fit scale for phone and desktop
@@ -294,36 +282,58 @@ export default function ResumeBuilder() {
     }));
   };
 
-  // Helper to get PDF Libraries (html2canvas + jsPDF)
-  const getPdfLibraries = async () => {
-    if (typeof window !== 'undefined' && window.html2canvas && (window.jspdf || window.jsPDF)) {
-      return { html2canvas: window.html2canvas, jsPDF: window.jspdf?.jsPDF || window.jsPDF };
-    }
-    return new Promise((resolve, reject) => {
-      const script = document.createElement('script');
-      script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
-      script.onload = () => {
-        const jsPDFClass = window.jspdf?.jsPDF || window.jsPDF;
-        resolve({ html2canvas: window.html2canvas, jsPDF: jsPDFClass });
-      };
-      script.onerror = () => reject(new Error('Failed to load PDF libraries'));
-      document.head.appendChild(script);
-    });
+  // Helper function to safely ensure standalone html2canvas & jsPDF are loaded
+  const ensurePdfTools = async () => {
+    // 1. Check or load html2canvas
+    const getHtml2Canvas = () => {
+      return new Promise((resolve, reject) => {
+        if (typeof window !== 'undefined' && typeof window.html2canvas === 'function') {
+          return resolve(window.html2canvas);
+        }
+        const s = document.createElement('script');
+        s.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+        s.onload = () => resolve(window.html2canvas);
+        s.onerror = () => reject(new Error('Failed to load html2canvas'));
+        document.head.appendChild(s);
+      });
+    };
+
+    // 2. Check or load jsPDF
+    const getJsPDF = () => {
+      return new Promise((resolve, reject) => {
+        const existingClass = window.jspdf?.jsPDF || window.jsPDF;
+        if (typeof existingClass === 'function') {
+          return resolve(existingClass);
+        }
+        const s = document.createElement('script');
+        s.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+        s.onload = () => {
+          const loadedClass = window.jspdf?.jsPDF || window.jsPDF;
+          resolve(loadedClass);
+        };
+        s.onerror = () => reject(new Error('Failed to load jsPDF'));
+        document.head.appendChild(s);
+      });
+    };
+
+    const [html2canvasFn, jsPdfClass] = await Promise.all([getHtml2Canvas(), getJsPDF()]);
+    return { html2canvasFn, jsPdfClass };
   };
 
   // =========================================================================
-  // DIRECT PDF DOWNLOAD ENGINE (Direct File Download, No Print Dialog)
+  // DIRECT PDF DOWNLOAD (Zero Print Modal, Instant .pdf File Save)
   // =========================================================================
   const handleDownloadPDF = async () => {
     if (!resumeRef.current) return;
     setIsExporting(true);
 
     try {
-      const { html2canvas, jsPDF } = await getPdfLibraries();
+      const { html2canvasFn, jsPdfClass } = await ensurePdfTools();
+
       const originalNode = resumeRef.current;
       const clone = originalNode.cloneNode(true);
 
-      // Dedicated offscreen container at exact (0, 0) for perfect capture
+      // Clean offscreen container at exact (0, 0)
       const exportContainer = document.createElement('div');
       exportContainer.style.position = 'fixed';
       exportContainer.style.top = '0px';
@@ -341,8 +351,8 @@ export default function ResumeBuilder() {
       exportContainer.appendChild(clone);
       document.body.appendChild(exportContainer);
 
-      // High-res 2x canvas capture
-      const canvas = await html2canvas(clone, {
+      // High-resolution 2x canvas capture
+      const canvas = await html2canvasFn(clone, {
         scale: 2,
         useCORS: true,
         allowTaint: true,
@@ -357,9 +367,9 @@ export default function ResumeBuilder() {
 
       document.body.removeChild(exportContainer);
 
-      // Generate standard A4 PDF (210mm x 297mm)
+      // Construct standard A4 PDF (210mm x 297mm) edge-to-edge
       const imgData = canvas.toDataURL('image/jpeg', 0.98);
-      const pdf = new jsPDF({
+      const pdf = new jsPdfClass({
         orientation: 'portrait',
         unit: 'mm',
         format: 'a4'
@@ -381,8 +391,8 @@ export default function ResumeBuilder() {
 
       setTimeout(() => URL.revokeObjectURL(blobUrl), 2000);
     } catch (err) {
-      console.error('Direct PDF export error:', err);
-      alert('PDF generation me issue aaya. Browser print option try karein.');
+      console.error('PDF export error:', err);
+      alert('PDF generation me issue aaya. Direct browser print button use karein.');
     } finally {
       setIsExporting(false);
     }
@@ -413,9 +423,7 @@ export default function ResumeBuilder() {
     position: 'relative'
   };
 
-  // =========================================================================
-  // BRAND LOGO COMPONENT
-  // =========================================================================
+  // Brand Logo Component
   const BrandLogo = () => (
     <svg width="34" height="34" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
       <defs>
@@ -1482,7 +1490,7 @@ export default function ResumeBuilder() {
                   </div>
                   {resumeData.education.map((edu) => (
                     <div key={edu.id} className="form-card">
-                      <button onClick={() => removeEducation(edu.id)} style={{ position: 'absolute', top: '8px', right: '8px', background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer' }}>
+                      <button onClick={() => removeEducation(edu.id)} style={{ position: 'absolute', top: '8px', right: '8px', background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer' }} type="button">
                         <Trash2 size={13} />
                       </button>
                       <div className="form-field" style={{ marginBottom: '6px' }}>
