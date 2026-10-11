@@ -186,37 +186,37 @@ const [resumeData, setResumeData] = useState({
     return () => window.removeEventListener('resize', autoFitScale);
   }, [mobileView]);
 
-  // Preload html2canvas & jsPDF independently
-  useEffect(() => {
-    document.title = "Ankit Kumar Jain | ATS Pro Resume Builder & 1-Page CV Generator";
+  // // Preload html2canvas & jsPDF independently
+  // useEffect(() => {
+  //   document.title = "Ankit Kumar Jain | ATS Pro Resume Builder & 1-Page CV Generator";
     
-    const setMetaTag = (name, content) => {
-      let meta = document.querySelector(`meta[name="${name}"]`);
-      if (!meta) {
-        meta = document.createElement('meta');
-        meta.setAttribute('name', name);
-        document.head.appendChild(meta);
-      }
-      meta.setAttribute('content', content);
-    };
+  //   const setMetaTag = (name, content) => {
+  //     let meta = document.querySelector(`meta[name="${name}"]`);
+  //     if (!meta) {
+  //       meta = document.createElement('meta');
+  //       meta.setAttribute('name', name);
+  //       document.head.appendChild(meta);
+  //     }
+  //     meta.setAttribute('content', content);
+  //   };
 
-    setMetaTag('description', 'Free ATS-Friendly 1-Page Resume Builder for MERN Stack Developers and Software Engineers.');
-    setMetaTag('keywords', 'ATS resume builder, Harvard resume, software engineer resume, single page resume, Ankit Kumar Jain');
+  //   setMetaTag('description', 'Free ATS-Friendly 1-Page Resume Builder for MERN Stack Developers and Software Engineers.');
+  //   setMetaTag('keywords', 'ATS resume builder, Harvard resume, software engineer resume, single page resume, Ankit Kumar Jain');
 
-    if (!window.html2canvas) {
-      const h2cScript = document.createElement('script');
-      h2cScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
-      h2cScript.async = true;
-      document.head.appendChild(h2cScript);
-    }
+  //   if (!window.html2canvas) {
+  //     const h2cScript = document.createElement('script');
+  //     h2cScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+  //     h2cScript.async = true;
+  //     document.head.appendChild(h2cScript);
+  //   }
 
-    if (!window.jspdf && !window.jsPDF) {
-      const jspdfScript = document.createElement('script');
-      jspdfScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
-      jspdfScript.async = true;
-      document.head.appendChild(jspdfScript);
-    }
-  }, []);
+  //   if (!window.jspdf && !window.jsPDF) {
+  //     const jspdfScript = document.createElement('script');
+  //     jspdfScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+  //     jspdfScript.async = true;
+  //     document.head.appendChild(jspdfScript);
+  //   }
+  // }, []);
 
   // Form Handlers
   const handlePersonalChange = (e) => {
