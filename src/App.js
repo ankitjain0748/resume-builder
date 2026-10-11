@@ -40,97 +40,134 @@ export default function ResumeBuilder() {
   };
 
   // Master State matching screenshot data
-  const [resumeData, setResumeData] = useState({
-    personalInfo: {
-      fullName: 'ANKIT KUMAR JAIN',
-      jobTitle: 'MERN Stack Developer & Cloud Engineer',
-      email: 'ankitjain0748@gmail.com',
-      phone: '8306615173',
-      address: 'House no.2, Suraj Pole Gate, Jaipur, Rajasthan',
-      city: 'Jaipur, Rajasthan',
-      country: 'India',
-      linkedin: 'linkedin.com/in/ankit-kumar-jain-9b736824a',
-      github: 'github.com/ankitjain0748',
-      portfolio: 'ankit-jain-mern-portfolio.vercel.app',
-      licenseNo: 'REG-IN-849204',
-      declaration: 'I hereby declare that all the information provided above is authentic and true to the best of my knowledge.',
-      photo: DEFAULT_AVATAR,
+const [resumeData, setResumeData] = useState({
+  personalInfo: {
+    fullName: "Alex Morgan",
+    jobTitle: "Full Stack Web Developer",
+    email: "alex.morgan@example.com",
+    phone: "+1 555-010-2048",
+    address: "123 Demo Street, Sample City",
+    city: "Sample City",
+    country: "United States",
+    linkedin: "linkedin.com/in/alex-morgan",
+    github: "github.com/alexmorgan",
+    portfolio: "alexmorgan.example.com",
+    licenseNo: "DEMO-123456",
+    declaration:
+      "I hereby declare that the information provided above is true and accurate to the best of my knowledge.",
+    photo: DEFAULT_AVATAR,
+  },
+
+  summary:
+    "Motivated Full Stack Developer with experience building responsive web applications, developing REST APIs, integrating third-party services, and optimizing application performance.",
+
+  metrics: [
+    { id: "m-1", label: "Projects Completed", val: "25+" },
+    { id: "m-2", label: "Performance Improvement", val: "35%" },
+    { id: "m-3", label: "Team Collaboration", val: "5 Members" },
+  ],
+
+  education: [
+    {
+      id: "edu-1",
+      degree: "Bachelor of Technology in Computer Science",
+      institution: "Example Institute of Technology",
+      location: "Sample City",
+      duration: "Aug 2020 – May 2024",
+      grade: "8.5 CGPA",
     },
-    summary: 'Results-driven professional with proven expertise in developing scalable web applications, integrating secure payment gateways, and delivering high-performance digital solutions with 99.9% uptime.',
-    metrics: [
-      { id: 'm-1', label: 'Revenue Impact', val: '$1.4M+' },
-      { id: 'm-2', label: 'Performance Gain', val: '40%' },
-      { id: 'm-3', label: 'Team Led', val: '8 Engineers' }
-    ],
-    education: [
-      {
-        id: 'edu-1',
-        degree: "Bachelor's Degree (First Division with Distinction)",
-        institution: 'Riet College Jaipur (RTU)',
-        location: 'Jaipur, Rajasthan',
-        duration: 'Apr. 2020 – Apr. 2022',
-        grade: '8.8 CGPA'
-      },
-      {
-        id: 'edu-2',
-        degree: 'Higher Secondary (First Division)',
-        institution: 'Commerce College Jaipur (RU)',
-        location: 'Jaipur, Rajasthan',
-        duration: 'Apr. 2019 – Apr. 2021',
-        grade: '86%'
-      }
-    ],
-    experience: [
-      {
-        id: 'exp-1',
-        role: 'MERN Stack Developer',
-        company: 'Future Profilez',
-        location: 'Jaipur, India',
-        duration: 'July 2023 – Present',
-        description: '– Designed and developed full-stack web applications using MongoDB, Express, React, and Node.js, delivering scalable solutions.\n– Implemented secure payment systems with gateways like razorpay, safeguarding user data and reducing transaction times by 40%.\n– Optimized application performance through caching and database tuning, reducing page load times by 25%.'
-      }
-    ],
-    skillCategories: {
-      languages: 'HTML, CSS, JavaScript (ES6+), SQL, MongoDB, Node.js, Express.js, React.js, Next.js',
-      tools: 'VS Code, Postman, Git, GitHub, Docker, Amazon EC2, Google Cloud Platform',
-      frameworks: 'Windows, REST APIs, JWT Auth, Redux Toolkit, Tailwind CSS, Bootstrap',
-      softSkills: 'Jira, Responsive Design, Agile / Scrum, Problem Solving'
+    {
+      id: "edu-2",
+      degree: "Higher Secondary Education",
+      institution: "Sample Public School",
+      location: "Sample City",
+      duration: "Apr 2018 – Mar 2020",
+      grade: "85%",
     },
-    projects: [
-      {
-        id: 'proj-1',
-        title: 'Japanese For Me',
-        tech: 'React.js, Node.js, MongoDB, ChatGPT, Stripe, PayPal',
-        duration: '2025/04 – current',
-        description: '– Developed an interactive web platform to enhance user learning experience.\n– Implemented student and teacher registration, lesson booking with calendar integration, payments via Stripe and PayPal, and Zoom-based video lessons.\n– Created separate dashboards for students, teachers (with earnings and payout management), and admins (with user approvals, reports, and content moderation).\n– Tech stack: React.js, Node.js, Express.js, MongoDB, JWT authentication; integrated Stripe, PayPal, Zoom APIs; supported multiple languages (English/Japanese).'
-      },
-      {
-        id: 'proj-2',
-        title: 'SafeGent Services Platform',
-        tech: 'React.js, Node.js, MongoDB, ChatGPT, Stripe',
-        duration: '2024/09 – Present',
-        description: '– Developed a web platform for booking home maintenance and repair services, enhanced with AI-powered ChatGPT assistance.\n– Integrated secure Stripe payments for both one-time bookings (e.g., $69 for a 30-minute session) and monthly subscriptions.\n– Enabled users to interact with SafeGent AI for basic queries and to schedule appointments directly through the chat.'
-      },
-      {
-        id: 'proj-3',
-        title: 'Event Management Platform',
-        tech: 'Next.js, Node.js, MongoDB, Google APIs, Stripe, ChatGPT',
-        duration: '2024/08 – 2025/02',
-        description: '– Developed a full-stack platform to book event spaces, leveraging Google APIs (Places, Details, and Geolocation) for venue discovery.\n– Integrated Google Places and Open API to enable users to browse and book nearby event organizers.'
-      },
-      {
-        id: 'proj-4',
-        title: 'Quaint Space',
-        tech: 'React.js, Node.js, MongoDB, Razorpay',
-        duration: '2023 – 2024',
-        description: '– Quaint Space is a property booking platform that streamlines the entire process — from discovery and booking to payments and admin management — all in one place.'
-      }
-    ],
-    certifications: [
-      { id: 'c-1', name: 'Full Stack MERN Developer Certified', issuer: 'Udemy', year: '2023' },
-      { id: 'c-2', name: 'AWS Certified Cloud Practitioner', issuer: 'Amazon Web Services', year: '2023' }
-    ]
-  });
+  ],
+
+  experience: [
+    {
+      id: "exp-1",
+      role: "Full Stack Developer",
+      company: "Tech Solutions Inc.",
+      location: "Sample City",
+      duration: "Jan 2023 – Present",
+      description:
+        "Developed responsive web applications using React.js, Node.js, Express.js, and MongoDB.\nImplemented secure authentication and REST APIs for web applications.\nImproved application performance through code optimization and database query improvements.\nCollaborated with designers and developers to deliver reliable digital products.",
+    },
+    {
+      id: "exp-2",
+      role: "Junior Web Developer",
+      company: "Creative Digital Studio",
+      location: "Sample City",
+      duration: "Jun 2022 – Dec 2022",
+      description:
+        "Built reusable UI components using React.js and modern CSS.\nIntegrated frontend interfaces with backend APIs.\nFixed bugs, improved responsive layouts, and participated in code reviews.",
+    },
+  ],
+
+  skillCategories: {
+    languages:
+      "HTML5, CSS3, JavaScript, TypeScript, SQL",
+    tools:
+      "VS Code, Git, GitHub, Postman, Docker",
+    frameworks:
+      "React.js, Next.js, Node.js, Express.js, Tailwind CSS, Redux Toolkit",
+    softSkills:
+      "Communication, Teamwork, Problem Solving, Agile / Scrum, Time Management",
+  },
+
+  projects: [
+    {
+      id: "proj-1",
+      title: "E-Commerce Platform",
+      tech: "React.js, Node.js, Express.js, MongoDB, Stripe",
+      duration: "Jan 2024 – Apr 2024",
+      description:
+        "Developed a responsive e-commerce platform with product listings, search, filtering, shopping cart, and checkout.\nIntegrated payment processing and user authentication.\nCreated an admin dashboard for managing products, orders, and customers.",
+    },
+    {
+      id: "proj-2",
+      title: "AI-Powered Learning Assistant",
+      tech: "Next.js, Node.js, MongoDB, OpenAI API",
+      duration: "Sep 2023 – Dec 2023",
+      description:
+        "Built an AI-powered learning application that generates explanations and practice questions.\nIntegrated an AI API for interactive responses.\nDesigned a responsive interface with reusable components and loading states.",
+    },
+    {
+      id: "proj-3",
+      title: "Task Management Dashboard",
+      tech: "React.js, Express.js, MongoDB, Tailwind CSS",
+      duration: "May 2023 – Aug 2023",
+      description:
+        "Created a task management dashboard with task creation, assignment, status tracking, and filtering.\nImplemented REST APIs and form validation.\nDesigned a clean interface for organizing tasks and monitoring progress.",
+    },
+    {
+      id: "proj-4",
+      title: "Property Listing Website",
+      tech: "React.js, Node.js, MongoDB, Maps API",
+      duration: "Jan 2023 – Apr 2023",
+      description:
+        "Developed a property listing website with location-based search and detailed property pages.\nImplemented property filters and inquiry forms.\nCreated an admin interface for managing property listings.",
+    },
+  ],
+
+  certifications: [
+    {
+      id: "c-1",
+      name: "Full Stack Web Development",
+      issuer: "Example Learning Academy",
+      year: "2024",
+    },
+    {
+      id: "c-2",
+      name: "Introduction to Cloud Computing",
+      issuer: "Example Cloud Academy",
+      year: "2023",
+    },
+  ],
+});
 
   // Calculate live preview fit scale for phone and desktop
   const autoFitScale = () => {
@@ -1390,7 +1427,7 @@ export default function ResumeBuilder() {
               {/* 1. PERSONAL INFO WITH PHOTO MANAGEMENT */}
               {activeTab === 'personal' && (
                 <>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#060b14', padding: '10px 12px', borderRadius: '9px', border: '1px solid #1a273f' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#060b14', padding: '8px 6px', borderRadius: '9px', border: '1px solid #1a273f' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                       <div style={{ width: '48px', height: '48px', borderRadius: '7px', overflow: 'hidden', backgroundColor: '#0e192d', border: '1px solid #243552', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         {resumeData.personalInfo.photo ? (
