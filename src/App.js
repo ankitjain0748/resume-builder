@@ -4,27 +4,25 @@ import React, { useState, useRef, useEffect } from 'react';
 import { 
   User, Briefcase, GraduationCap, Award, Code, 
   Download, CheckCircle2, Trash2, Plus, Image as ImageIcon, 
-  Palette, Eye, EyeOff, Layers, Mail, Phone, MapPin, ZoomIn, ZoomOut, Smartphone, Monitor, Printer, Maximize2, Sparkles, FileText, FileDown
+  Palette, Eye, EyeOff, Layers, Mail, Phone, MapPin, ZoomIn, ZoomOut, Smartphone, Monitor, Printer, Maximize2, Sparkles, FileDown, Type, HelpCircle
 } from 'lucide-react';
 import { FaGithub, FaLinkedin } from 'react-icons/fa';
 
-// 100% Reliable Base64 Avatar
-const DEFAULT_AVATAR = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48Y2lyY2xlIGN4PSI1MCIgY3k9IjUwIiByPSI1MCIgZmlsbD0iI2UyZThmMCIvPjxjaXJjbGUgY3g9IjUwIiBjeT0iMzgiIHI9IjE4IiBmaWxsPSIjNjQ3NDhiIi8+PHBhdGggZD0iTTIwIDg2Yz0tMTYuNSAxMy.1LTMwIDMwLTMwczMwIDEzLjUgMzAgMzB6IiBmaWxsPSIjNjQ3NDhiIi8+PC9zdmc+";
+const DEFAULT_AVATAR = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48Y2lyY2xlIGN4PSI1MCIgY3k9IjUwIiByPSI1MCIgZmlsbD0iI2UyZThmMCIvPjxjaXJjbGUgY3g9IjUwIiBjeT0iMzgiIHI9IjE4IiBmaWxsPSIjNjQ3NDhiIi8+PHBhdGggZD0iTTIwIDg2Yz0tMTYuNSAxMy41LTMwIDMwLTMwczMwIDEzLjUgMzAgMzB6IiBmaWxsPSIjNjQ3NDhiIi8+PC9zdmc+";
 
-// Pre-built Bullet Points Bank (Free AI Alternative)
 const SUGGESTED_BULLETS = [
   "Developed responsive web applications using React.js, Node.js, Express.js, and MongoDB.",
-  "Implemented secure JWT authentication and optimized RESTful APIs for improved security and performance.",
-  "Improved application page load speed by 35% through code splitting and efficient database indexing.",
-  "Collaborated with UI/UX designers and backend engineers in an Agile environment to deliver scalable digital products.",
-  "Wrote unit and integration tests using Jest and React Testing Library, reducing bug reports by 40%.",
-  "Integrated third-party payment gateways (Stripe, PayPal) and real-time socket communication features."
+  "Implemented secure JWT authentication and optimized RESTful APIs for security and speed.",
+  "Improved application page load speed by 35% through code splitting and asset optimization.",
+  "Collaborated with UI/UX designers and backend engineers in an Agile environment.",
+  "Wrote unit and integration tests using Jest, reducing production bug reports by 40%."
 ];
 
 export default function ResumeBuilder() {
   const [activeTab, setActiveTab] = useState('personal');
   const [selectedTemplate, setSelectedTemplate] = useState('ankit_harvard'); 
   const [accentColor, setAccentColor] = useState('#1e3a8a'); 
+  const [selectedFont, setSelectedFont] = useState('"Times New Roman", Times, serif');
   const [showPhoto, setShowPhoto] = useState(true);
   const [isExporting, setIsExporting] = useState(false);
   const [isExportingDocx, setIsExportingDocx] = useState(false);
@@ -34,7 +32,6 @@ export default function ResumeBuilder() {
   const resumeRef = useRef(null);
   const previewWrapperRef = useRef(null);
 
-  // Section Visibility Toggles
   const [visibility, setVisibility] = useState({
     summary: true,
     metrics: true,
@@ -50,16 +47,11 @@ export default function ResumeBuilder() {
     setVisibility((prev) => ({ ...prev, [key]: !prev[key] }));
   };
 
-  // Master State with LocalStorage Initialization
   const [resumeData, setResumeData] = useState(() => {
     if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('pro_resume_builder_data');
+      const saved = localStorage.getItem('pro_resume_builder_data_v2');
       if (saved) {
-        try {
-          return JSON.parse(saved);
-        } catch (e) {
-          console.error("Error loading saved resume data", e);
-        }
+        try { return JSON.parse(saved); } catch (e) { console.error(e); }
       }
     }
     return {
@@ -75,10 +67,10 @@ export default function ResumeBuilder() {
         github: "github.com/alexmorgan",
         portfolio: "alexmorgan.example.com",
         licenseNo: "DEMO-123456",
-        declaration: "I hereby declare that the information provided above is true and accurate to the best of my knowledge.",
+        declaration: "I hereby declare that the information provided above is true and accurate.",
         photo: DEFAULT_AVATAR,
       },
-      summary: "Motivated Full Stack Developer with experience building responsive web applications, developing REST APIs, integrating third-party services, and optimizing application performance.",
+      summary: "Motivated Full Stack Developer with experience building responsive web applications, developing REST APIs, and optimizing application performance.",
       metrics: [
         { id: "m-1", label: "Projects Completed", val: "25+" },
         { id: "m-2", label: "Performance Improvement", val: "35%" },
@@ -130,14 +122,12 @@ export default function ResumeBuilder() {
     };
   });
 
-  // Save to LocalStorage automatically whenever resumeData changes
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      localStorage.setItem('pro_resume_builder_data', JSON.stringify(resumeData));
+      localStorage.setItem('pro_resume_builder_data_v2', JSON.stringify(resumeData));
     }
   }, [resumeData]);
 
-  // Calculate live preview fit scale
   const autoFitScale = () => {
     if (previewWrapperRef.current) {
       const containerWidth = previewWrapperRef.current.clientWidth - 28;
@@ -154,7 +144,6 @@ export default function ResumeBuilder() {
     return () => window.removeEventListener('resize', autoFitScale);
   }, [mobileView]);
 
-  // Form Handlers
   const handlePersonalChange = (e) => {
     const { name, value } = e.target;
     setResumeData((prev) => ({
@@ -166,10 +155,7 @@ export default function ResumeBuilder() {
   const handlePhotoUpload = (e) => {
     const file = e.target.files && e.target.files[0];
     if (file) {
-      if (file.size > 3 * 1024 * 1024) {
-        alert('File size must be under 3MB');
-        return;
-      }
+      if (file.size > 3 * 1024 * 1024) { alert('File size must be under 3MB'); return; }
       const reader = new FileReader();
       reader.onload = (event) => {
         if (event.target && event.target.result) {
@@ -266,49 +252,34 @@ export default function ResumeBuilder() {
     }));
   };
 
-  // Safe Loader for html2canvas & jsPDF
   const ensurePdfTools = async () => {
-    const getHtml2Canvas = () => {
-      return new Promise((resolve, reject) => {
-        if (typeof window !== 'undefined' && typeof window.html2canvas === 'function') {
-          return resolve(window.html2canvas);
-        }
-        const s = document.createElement('script');
-        s.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
-        s.onload = () => resolve(window.html2canvas);
-        s.onerror = () => reject(new Error('Failed to load html2canvas'));
-        document.head.appendChild(s);
-      });
-    };
+    const getHtml2Canvas = () => new Promise((resolve, reject) => {
+      if (typeof window !== 'undefined' && typeof window.html2canvas === 'function') return resolve(window.html2canvas);
+      const s = document.createElement('script');
+      s.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+      s.onload = () => resolve(window.html2canvas);
+      s.onerror = () => reject(new Error('Failed to load html2canvas'));
+      document.head.appendChild(s);
+    });
 
-    const getJsPDF = () => {
-      return new Promise((resolve, reject) => {
-        const existingClass = window.jspdf?.jsPDF || window.jsPDF;
-        if (typeof existingClass === 'function') {
-          return resolve(existingClass);
-        }
-        const s = document.createElement('script');
-        s.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
-        s.onload = () => {
-          const loadedClass = window.jspdf?.jsPDF || window.jsPDF;
-          resolve(loadedClass);
-        };
-        s.onerror = () => reject(new Error('Failed to load jsPDF'));
-        document.head.appendChild(s);
-      });
-    };
+    const getJsPDF = () => new Promise((resolve, reject) => {
+      const existingClass = window.jspdf?.jsPDF || window.jsPDF;
+      if (typeof existingClass === 'function') return resolve(existingClass);
+      const s = document.createElement('script');
+      s.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+      s.onload = () => resolve(window.jspdf?.jsPDF || window.jsPDF);
+      s.onerror = () => reject(new Error('Failed to load jsPDF'));
+      document.head.appendChild(s);
+    });
 
-    const [html2canvasFn, jsPdfClass] = await Promise.all([getHtml2Canvas(), getJsPDF()]);
-    return { html2canvasFn, jsPdfClass };
+    return Promise.all([getHtml2Canvas(), getJsPDF()]);
   };
 
-  // Direct PDF Download
   const handleDownloadPDF = async () => {
     if (!resumeRef.current) return;
     setIsExporting(true);
-
     try {
-      const { html2canvasFn, jsPdfClass } = await ensurePdfTools();
+      const [html2canvasFn, jsPdfClass] = await ensurePdfTools();
       const originalNode = resumeRef.current;
       const clone = originalNode.cloneNode(true);
 
@@ -321,7 +292,6 @@ export default function ResumeBuilder() {
       exportContainer.style.zIndex = '-99999';
       exportContainer.style.backgroundColor = '#ffffff';
       exportContainer.style.overflow = 'hidden';
-      exportContainer.style.transform = 'none';
 
       clone.style.margin = '0';
       clone.style.transform = 'none';
@@ -333,89 +303,46 @@ export default function ResumeBuilder() {
         scale: 2,
         useCORS: true,
         allowTaint: true,
-        logging: false,
         width: 794,
         height: 1122,
-        scrollX: 0,
-        scrollY: 0,
-        windowWidth: 794,
-        windowHeight: 1122
       });
 
       document.body.removeChild(exportContainer);
 
       const imgData = canvas.toDataURL('image/jpeg', 0.98);
-      const pdf = new jsPdfClass({
-        orientation: 'portrait',
-        unit: 'mm',
-        format: 'a4'
-      });
-
+      const pdf = new jsPdfClass({ orientation: 'portrait', unit: 'mm', format: 'a4' });
       pdf.addImage(imgData, 'JPEG', 0, 0, 210, 297, undefined, 'FAST');
+      
       const safeName = (resumeData.personalInfo.fullName || 'Resume').replace(/\s+/g, '_');
-      const fileName = `${safeName}_Resume.pdf`;
-
-      const pdfBlob = pdf.output('blob');
-      const blobUrl = URL.createObjectURL(pdfBlob);
-      const downloadAnchor = document.createElement('a');
-      downloadAnchor.href = blobUrl;
-      downloadAnchor.download = fileName;
-      document.body.appendChild(downloadAnchor);
-      downloadAnchor.click();
-      document.body.removeChild(downloadAnchor);
-
-      setTimeout(() => URL.revokeObjectURL(blobUrl), 2000);
+      pdf.save(`${safeName}_Resume.pdf`);
     } catch (err) {
-      console.error('PDF export error:', err);
-      alert('PDF generation me issue aaya. Direct browser print button use karein.');
+      console.error(err);
+      alert('PDF generation failed. Use browser print instead.');
     } finally {
       setIsExporting(false);
     }
   };
 
-  // Direct DOCX Download Feature
   const handleDownloadDocx = () => {
     setIsExportingDocx(true);
     try {
       const htmlContent = `
         <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
-        <head><meta charset='utf-8'><title>${resumeData.personalInfo.fullName} Resume</title></head>
+        <head><meta charset='utf-8'><title>Resume</title></head>
         <body style="font-family: Arial, sans-serif; padding: 20px;">
-          <h1 style="color: #1e3a8a; text-transform: uppercase; margin-bottom: 0;">${resumeData.personalInfo.fullName}</h1>
-          <p style="font-size: 14px; font-weight: bold; color: #555;">${resumeData.personalInfo.jobTitle}</p>
-          <p style="font-size: 11px; color: #666;">${resumeData.personalInfo.email} | ${resumeData.personalInfo.phone} | ${resumeData.personalInfo.city}</p>
-          <hr style="border: 1px solid #1e3a8a;" />
-          
-          <h3>Professional Summary</h3>
+          <h1 style="color: #1e3a8a; text-transform: uppercase;">${resumeData.personalInfo.fullName}</h1>
+          <p><b>${resumeData.personalInfo.jobTitle}</b></p>
+          <p>${resumeData.personalInfo.email} | ${resumeData.personalInfo.phone} | ${resumeData.personalInfo.city}</p>
+          <hr />
+          <h3>Summary</h3>
           <p>${resumeData.summary}</p>
-          
-          <h3>Work Experience</h3>
-          ${resumeData.experience.map(exp => `
-            <div>
-              <strong>${exp.role}</strong> at <em>${exp.company}</em> (${exp.duration})<br/>
-              <p style="white-space: pre-line;">${exp.description}</p>
-            </div>
-          `).join('')}
-
+          <h3>Experience</h3>
+          ${resumeData.experience.map(e => `<div><b>${e.role}</b> at ${e.company} (${e.duration})<br/>${e.description}</div>`).join('')}
           <h3>Education</h3>
-          ${resumeData.education.map(edu => `
-            <div>
-              <strong>${edu.degree}</strong> - ${edu.institution} (${edu.duration})<br/>
-              <span>Grade: ${edu.grade}</span>
-            </div>
-          `).join('')}
-
-          <h3>Technical Skills</h3>
-          <p><strong>Languages:</strong> ${resumeData.skillCategories.languages}</p>
-          <p><strong>Frameworks:</strong> ${resumeData.skillCategories.frameworks}</p>
-          <p><strong>Tools:</strong> ${resumeData.skillCategories.tools}</p>
-        </body>
-        </html>
+          ${resumeData.education.map(ed => `<div><b>${ed.degree}</b> - ${ed.institution} (${ed.duration})</div>`).join('')}
+        </body></html>
       `;
-
-      const blob = new Blob(['\ufeff' + htmlContent], {
-        type: 'application/msword'
-      });
+      const blob = new Blob(['\ufeff' + htmlContent], { type: 'application/msword' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
@@ -432,9 +359,7 @@ export default function ResumeBuilder() {
     }
   };
 
-  const handleNativePrint = () => {
-    window.print();
-  };
+  const handleNativePrint = () => window.print();
 
   const getSkillsList = () => {
     return [
@@ -444,7 +369,6 @@ export default function ResumeBuilder() {
     ].map(s => s.trim()).filter(Boolean);
   };
 
-  // Base A4 Locked Dimensions
   const a4CanvasStyle = {
     width: '794px',
     height: '1122px',
@@ -454,32 +378,23 @@ export default function ResumeBuilder() {
     color: '#000000',
     boxSizing: 'border-box',
     overflow: 'hidden',
-    position: 'relative'
+    position: 'relative',
+    fontFamily: selectedFont
   };
 
-  // =========================================================================
-  // 10 INDUSTRY TEMPLATES
-  // =========================================================================
-
+  // ================= TEMPLATES =================
   const renderAnkitHarvardATS = () => (
-    <div style={{ ...a4CanvasStyle, padding: '32px 42px', fontFamily: '"Times New Roman", Times, Georgia, serif', fontSize: '11px', lineHeight: '1.35', color: '#000000' }}>
+    <div style={{ ...a4CanvasStyle, padding: '32px 42px', fontSize: '11px', lineHeight: '1.35' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1.5px solid #000000', paddingBottom: '10px', marginBottom: '10px' }}>
-        <div style={{ flex: 1, textAlign: showPhoto && resumeData.personalInfo.photo ? 'left' : 'center' }}>
-          <h1 style={{ fontSize: '23px', fontWeight: 'bold', margin: '0 0 2px 0', letterSpacing: '0.8px', textTransform: 'uppercase' }}>
-            {resumeData.personalInfo.fullName}
-          </h1>
-          <div style={{ fontSize: '11px', color: '#222222', marginBottom: '4px' }}>
-            {resumeData.personalInfo.address}
-          </div>
-          <div style={{ display: 'flex', justifyContent: showPhoto && resumeData.personalInfo.photo ? 'flex-start' : 'center', alignItems: 'center', flexWrap: 'wrap', gap: '12px', fontSize: '10px', color: '#111111' }}>
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><Phone size={11} /> {resumeData.personalInfo.phone}</span>
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><Mail size={11} /> {resumeData.personalInfo.email}</span>
-            {resumeData.personalInfo.linkedin && <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><FaLinkedin size={11} /> {resumeData.personalInfo.linkedin}</span>}
-            {resumeData.personalInfo.github && <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><FaGithub size={11} /> {resumeData.personalInfo.github}</span>}
+        <div style={{ flex: 1 }}>
+          <h1 style={{ fontSize: '23px', fontWeight: 'bold', margin: '0 0 2px 0', textTransform: 'uppercase' }}>{resumeData.personalInfo.fullName}</h1>
+          <div style={{ fontSize: '11px', marginBottom: '4px' }}>{resumeData.personalInfo.address}</div>
+          <div style={{ fontSize: '10px', display: 'flex', gap: '12px' }}>
+            <span>{resumeData.personalInfo.phone}</span><span>{resumeData.personalInfo.email}</span><span>{resumeData.personalInfo.linkedin}</span>
           </div>
         </div>
         {showPhoto && resumeData.personalInfo.photo && (
-          <div style={{ width: '70px', height: '82px', border: '1.5px solid #000000', padding: '2px', backgroundColor: '#ffffff', marginLeft: '16px', flexShrink: 0 }}>
+          <div style={{ width: '70px', height: '82px', border: '1.5px solid #000', padding: '2px', backgroundColor: '#fff', marginLeft: '16px', flexShrink: 0 }}>
             <img src={resumeData.personalInfo.photo} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} crossOrigin="anonymous" />
           </div>
         )}
@@ -487,17 +402,11 @@ export default function ResumeBuilder() {
 
       {visibility.education && resumeData.education.length > 0 && (
         <div style={{ marginBottom: '10px' }}>
-          <div style={{ fontSize: '13px', fontWeight: 'bold', borderBottom: '1px solid #000000', paddingBottom: '1px', marginBottom: '4px' }}>Education</div>
-          {resumeData.education.map((edu) => (
+          <div style={{ fontSize: '13px', fontWeight: 'bold', borderBottom: '1px solid #000', marginBottom: '4px' }}>Education</div>
+          {resumeData.education.map(edu => (
             <div key={edu.id} style={{ marginBottom: '4px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11.5px' }}>
-                <strong>{edu.institution}</strong>
-                <strong>{edu.duration}</strong>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10.5px', fontStyle: 'italic', color: '#333333' }}>
-                <span>{edu.degree}</span>
-                <span>{edu.location}</span>
-              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}><strong>{edu.institution}</strong><strong>{edu.duration}</strong></div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontStyle: 'italic' }}><span>{edu.degree}</span><span>{edu.location}</span></div>
             </div>
           ))}
         </div>
@@ -505,18 +414,12 @@ export default function ResumeBuilder() {
 
       {visibility.experience && resumeData.experience.length > 0 && (
         <div style={{ marginBottom: '10px' }}>
-          <div style={{ fontSize: '13px', fontWeight: 'bold', borderBottom: '1px solid #000000', paddingBottom: '1px', marginBottom: '4px' }}>Experience</div>
-          {resumeData.experience.map((exp) => (
+          <div style={{ fontSize: '13px', fontWeight: 'bold', borderBottom: '1px solid #000', marginBottom: '4px' }}>Experience</div>
+          {resumeData.experience.map(exp => (
             <div key={exp.id} style={{ marginBottom: '6px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11.5px' }}>
-                <strong>{exp.company}</strong>
-                <strong>{exp.duration}</strong>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10.5px', fontStyle: 'italic', color: '#333333', marginBottom: '2px' }}>
-                <span>{exp.role}</span>
-                <span>{exp.location}</span>
-              </div>
-              <div style={{ fontSize: '10px', whiteSpace: 'pre-line', lineHeight: '1.4', paddingLeft: '8px' }}>{exp.description}</div>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}><strong>{exp.company}</strong><strong>{exp.duration}</strong></div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontStyle: 'italic', marginBottom: '2px' }}><span>{exp.role}</span><span>{exp.location}</span></div>
+              <div style={{ fontSize: '10px', whiteSpace: 'pre-line', paddingLeft: '8px' }}>{exp.description}</div>
             </div>
           ))}
         </div>
@@ -524,71 +427,32 @@ export default function ResumeBuilder() {
 
       {visibility.skills && (
         <div style={{ marginBottom: '10px' }}>
-          <div style={{ fontSize: '13px', fontWeight: 'bold', borderBottom: '1px solid #000000', paddingBottom: '1px', marginBottom: '4px' }}>Technical Skills</div>
-          <div style={{ fontSize: '10.5px', lineHeight: '1.5' }}>
+          <div style={{ fontSize: '13px', fontWeight: 'bold', borderBottom: '1px solid #000', marginBottom: '4px' }}>Technical Skills</div>
+          <div style={{ fontSize: '10.5px' }}>
             <div><strong>Languages:</strong> {resumeData.skillCategories.languages}</div>
-            <div><strong>Developer Tools:</strong> {resumeData.skillCategories.tools}</div>
-            <div><strong>Technologies/Frameworks:</strong> {resumeData.skillCategories.frameworks}</div>
-            <div><strong>Others:</strong> {resumeData.skillCategories.softSkills}</div>
+            <div><strong>Tools:</strong> {resumeData.skillCategories.tools}</div>
+            <div><strong>Frameworks:</strong> {resumeData.skillCategories.frameworks}</div>
           </div>
-        </div>
-      )}
-
-      {visibility.projects && resumeData.projects.length > 0 && (
-        <div>
-          <div style={{ fontSize: '13px', fontWeight: 'bold', borderBottom: '1px solid #000000', paddingBottom: '1px', marginBottom: '4px' }}>Projects</div>
-          {resumeData.projects.map((proj) => (
-            <div key={proj.id} style={{ marginBottom: '6px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11.5px' }}>
-                <span><strong>{proj.title}</strong> | <em>{proj.tech}</em></span>
-                <strong>{proj.duration}</strong>
-              </div>
-              <div style={{ fontSize: '10px', whiteSpace: 'pre-line', lineHeight: '1.38', marginTop: '1px', paddingLeft: '8px' }}>{proj.description}</div>
-            </div>
-          ))}
         </div>
       )}
     </div>
   );
 
   const renderClassicATS = () => (
-    <div style={{ ...a4CanvasStyle, padding: '34px 42px', fontFamily: 'Arial, Helvetica, sans-serif' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: `2.5px solid ${accentColor}`, paddingBottom: '10px', marginBottom: '12px' }}>
-        <div style={{ flex: 1 }}>
-          <h1 style={{ fontSize: '22px', fontWeight: 'bold', textTransform: 'uppercase', margin: 0, color: '#0f172a' }}>{resumeData.personalInfo.fullName}</h1>
-          <div style={{ fontSize: '11.5px', fontWeight: 'bold', color: accentColor, marginTop: '3px' }}>{resumeData.personalInfo.jobTitle}</div>
-          <div style={{ fontSize: '9.5px', color: '#475569', marginTop: '5px', display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-            <span>{resumeData.personalInfo.email}</span> • <span>{resumeData.personalInfo.phone}</span> • <span>{resumeData.personalInfo.city}</span>
-          </div>
-        </div>
-        {showPhoto && resumeData.personalInfo.photo && (
-          <div style={{ width: '74px', height: '74px', borderRadius: '10px', overflow: 'hidden', border: `2px solid ${accentColor}`, flexShrink: 0 }}>
-            <img src={resumeData.personalInfo.photo} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} crossOrigin="anonymous" />
-          </div>
-        )}
+    <div style={{ ...a4CanvasStyle, padding: '34px 42px' }}>
+      <div style={{ borderBottom: `2.5px solid ${accentColor}`, paddingBottom: '10px', marginBottom: '12px' }}>
+        <h1 style={{ fontSize: '22px', fontWeight: 'bold', textTransform: 'uppercase', margin: 0, color: '#0f172a' }}>{resumeData.personalInfo.fullName}</h1>
+        <div style={{ fontSize: '11.5px', fontWeight: 'bold', color: accentColor }}>{resumeData.personalInfo.jobTitle}</div>
+        <div style={{ fontSize: '9.5px', color: '#475569', marginTop: '4px' }}>{resumeData.personalInfo.email} • {resumeData.personalInfo.phone} • {resumeData.personalInfo.city}</div>
       </div>
-      {visibility.summary && (
-        <div style={{ marginBottom: '12px' }}>
-          <div style={{ fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', color: accentColor, borderBottom: '1px solid #cbd5e1', paddingBottom: '2px', marginBottom: '4px' }}>Professional Summary</div>
-          <p style={{ fontSize: '9.5px', lineHeight: '1.45', margin: 0, color: '#334155' }}>{resumeData.summary}</p>
-        </div>
-      )}
-      {visibility.skills && (
-        <div style={{ marginBottom: '12px' }}>
-          <div style={{ fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', color: accentColor, borderBottom: '1px solid #cbd5e1', paddingBottom: '2px', marginBottom: '4px' }}>Core Competencies</div>
-          <div style={{ fontSize: '9.5px', color: '#334155', lineHeight: '1.5' }}>{getSkillsList().join('  •  ')}</div>
-        </div>
-      )}
+      {visibility.summary && <p style={{ fontSize: '9.5px', lineHeight: '1.45' }}>{resumeData.summary}</p>}
       {visibility.experience && (
-        <div style={{ marginBottom: '12px' }}>
-          <div style={{ fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', color: accentColor, borderBottom: '1px solid #cbd5e1', paddingBottom: '2px', marginBottom: '6px' }}>Work Experience</div>
-          {resumeData.experience.map((exp) => (
-            <div key={exp.id} style={{ marginBottom: '8px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10.5px', fontWeight: 'bold' }}>
-                <span>{exp.role} — <span style={{ color: '#475569', fontWeight: 'normal' }}>{exp.company}</span></span>
-                <span style={{ fontSize: '9.5px', color: '#64748b' }}>{exp.duration}</span>
-              </div>
-              <div style={{ fontSize: '9.5px', color: '#334155', whiteSpace: 'pre-line', lineHeight: '1.4', marginTop: '2px' }}>{exp.description}</div>
+        <div>
+          <div style={{ fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', color: accentColor, borderBottom: '1px solid #cbd5e1', marginBottom: '6px' }}>Experience</div>
+          {resumeData.experience.map(e => (
+            <div key={e.id} style={{ marginBottom: '8px' }}>
+              <strong>{e.role}</strong> - {e.company} ({e.duration})
+              <div style={{ whiteSpace: 'pre-line', fontSize: '9.5px' }}>{e.description}</div>
             </div>
           ))}
         </div>
@@ -596,68 +460,65 @@ export default function ResumeBuilder() {
     </div>
   );
 
-  const renderNovoresumeClean = () => (
-    <div style={{ ...a4CanvasStyle, padding: '32px 36px', fontFamily: '"Segoe UI", Tahoma, sans-serif' }}>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 90px 180px', gap: '15px', alignItems: 'center', borderBottom: '1.5px solid #e2e8f0', paddingBottom: '14px', marginBottom: '14px' }}>
-        <div>
-          <h1 style={{ fontSize: '23px', fontWeight: '800', color: accentColor, margin: 0 }}>{resumeData.personalInfo.fullName}</h1>
-          <div style={{ fontSize: '11.5px', color: '#64748b', fontWeight: '600', marginTop: '2px' }}>{resumeData.personalInfo.jobTitle}</div>
-        </div>
-        {showPhoto && resumeData.personalInfo.photo && (
-          <div style={{ width: '80px', height: '80px', borderRadius: '12px', overflow: 'hidden', border: `2px solid ${accentColor}` }}>
-            <img src={resumeData.personalInfo.photo} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} crossOrigin="anonymous" />
-          </div>
-        )}
-        <div style={{ fontSize: '8.5px', color: '#475569', textAlign: 'right' }}>
-          <div>{resumeData.personalInfo.email} ✉</div>
-          <div>{resumeData.personalInfo.phone} 📞</div>
-        </div>
+  // Template 11: Minimalist Clean
+  const renderMinimalist = () => (
+    <div style={{ ...a4CanvasStyle, padding: '40px', fontFamily: '"Helvetica Neue", Helvetica, Arial, sans-serif' }}>
+      <h1 style={{ fontSize: '26px', fontWeight: '300', letterSpacing: '1px', margin: 0 }}>{resumeData.personalInfo.fullName}</h1>
+      <div style={{ fontSize: '11px', color: '#666', letterSpacing: '2px', textTransform: 'uppercase', marginTop: '4px', marginBottom: '20px' }}>{resumeData.personalInfo.jobTitle}</div>
+      <div style={{ fontSize: '9.5px', color: '#444', marginBottom: '20px', display: 'flex', gap: '15px' }}>
+        <span>{resumeData.personalInfo.email}</span><span>{resumeData.personalInfo.phone}</span><span>{resumeData.personalInfo.city}</span>
       </div>
-      <div style={{ display: 'grid', gridTemplateColumns: '1.3fr 1fr', gap: '22px' }}>
+      <hr style={{ border: 'none', borderTop: '1px solid #ddd', marginBottom: '20px' }} />
+      {visibility.summary && <div style={{ fontSize: '10px', lineHeight: '1.5', color: '#333', marginBottom: '20px' }}>{resumeData.summary}</div>}
+      {visibility.experience && (
         <div>
-          {visibility.experience && (
-            <div>
-              <div style={{ fontSize: '11px', fontWeight: '800', textTransform: 'uppercase', color: '#0f172a', borderBottom: '1px solid #cbd5e1', paddingBottom: '2px', marginBottom: '8px' }}>Work Experience</div>
-              {resumeData.experience.map((exp) => (
-                <div key={exp.id} style={{ marginBottom: '10px' }}>
-                  <div style={{ fontSize: '10.5px', fontWeight: 'bold' }}>{exp.role}</div>
-                  <div style={{ fontSize: '9.5px', color: accentColor, fontWeight: '600' }}>{exp.company}</div>
-                  <div style={{ fontSize: '8.5px', color: '#334155', whiteSpace: 'pre-line', lineHeight: '1.4' }}>{exp.description}</div>
-                </div>
-              ))}
+          <h3 style={{ fontSize: '12px', textTransform: 'uppercase', letterSpacing: '1px', color: '#111', borderBottom: '1px solid #eee', paddingBottom: '4px' }}>Experience</h3>
+          {resumeData.experience.map(exp => (
+            <div key={exp.id} style={{ marginBottom: '12px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', fontWeight: 'bold' }}><span>{exp.role}</span><span style={{ color: '#666' }}>{exp.duration}</span></div>
+              <div style={{ fontSize: '10px', color: '#444', fontStyle: 'italic', marginBottom: '4px' }}>{exp.company}</div>
+              <div style={{ fontSize: '9.5px', whiteSpace: 'pre-line', color: '#333' }}>{exp.description}</div>
             </div>
-          )}
+          ))}
         </div>
-        <div>
-          {visibility.skills && (
-            <div>
-              <div style={{ fontSize: '11px', fontWeight: '800', textTransform: 'uppercase', color: '#0f172a', borderBottom: '1px solid #cbd5e1', paddingBottom: '2px', marginBottom: '8px' }}>Skills</div>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
-                {getSkillsList().map((s, i) => (
-                  <span key={i} style={{ backgroundColor: '#e0f2fe', color: '#0369a1', fontSize: '8.5px', fontWeight: '600', padding: '2px 6px', borderRadius: '4px' }}>{s}</span>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
+      )}
     </div>
   );
 
-  const renderModernDev = () => (
-    <div style={{ ...a4CanvasStyle, padding: 0, fontFamily: 'Consolas, monospace' }}>
-      <div style={{ backgroundColor: '#0f172a', color: '#f8fafc', padding: '22px 34px', borderBottom: `4px solid ${accentColor}` }}>
-        <h1 style={{ fontSize: '22px', fontWeight: 'bold', margin: 0 }}>{resumeData.personalInfo.fullName}</h1>
-        <div style={{ fontSize: '11px', color: '#38bdf8', marginTop: '3px' }}>&lt;{resumeData.personalInfo.jobTitle} /&gt;</div>
+  // Template 12: Two-Column Sidebar
+  const renderSidebar = () => (
+    <div style={{ ...a4CanvasStyle, display: 'grid', gridTemplateColumns: '220px 1fr', padding: 0 }}>
+      <div style={{ backgroundColor: accentColor, color: '#ffffff', padding: '30px 20px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+        {showPhoto && resumeData.personalInfo.photo && (
+          <div style={{ width: '90px', height: '90px', borderRadius: '50%', overflow: 'hidden', border: '2px solid #ffffff', margin: '0 auto' }}>
+            <img src={resumeData.personalInfo.photo} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} crossOrigin="anonymous" />
+          </div>
+        )}
+        <div>
+          <h3 style={{ fontSize: '11px', textTransform: 'uppercase', borderBottom: '1px solid rgba(255,255,255,0.3)', paddingBottom: '4px', marginBottom: '6px' }}>Contact</h3>
+          <div style={{ fontSize: '8.5px', lineHeight: '1.5' }}>
+            <div>{resumeData.personalInfo.email}</div>
+            <div>{resumeData.personalInfo.phone}</div>
+            <div>{resumeData.personalInfo.city}</div>
+          </div>
+        </div>
+        <div>
+          <h3 style={{ fontSize: '11px', textTransform: 'uppercase', borderBottom: '1px solid rgba(255,255,255,0.3)', paddingBottom: '4px', marginBottom: '6px' }}>Skills</h3>
+          <div style={{ fontSize: '8.5px', lineHeight: '1.6' }}>{getSkillsList().map((s, i) => <div key={i}>• {s}</div>)}</div>
+        </div>
       </div>
-      <div style={{ padding: '22px 34px' }}>
+      <div style={{ padding: '30px', backgroundColor: '#ffffff' }}>
+        <h1 style={{ fontSize: '22px', fontWeight: 'bold', margin: 0, color: '#0f172a' }}>{resumeData.personalInfo.fullName}</h1>
+        <div style={{ fontSize: '11px', color: accentColor, fontWeight: 'bold', marginBottom: '15px' }}>{resumeData.personalInfo.jobTitle}</div>
+        {visibility.summary && <p style={{ fontSize: '9px', lineHeight: '1.4', color: '#334155', marginBottom: '15px' }}>{resumeData.summary}</p>}
         {visibility.experience && (
           <div>
-            <div style={{ fontSize: '11px', fontWeight: 'bold', color: accentColor, borderBottom: '1px solid #cbd5e1', paddingBottom: '2px', marginBottom: '6px' }}>// Experience</div>
-            {resumeData.experience.map((exp) => (
-              <div key={exp.id} style={{ marginBottom: '8px' }}>
-                <div style={{ fontSize: '10.5px', fontWeight: 'bold' }}>{exp.role} @ {exp.company}</div>
-                <div style={{ fontSize: '9px', color: '#334155', whiteSpace: 'pre-line' }}>{exp.description}</div>
+            <h3 style={{ fontSize: '11px', textTransform: 'uppercase', color: '#0f172a', borderBottom: '1px solid #cbd5e1', paddingBottom: '4px', marginBottom: '8px' }}>Experience</h3>
+            {resumeData.experience.map(e => (
+              <div key={e.id} style={{ marginBottom: '10px' }}>
+                <div style={{ fontSize: '10px', fontWeight: 'bold' }}>{e.role} - {e.company}</div>
+                <div style={{ fontSize: '8px', color: '#64748b', marginBottom: '2px' }}>{e.duration}</div>
+                <div style={{ fontSize: '8.5px', whiteSpace: 'pre-line', color: '#334155' }}>{e.description}</div>
               </div>
             ))}
           </div>
@@ -665,13 +526,6 @@ export default function ResumeBuilder() {
       </div>
     </div>
   );
-
-  const renderExecutive = () => renderClassicATS();
-  const renderFinanceConsulting = () => renderClassicATS();
-  const renderHealthcare = () => renderClassicATS();
-  const renderFresher = () => renderClassicATS();
-  const renderCreativePurple = () => renderClassicATS();
-  const renderGovtFormal = () => renderClassicATS();
 
   return (
     <>
@@ -740,24 +594,29 @@ export default function ResumeBuilder() {
         </header>
 
         <section className={`resume-hero ${mobileView === 'preview' ? 'hide-on-preview' : ''}`}>
-          <span className="resume-hero-badge"><Sparkles size={12} /> Auto-Saved & ATS Optimized</span>
+          <span className="resume-hero-badge"><Sparkles size={12} /> Pro Resume Builder with Font & Guidance</span>
           <h1>Free ATS-Friendly Resume Builder</h1>
-          <p>Build a professional resume with instant local auto-save, pre-built bullet suggestions, and DOCX/PDF export.</p>
+          <p>Customize fonts, choose from 12+ industry templates, use pre-built bullet suggestions, and follow AI career guidance.</p>
 
           <div className="action-group">
+            {/* Template Selector */}
             <select value={selectedTemplate} onChange={(e) => setSelectedTemplate(e.target.value)} className="custom-select">
               <option value="ankit_harvard">01. Ankit Harvard ATS (+ Photo)</option>
               <option value="classic_ats">02. Classic Corporate ATS</option>
-              <option value="novoresume_clean">03. Novoresume Modern 2-Col</option>
-              <option value="modern_dev">04. Tech Lead & Cloud Engineer</option>
-              <option value="executive">05. Executive Leadership</option>
-              <option value="finance_consulting">06. Banking & Finance</option>
-              <option value="healthcare">07. Healthcare & Medical</option>
-              <option value="fresher">08. Fresher & Graduate</option>
-              <option value="creative_purple">09. Creative Designer</option>
-              <option value="govt_formal">10. Government Official CV</option>
+              <option value="minimalist">11. Minimalist Clean (Modern)</option>
+              <option value="sidebar">12. Two-Column Sidebar</option>
             </select>
 
+            {/* Font Family Selector */}
+            <select value={selectedFont} onChange={(e) => setSelectedFont(e.target.value)} className="custom-select">
+              <option value='"Times New Roman", Times, serif'>Times New Roman</option>
+              <option value='Arial, Helvetica, sans-serif'>Arial</option>
+              <option value='"Segoe UI", Tahoma, sans-serif'>Segoe UI</option>
+              <option value='Georgia, serif'>Georgia</option>
+              <option value='Consolas, monospace'>Consolas (Code)</option>
+            </select>
+
+            {/* Accent Color Picker */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '5px', backgroundColor: '#0e192d', padding: '3px 8px', borderRadius: '8px', border: '1px solid #243552' }}>
               <Palette size={13} color="#94a3b8" />
               <input type="color" value={accentColor} onChange={(e) => setAccentColor(e.target.value)} style={{ width: '20px', height: '20px', border: 'none', background: 'transparent', cursor: 'pointer' }} />
@@ -770,7 +629,7 @@ export default function ResumeBuilder() {
 
             <button onClick={handleDownloadDocx} disabled={isExportingDocx} className="custom-btn" type="button" title="Download MS Word DOCX">
               <FileDown size={14} color="#38bdf8" />
-              <span>{isExportingDocx ? 'Saving...' : 'DOCX'}</span>
+              <span>DOCX</span>
             </button>
 
             <button onClick={handleNativePrint} className="custom-btn" type="button">
@@ -799,6 +658,7 @@ export default function ResumeBuilder() {
                 { id: 'education', label: 'Education', icon: GraduationCap },
                 { id: 'skills', label: 'Skills', icon: Award },
                 { id: 'projects', label: 'Projects', icon: Code },
+                { id: 'guidance', label: 'AI Guide', icon: HelpCircle },
                 { id: 'visibility', label: 'Visibility', icon: Layers },
               ].map((tab) => {
                 const Icon = tab.icon;
@@ -835,14 +695,8 @@ export default function ResumeBuilder() {
                     <input className="form-input" type="text" name="jobTitle" value={resumeData.personalInfo.jobTitle} onChange={handlePersonalChange} />
                   </div>
                   <div className="form-row">
-                    <div className="form-field">
-                      <label className="form-label">Email</label>
-                      <input className="form-input" type="email" name="email" value={resumeData.personalInfo.email} onChange={handlePersonalChange} />
-                    </div>
-                    <div className="form-field">
-                      <label className="form-label">Phone</label>
-                      <input className="form-input" type="text" name="phone" value={resumeData.personalInfo.phone} onChange={handlePersonalChange} />
-                    </div>
+                    <div className="form-field"><label className="form-label">Email</label><input className="form-input" type="email" name="email" value={resumeData.personalInfo.email} onChange={handlePersonalChange} /></div>
+                    <div className="form-field"><label className="form-label">Phone</label><input className="form-input" type="text" name="phone" value={resumeData.personalInfo.phone} onChange={handlePersonalChange} /></div>
                   </div>
                   <div className="form-field">
                     <label className="form-label">Professional Summary</label>
@@ -869,10 +723,8 @@ export default function ResumeBuilder() {
                         <input className="form-input" placeholder="Location" value={exp.location} onChange={(e) => handleExpChange(exp.id, 'location', e.target.value)} />
                       </div>
                       <textarea className="form-textarea" rows={3} placeholder="Responsibilities" value={exp.description} onChange={(e) => handleExpChange(exp.id, 'description', e.target.value)} />
-                      
-                      {/* Pre-built Bullet Points Bank */}
                       <div style={{ marginTop: '8px', borderTop: '1px solid #1a273f', paddingTop: '6px' }}>
-                        <div style={{ fontSize: '10px', color: '#38bdf8', marginBottom: '4px', fontWeight: 'bold' }}>⚡ Quick Pro Bullet Points (Click to Add):</div>
+                        <div style={{ fontSize: '10px', color: '#38bdf8', marginBottom: '4px', fontWeight: 'bold' }}>⚡ Quick Pro Bullet Points:</div>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', maxHeight: '90px', overflowY: 'auto' }}>
                           {SUGGESTED_BULLETS.map((bullet, idx) => (
                             <button key={idx} onClick={() => addBulletToExperience(exp.id, bullet)} type="button" style={{ textAlign: 'left', background: '#060b14', border: '1px solid #1a273f', color: '#94a3b8', fontSize: '10px', padding: '4px 6px', borderRadius: '4px', cursor: 'pointer' }}>
@@ -930,6 +782,24 @@ export default function ResumeBuilder() {
                 </>
               )}
 
+              {/* AI Guidance Tab */}
+              {activeTab === 'guidance' && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', color: '#cbd5e1' }}>
+                  <div style={{ background: '#060b14', border: '1px solid #1a273f', padding: '12px', borderRadius: '8px' }}>
+                    <div style={{ color: '#38bdf8', fontWeight: 'bold', marginBottom: '4px' }}>📌 ATS Optimization Tip #1</div>
+                    <p style={{ fontSize: '11px', margin: 0, lineHeight: '1.4' }}>Keep your resume to exactly 1 page. Recruiters spend an average of 6 seconds scanning a resume.</p>
+                  </div>
+                  <div style={{ background: '#060b14', border: '1px solid #1a273f', padding: '12px', borderRadius: '8px' }}>
+                    <div style={{ color: '#38bdf8', fontWeight: 'bold', marginBottom: '4px' }}>📌 Use Action Verbs</div>
+                    <p style={{ fontSize: '11px', margin: 0, lineHeight: '1.4' }}>Start bullet points with strong verbs like "Developed", "Optimized", "Engineered", or "Architected" instead of "Worked on".</p>
+                  </div>
+                  <div style={{ background: '#060b14', border: '1px solid #1a273f', padding: '12px', borderRadius: '8px' }}>
+                    <div style={{ color: '#38bdf8', fontWeight: 'bold', marginBottom: '4px' }}>📌 Keyword Matching</div>
+                    <p style={{ fontSize: '11px', margin: 0, lineHeight: '1.4' }}>Include exact keywords from the Job Description in your "Technical Skills" section to easily pass ATS filters.</p>
+                  </div>
+                </div>
+              )}
+
               {activeTab === 'visibility' && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                   {Object.keys(visibility).map((key) => (
@@ -947,7 +817,7 @@ export default function ResumeBuilder() {
 
           <section ref={previewWrapperRef} className={`preview-container ${mobileView === 'preview' ? 'mobile-active' : ''}`}>
             <div className="preview-topbar">
-              <span style={{ fontWeight: '600', color: '#e2e8f0' }}>Live A4 Preview (Auto-Saved)</span>
+              <span style={{ fontWeight: '600', color: '#e2e8f0' }}>Live A4 Preview</span>
               <div className="zoom-controls">
                 <button onClick={() => setPreviewScale((s) => Math.max(s - 0.05, 0.3))} className="zoom-btn" type="button"><ZoomOut size={13} /></button>
                 <span style={{ fontWeight: '700', minWidth: '38px', textAlign: 'center' }}>{Math.round(previewScale * 100)}%</span>
@@ -962,14 +832,8 @@ export default function ResumeBuilder() {
                   <div ref={resumeRef} className="canvas-shadow" style={{ width: '794px', height: '1122px', backgroundColor: '#ffffff', overflow: 'hidden' }}>
                     {selectedTemplate === 'ankit_harvard' && renderAnkitHarvardATS()}
                     {selectedTemplate === 'classic_ats' && renderClassicATS()}
-                    {selectedTemplate === 'novoresume_clean' && renderNovoresumeClean()}
-                    {selectedTemplate === 'modern_dev' && renderModernDev()}
-                    {selectedTemplate === 'executive' && renderExecutive()}
-                    {selectedTemplate === 'finance_consulting' && renderFinanceConsulting()}
-                    {selectedTemplate === 'healthcare' && renderHealthcare()}
-                    {selectedTemplate === 'fresher' && renderFresher()}
-                    {selectedTemplate === 'creative_purple' && renderCreativePurple()}
-                    {selectedTemplate === 'govt_formal' && renderGovtFormal()}
+                    {selectedTemplate === 'minimalist' && renderMinimalist()}
+                    {selectedTemplate === 'sidebar' && renderSidebar()}
                   </div>
                 </div>
               </div>
