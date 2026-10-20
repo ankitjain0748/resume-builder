@@ -4,7 +4,8 @@ import React, { useState, useRef, useEffect } from 'react';
 import { 
   User, Briefcase, GraduationCap, Award, Code, 
   Download, CheckCircle2, Trash2, Plus, Image as ImageIcon, 
-  Palette, Eye, EyeOff, Layers, Mail, Phone, MapPin, ZoomIn, ZoomOut, Smartphone, Monitor, Printer, Maximize2, Sparkles, FileDown, Type, CheckCircle, AlertTriangle
+  Palette, Eye, EyeOff, Layers, Mail, Phone, MapPin, Globe,
+  ZoomIn, ZoomOut, Smartphone, Monitor, Printer, Maximize2, Sparkles, FileDown, Type, CheckCircle, AlertTriangle
 } from 'lucide-react';
 import { FaGithub, FaLinkedin } from 'react-icons/fa';
 
@@ -50,7 +51,7 @@ export default function ResumeBuilder() {
 
   const [resumeData, setResumeData] = useState(() => {
     if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('pro_resume_builder_data_v3');
+      const saved = localStorage.getItem('pro_resume_builder_data_v4');
       if (saved) {
         try { return JSON.parse(saved); } catch (e) { console.error(e); }
       }
@@ -61,12 +62,12 @@ export default function ResumeBuilder() {
         jobTitle: "Full Stack Web Developer",
         email: "alex.morgan@example.com",
         phone: "+1 555-010-2048",
-        address: "123 Demo Street, Sample City",
-        city: "Sample City",
-        country: "United States",
-        linkedin: "linkedin.com/in/alex-morgan",
+        address: "New York, USA",
+        city: "New York",
+        country: "USA",
+        linkedin: "linkedin.com/in/alexmorgan",
         github: "github.com/alexmorgan",
-        portfolio: "alexmorgan.example.com",
+        portfolio: "alexmorgan.dev",
         licenseNo: "DEMO-123456",
         declaration: "I hereby declare that the information provided above is true and accurate.",
         photo: DEFAULT_AVATAR,
@@ -82,7 +83,7 @@ export default function ResumeBuilder() {
           id: "edu-1",
           degree: "Bachelor of Technology in Computer Science",
           institution: "Example Institute of Technology",
-          location: "Sample City",
+          location: "New York, USA",
           duration: "Aug 2020 – May 2024",
           grade: "8.5 CGPA",
         }
@@ -92,7 +93,7 @@ export default function ResumeBuilder() {
           id: "exp-1",
           role: "Full Stack Developer",
           company: "Tech Solutions Inc.",
-          location: "Sample City",
+          location: "New York, USA",
           duration: "Jan 2023 – Present",
           description: "Developed responsive web applications using React.js, Node.js, Express.js, and MongoDB.\nImplemented secure authentication and REST APIs for web applications.",
         }
@@ -125,7 +126,7 @@ export default function ResumeBuilder() {
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      localStorage.setItem('pro_resume_builder_data_v3', JSON.stringify(resumeData));
+      localStorage.setItem('pro_resume_builder_data_v4', JSON.stringify(resumeData));
     }
   }, [resumeData]);
 
@@ -253,9 +254,9 @@ export default function ResumeBuilder() {
     }));
   };
 
-  // ATS Score Calculator Logic (85%+ Target)
+  // ATS Score Calculator
   const calculateAtsScore = () => {
-    let score = 50;
+    let score = 40;
     const checks = [];
 
     if (resumeData.personalInfo.fullName.trim().length > 2) { score += 10; checks.push({ pass: true, msg: "Full Name is provided." }); } 
@@ -264,14 +265,17 @@ export default function ResumeBuilder() {
     if (resumeData.personalInfo.email.includes('@')) { score += 10; checks.push({ pass: true, msg: "Professional Email format is valid." }); } 
     else checks.push({ pass: false, msg: "Add a valid Email address." });
 
+    if (resumeData.personalInfo.linkedin?.trim().length > 5) { score += 10; checks.push({ pass: true, msg: "LinkedIn profile added." }); }
+    else checks.push({ pass: false, msg: "Add your LinkedIn profile for recruiters." });
+
+    if (resumeData.personalInfo.address?.trim().length > 3) { score += 5; checks.push({ pass: true, msg: "Location/Address is specified." }); }
+    else checks.push({ pass: false, msg: "Add your City/Location." });
+
     if (resumeData.summary.length > 50) { score += 15; checks.push({ pass: true, msg: "Professional summary is detailed (>50 chars)." }); } 
     else checks.push({ pass: false, msg: "Expand your summary to at least 50 characters." });
 
-    if (resumeData.experience.length > 0 && resumeData.experience[0].description.length > 20) { score += 15; checks.push({ pass: true, msg: "Work experience includes detailed points." }); } 
+    if (resumeData.experience.length > 0 && resumeData.experience[0].description.length > 20) { score += 10; checks.push({ pass: true, msg: "Work experience includes detailed points." }); } 
     else checks.push({ pass: false, msg: "Add work experience bullet points." });
-
-    if (resumeData.skillCategories.languages.length > 3) { score += 15; checks.push({ pass: true, msg: "Technical skills are specified." }); } 
-    else checks.push({ pass: false, msg: "Add core technical skills and languages." });
 
     return { score: Math.min(score, 100), checks };
   };
@@ -349,7 +353,12 @@ export default function ResumeBuilder() {
         <body style="font-family: Arial, sans-serif; padding: 20px;">
           <h1 style="color: #1e3a8a; text-transform: uppercase;">${resumeData.personalInfo.fullName}</h1>
           <p><b>${resumeData.personalInfo.jobTitle}</b></p>
-          <p>${resumeData.personalInfo.email} | ${resumeData.personalInfo.phone} | ${resumeData.personalInfo.city}</p>
+          <p>
+            ${resumeData.personalInfo.email} | ${resumeData.personalInfo.phone} | ${resumeData.personalInfo.address || resumeData.personalInfo.city}
+            ${resumeData.personalInfo.linkedin ? ` | LinkedIn: ${resumeData.personalInfo.linkedin}` : ''}
+            ${resumeData.personalInfo.github ? ` | GitHub: ${resumeData.personalInfo.github}` : ''}
+            ${resumeData.personalInfo.portfolio ? ` | Portfolio: ${resumeData.personalInfo.portfolio}` : ''}
+          </p>
           <hr />
           <h3>Summary</h3>
           <p>${resumeData.summary}</p>
@@ -378,14 +387,6 @@ export default function ResumeBuilder() {
 
   const handleNativePrint = () => window.print();
 
-  const getSkillsList = () => {
-    return [
-      ...resumeData.skillCategories.languages.split(','),
-      ...resumeData.skillCategories.frameworks.split(','),
-      ...resumeData.skillCategories.tools.split(',')
-    ].map(s => s.trim()).filter(Boolean);
-  };
-
   const a4CanvasStyle = {
     width: '794px',
     height: '1122px',
@@ -399,44 +400,84 @@ export default function ResumeBuilder() {
     fontFamily: selectedFont
   };
 
-  // ================= 10 ALL ORIGINAL TEMPLATES =================
+  // ================= 01. HARVARD ATS TEMPLATE =================
   const renderAnkitHarvardATS = () => (
-    <div style={{ ...a4CanvasStyle, padding: '32px 42px', fontSize: '11px', lineHeight: '1.35' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1.5px solid #000000', paddingBottom: '10px', marginBottom: '10px' }}>
+    <div style={{ ...a4CanvasStyle, padding: '34px 42px', fontSize: '11px', lineHeight: '1.4' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1.5px solid #000000', paddingBottom: '10px', marginBottom: '12px' }}>
         <div style={{ flex: 1, textAlign: showPhoto && resumeData.personalInfo.photo ? 'left' : 'center' }}>
-          <h1 style={{ fontSize: '23px', fontWeight: 'bold', margin: '0 0 2px 0', textTransform: 'uppercase' }}>{resumeData.personalInfo.fullName}</h1>
-          <div style={{ fontSize: '11px', marginBottom: '4px' }}>{resumeData.personalInfo.address}</div>
-          <div style={{ fontSize: '10px', display: 'flex', gap: '12px' }}>
-            <span>{resumeData.personalInfo.phone}</span><span>{resumeData.personalInfo.email}</span><span>{resumeData.personalInfo.linkedin}</span>
+          <h1 style={{ fontSize: '24px', fontWeight: 'bold', margin: '0 0 4px 0', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+            {resumeData.personalInfo.fullName}
+          </h1>
+          <div style={{ fontSize: '12px', fontWeight: '600', color: '#334155', marginBottom: '6px' }}>
+            {resumeData.personalInfo.jobTitle}
+          </div>
+          
+          {/* Contact & Social Links Bar */}
+          <div style={{ fontSize: '10px', display: 'flex', flexWrap: 'wrap', gap: '8px', justifyContent: showPhoto && resumeData.personalInfo.photo ? 'flex-start' : 'center', alignItems: 'center', color: '#1e293b' }}>
+            {resumeData.personalInfo.address && <span>📍 {resumeData.personalInfo.address}</span>}
+            {resumeData.personalInfo.phone && <span>• 📞 {resumeData.personalInfo.phone}</span>}
+            {resumeData.personalInfo.email && <span>• ✉️ {resumeData.personalInfo.email}</span>}
+            {resumeData.personalInfo.linkedin && (
+              <span>• <strong>in</strong> {resumeData.personalInfo.linkedin.replace(/^https?:\/\//, '')}</span>
+            )}
+            {resumeData.personalInfo.github && (
+              <span>• <strong>git</strong> {resumeData.personalInfo.github.replace(/^https?:\/\//, '')}</span>
+            )}
+            {resumeData.personalInfo.portfolio && (
+              <span>• 🌐 {resumeData.personalInfo.portfolio.replace(/^https?:\/\//, '')}</span>
+            )}
           </div>
         </div>
+
         {showPhoto && resumeData.personalInfo.photo && (
-          <div style={{ width: '70px', height: '82px', border: '1.5px solid #000000', padding: '2px', backgroundColor: '#ffffff', marginLeft: '16px', flexShrink: 0 }}>
+          <div style={{ width: '75px', height: '88px', border: '1.5px solid #000000', padding: '2px', backgroundColor: '#ffffff', marginLeft: '16px', flexShrink: 0 }}>
             <img src={resumeData.personalInfo.photo} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} crossOrigin="anonymous" />
           </div>
         )}
       </div>
 
+      {visibility.summary && resumeData.summary && (
+        <div style={{ marginBottom: '12px' }}>
+          <div style={{ fontSize: '12.5px', fontWeight: 'bold', borderBottom: '1px solid #000000', textTransform: 'uppercase', marginBottom: '5px' }}>Professional Summary</div>
+          <p style={{ margin: 0, fontSize: '10.5px', lineHeight: '1.5', textAlign: 'justify' }}>{resumeData.summary}</p>
+        </div>
+      )}
+
       {visibility.education && resumeData.education.length > 0 && (
-        <div style={{ marginBottom: '10px' }}>
-          <div style={{ fontSize: '13px', fontWeight: 'bold', borderBottom: '1px solid #000000', marginBottom: '4px' }}>Education</div>
+        <div style={{ marginBottom: '12px' }}>
+          <div style={{ fontSize: '12.5px', fontWeight: 'bold', borderBottom: '1px solid #000000', textTransform: 'uppercase', marginBottom: '5px' }}>Education</div>
           {resumeData.education.map((edu) => (
-            <div key={edu.id} style={{ marginBottom: '4px' }}>
+            <div key={edu.id} style={{ marginBottom: '6px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11.5px' }}><strong>{edu.institution}</strong><strong>{edu.duration}</strong></div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10.5px', fontStyle: 'italic', color: '#333333' }}><span>{edu.degree}</span><span>{edu.location}</span></div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10.5px', fontStyle: 'italic', color: '#333333' }}><span>{edu.degree} {edu.grade ? `(${edu.grade})` : ''}</span><span>{edu.location}</span></div>
             </div>
           ))}
         </div>
       )}
 
       {visibility.experience && resumeData.experience.length > 0 && (
-        <div style={{ marginBottom: '10px' }}>
-          <div style={{ fontSize: '13px', fontWeight: 'bold', borderBottom: '1px solid #000000', marginBottom: '4px' }}>Experience</div>
+        <div style={{ marginBottom: '12px' }}>
+          <div style={{ fontSize: '12.5px', fontWeight: 'bold', borderBottom: '1px solid #000000', textTransform: 'uppercase', marginBottom: '5px' }}>Work Experience</div>
           {resumeData.experience.map((exp) => (
-            <div key={exp.id} style={{ marginBottom: '6px' }}>
+            <div key={exp.id} style={{ marginBottom: '8px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11.5px' }}><strong>{exp.company}</strong><strong>{exp.duration}</strong></div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10.5px', fontStyle: 'italic', color: '#333333', marginBottom: '2px' }}><span>{exp.role}</span><span>{exp.location}</span></div>
-              <div style={{ fontSize: '10px', whiteSpace: 'pre-line', lineHeight: '1.4', paddingLeft: '8px' }}>{exp.description}</div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10.5px', fontStyle: 'italic', color: '#333333', marginBottom: '3px' }}><span>{exp.role}</span><span>{exp.location}</span></div>
+              <div style={{ fontSize: '10.5px', whiteSpace: 'pre-line', lineHeight: '1.45', paddingLeft: '8px' }}>{exp.description}</div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {visibility.projects && resumeData.projects.length > 0 && (
+        <div style={{ marginBottom: '12px' }}>
+          <div style={{ fontSize: '12.5px', fontWeight: 'bold', borderBottom: '1px solid #000000', textTransform: 'uppercase', marginBottom: '5px' }}>Key Projects</div>
+          {resumeData.projects.map((proj) => (
+            <div key={proj.id} style={{ marginBottom: '6px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11.5px' }}>
+                <strong>{proj.title} {proj.tech ? <span style={{ fontWeight: 'normal', fontSize: '10px', color: '#475569' }}>| {proj.tech}</span> : ''}</strong>
+                <strong>{proj.duration}</strong>
+              </div>
+              <div style={{ fontSize: '10.5px', lineHeight: '1.4', paddingLeft: '8px' }}>{proj.description}</div>
             </div>
           ))}
         </div>
@@ -444,24 +485,33 @@ export default function ResumeBuilder() {
 
       {visibility.skills && (
         <div style={{ marginBottom: '10px' }}>
-          <div style={{ fontSize: '13px', fontWeight: 'bold', borderBottom: '1px solid #000000', marginBottom: '4px' }}>Technical Skills</div>
+          <div style={{ fontSize: '12.5px', fontWeight: 'bold', borderBottom: '1px solid #000000', textTransform: 'uppercase', marginBottom: '5px' }}>Technical & Core Skills</div>
           <div style={{ fontSize: '10.5px', lineHeight: '1.5' }}>
-            <div><strong>Languages:</strong> {resumeData.skillCategories.languages}</div>
-            <div><strong>Developer Tools:</strong> {resumeData.skillCategories.tools}</div>
-            <div><strong>Technologies/Frameworks:</strong> {resumeData.skillCategories.frameworks}</div>
+            {resumeData.skillCategories.languages && <div><strong>Languages:</strong> {resumeData.skillCategories.languages}</div>}
+            {resumeData.skillCategories.frameworks && <div><strong>Frameworks & Libraries:</strong> {resumeData.skillCategories.frameworks}</div>}
+            {resumeData.skillCategories.tools && <div><strong>Developer Tools:</strong> {resumeData.skillCategories.tools}</div>}
+            {resumeData.skillCategories.softSkills && <div><strong>Soft Skills:</strong> {resumeData.skillCategories.softSkills}</div>}
           </div>
         </div>
       )}
     </div>
   );
 
+  // ================= 02. CLASSIC CORPORATE ATS TEMPLATE =================
   const renderClassicATS = () => (
     <div style={{ ...a4CanvasStyle, padding: '34px 42px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: `2.5px solid ${accentColor}`, paddingBottom: '10px', marginBottom: '12px' }}>
         <div style={{ flex: 1 }}>
           <h1 style={{ fontSize: '22px', fontWeight: 'bold', textTransform: 'uppercase', margin: 0, color: '#0f172a' }}>{resumeData.personalInfo.fullName}</h1>
-          <div style={{ fontSize: '11.5px', fontWeight: 'bold', color: accentColor, marginTop: '3px' }}>{resumeData.personalInfo.jobTitle}</div>
-          <div style={{ fontSize: '9.5px', color: '#475569', marginTop: '5px' }}>{resumeData.personalInfo.email} • {resumeData.personalInfo.phone} • {resumeData.personalInfo.city}</div>
+          <div style={{ fontSize: '12px', fontWeight: 'bold', color: accentColor, marginTop: '3px' }}>{resumeData.personalInfo.jobTitle}</div>
+          
+          <div style={{ fontSize: '9.5px', color: '#475569', marginTop: '6px', display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center' }}>
+            {resumeData.personalInfo.email && <span>{resumeData.personalInfo.email}</span>}
+            {resumeData.personalInfo.phone && <span>• {resumeData.personalInfo.phone}</span>}
+            {resumeData.personalInfo.address && <span>• {resumeData.personalInfo.address}</span>}
+            {resumeData.personalInfo.linkedin && <span>• in/{resumeData.personalInfo.linkedin.replace(/^https?:\/\/(www\.)?linkedin\.com\/in\//, '')}</span>}
+            {resumeData.personalInfo.github && <span>• git/{resumeData.personalInfo.github.replace(/^https?:\/\/(www\.)?github\.com\//, '')}</span>}
+          </div>
         </div>
         {showPhoto && resumeData.personalInfo.photo && (
           <div style={{ width: '74px', height: '74px', borderRadius: '10px', overflow: 'hidden', border: `2px solid ${accentColor}`, flexShrink: 0 }}>
@@ -469,16 +519,43 @@ export default function ResumeBuilder() {
           </div>
         )}
       </div>
-      {visibility.summary && <p style={{ fontSize: '9.5px', lineHeight: '1.45', color: '#334155' }}>{resumeData.summary}</p>}
-      {visibility.experience && (
-        <div>
-          <div style={{ fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', color: accentColor, borderBottom: '1px solid #cbd5e1', marginBottom: '6px' }}>Work Experience</div>
+
+      {visibility.summary && resumeData.summary && <p style={{ fontSize: '9.5px', lineHeight: '1.45', color: '#334155', marginBottom: '12px' }}>{resumeData.summary}</p>}
+
+      {visibility.experience && resumeData.experience.length > 0 && (
+        <div style={{ marginBottom: '12px' }}>
+          <div style={{ fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', color: accentColor, borderBottom: '1px solid #cbd5e1', marginBottom: '6px', paddingBottom: '2px' }}>Work Experience</div>
           {resumeData.experience.map(e => (
             <div key={e.id} style={{ marginBottom: '8px' }}>
-              <strong>{e.role}</strong> — <span style={{ color: '#475569' }}>{e.company}</span> ({e.duration})
-              <div style={{ fontSize: '9.5px', color: '#334155', whiteSpace: 'pre-line' }}>{e.description}</div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10.5px' }}>
+                <span><strong>{e.role}</strong> — <span style={{ color: '#475569' }}>{e.company}</span></span>
+                <span style={{ color: '#64748b', fontSize: '9.5px' }}>{e.duration}</span>
+              </div>
+              <div style={{ fontSize: '9.5px', color: '#334155', whiteSpace: 'pre-line', marginTop: '2px' }}>{e.description}</div>
             </div>
           ))}
+        </div>
+      )}
+
+      {visibility.education && resumeData.education.length > 0 && (
+        <div style={{ marginBottom: '12px' }}>
+          <div style={{ fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', color: accentColor, borderBottom: '1px solid #cbd5e1', marginBottom: '6px', paddingBottom: '2px' }}>Education</div>
+          {resumeData.education.map(ed => (
+            <div key={ed.id} style={{ marginBottom: '4px', display: 'flex', justifyContent: 'space-between', fontSize: '10px' }}>
+              <span><strong>{ed.degree}</strong>, {ed.institution}</span>
+              <span style={{ color: '#64748b' }}>{ed.duration}</span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {visibility.skills && (
+        <div>
+          <div style={{ fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', color: accentColor, borderBottom: '1px solid #cbd5e1', marginBottom: '6px', paddingBottom: '2px' }}>Skills & Competencies</div>
+          <div style={{ fontSize: '9.5px', lineHeight: '1.5', color: '#334155' }}>
+            <div><strong>Tech Stack:</strong> {resumeData.skillCategories.languages}, {resumeData.skillCategories.frameworks}</div>
+            <div><strong>Tools:</strong> {resumeData.skillCategories.tools}</div>
+          </div>
         </div>
       )}
     </div>
@@ -522,7 +599,7 @@ export default function ResumeBuilder() {
         .form-scroller { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 14px; font-size: 12px; }
         .form-field { display: flex; flex-direction: column; gap: 4px; }
         .form-label { font-weight: 700; color: #94a3b8; font-size: 11px; text-transform: uppercase; }
-        .form-input, .form-textarea { background-color: #060b14; border: 1px solid #1a273f; border-radius: 8px; padding: 10px 12px; font-size: 13.5px; color: #ffffff; outline: none; width: 100%; }
+        .form-input, .form-textarea { background-color: #060b14; border: 1px solid #1a273f; border-radius: 8px; padding: 10px 12px; font-size: 13px; color: #ffffff; outline: none; width: 100%; }
         .form-input:focus, .form-textarea:focus { border-color: #3b82f6; }
         .form-card { background-color: #060b14; border: 1px solid #1a273f; border-radius: 9px; padding: 12px; margin-bottom: 8px; position: relative; }
         .form-row { display: flex; gap: 10px; }
@@ -562,10 +639,9 @@ export default function ResumeBuilder() {
         <section className={`resume-hero ${mobileView === 'preview' ? 'hide-on-preview' : ''}`}>
           <span className="resume-hero-badge"><Sparkles size={12} /> ATS Optimizer & Font Customizer</span>
           <h1>Free ATS-Friendly Resume Builder</h1>
-          <p>Choose from 10 original templates, change font styles instantly, and check your resume's ATS score in real-time.</p>
+          <p>Choose from 10 original templates, customize contact & social links instantly, and check ATS compatibility.</p>
 
           <div className="action-group">
-            {/* All 10 Original Templates */}
             <select value={selectedTemplate} onChange={(e) => setSelectedTemplate(e.target.value)} className="custom-select">
               <option value="ankit_harvard">01. Ankit Harvard ATS (Match + Photo)</option>
               <option value="classic_ats">02. Classic Corporate ATS (Universal MNC)</option>
@@ -579,7 +655,6 @@ export default function ResumeBuilder() {
               <option value="govt_formal">10. Government Official CV</option>
             </select>
 
-            {/* Font Family Selector */}
             <select value={selectedFont} onChange={(e) => setSelectedFont(e.target.value)} className="custom-select">
               <option value='"Times New Roman", Times, serif'>Times New Roman</option>
               <option value='Arial, Helvetica, sans-serif'>Arial</option>
@@ -588,7 +663,6 @@ export default function ResumeBuilder() {
               <option value='Consolas, monospace'>Consolas (Code)</option>
             </select>
 
-            {/* Accent Color Picker */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '5px', backgroundColor: '#0e192d', padding: '3px 8px', borderRadius: '8px', border: '1px solid #243552' }}>
               <Palette size={13} color="#94a3b8" />
               <input type="color" value={accentColor} onChange={(e) => setAccentColor(e.target.value)} style={{ width: '20px', height: '20px', border: 'none', background: 'transparent', cursor: 'pointer' }} />
@@ -625,7 +699,7 @@ export default function ResumeBuilder() {
           <section className={`editor-container ${mobileView === 'editor' ? 'mobile-active' : ''}`}>
             <div className="nav-tabs">
               {[
-                { id: 'personal', label: 'Personal', icon: User },
+                { id: 'personal', label: 'Personal & Links', icon: User },
                 { id: 'experience', label: 'Experience', icon: Briefcase },
                 { id: 'education', label: 'Education', icon: GraduationCap },
                 { id: 'skills', label: 'Skills', icon: Award },
@@ -645,7 +719,7 @@ export default function ResumeBuilder() {
             <div className="form-scroller">
               {activeTab === 'personal' && (
                 <>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#060b14', padding: '8px 6px', borderRadius: '9px', border: '1px solid #1a273f' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#060b14', padding: '8px 10px', borderRadius: '9px', border: '1px solid #1a273f' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                       <div style={{ width: '48px', height: '48px', borderRadius: '7px', overflow: 'hidden', backgroundColor: '#0e192d', border: '1px solid #243552', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         {resumeData.personalInfo.photo ? <img src={resumeData.personalInfo.photo} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} crossOrigin="anonymous" /> : <ImageIcon size={20} color="#94a3b8" />}
@@ -658,13 +732,28 @@ export default function ResumeBuilder() {
                     {resumeData.personalInfo.photo && <button onClick={removePhoto} className="custom-btn" style={{ padding: '4px 7px', fontSize: '10px', color: '#ef4444' }} type="button">Remove</button>}
                   </div>
 
-                  <div className="form-field"><label className="form-label">Full Name</label><input className="form-input" type="text" name="fullName" value={resumeData.personalInfo.fullName} onChange={handlePersonalChange} /></div>
-                  <div className="form-field"><label className="form-label">Job Title / Designation</label><input className="form-input" type="text" name="jobTitle" value={resumeData.personalInfo.jobTitle} onChange={handlePersonalChange} /></div>
                   <div className="form-row">
-                    <div className="form-field"><label className="form-label">Email</label><input className="form-input" type="email" name="email" value={resumeData.personalInfo.email} onChange={handlePersonalChange} /></div>
-                    <div className="form-field"><label className="form-label">Phone</label><input className="form-input" type="text" name="phone" value={resumeData.personalInfo.phone} onChange={handlePersonalChange} /></div>
+                    <div className="form-field"><label className="form-label">Full Name</label><input className="form-input" type="text" name="fullName" value={resumeData.personalInfo.fullName} onChange={handlePersonalChange} placeholder="e.g. John Doe" /></div>
+                    <div className="form-field"><label className="form-label">Job Title / Designation</label><input className="form-input" type="text" name="jobTitle" value={resumeData.personalInfo.jobTitle} onChange={handlePersonalChange} placeholder="e.g. Software Engineer" /></div>
                   </div>
-                  <div className="form-field"><label className="form-label">Professional Summary</label><textarea className="form-textarea" rows={3} value={resumeData.summary} onChange={(e) => setResumeData({ ...resumeData, summary: e.target.value })} /></div>
+
+                  <div className="form-row">
+                    <div className="form-field"><label className="form-label">Email Address</label><input className="form-input" type="email" name="email" value={resumeData.personalInfo.email} onChange={handlePersonalChange} placeholder="name@domain.com" /></div>
+                    <div className="form-field"><label className="form-label">Phone Number</label><input className="form-input" type="text" name="phone" value={resumeData.personalInfo.phone} onChange={handlePersonalChange} placeholder="+1 555-010-0000" /></div>
+                  </div>
+
+                  {/* Enhanced Address & Social Inputs */}
+                  <div className="form-row">
+                    <div className="form-field"><label className="form-label">Address / Location</label><input className="form-input" type="text" name="address" value={resumeData.personalInfo.address} onChange={handlePersonalChange} placeholder="e.g. New York, USA" /></div>
+                    <div className="form-field"><label className="form-label">LinkedIn Profile URL</label><input className="form-input" type="text" name="linkedin" value={resumeData.personalInfo.linkedin} onChange={handlePersonalChange} placeholder="linkedin.com/in/username" /></div>
+                  </div>
+
+                  <div className="form-row">
+                    <div className="form-field"><label className="form-label">GitHub Profile URL</label><input className="form-input" type="text" name="github" value={resumeData.personalInfo.github} onChange={handlePersonalChange} placeholder="github.com/username" /></div>
+                    <div className="form-field"><label className="form-label">Portfolio Website (Optional)</label><input className="form-input" type="text" name="portfolio" value={resumeData.personalInfo.portfolio} onChange={handlePersonalChange} placeholder="portfolio.dev" /></div>
+                  </div>
+
+                  <div className="form-field"><label className="form-label">Professional Summary</label><textarea className="form-textarea" rows={3} value={resumeData.summary} onChange={(e) => setResumeData({ ...resumeData, summary: e.target.value })} placeholder="Write a short impact-driven summary..." /></div>
                 </>
               )}
 
@@ -679,13 +768,13 @@ export default function ResumeBuilder() {
                       <button onClick={() => removeExperience(exp.id)} style={{ position: 'absolute', top: '8px', right: '8px', background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer' }} type="button"><Trash2 size={13} /></button>
                       <div className="form-row" style={{ marginBottom: '6px' }}>
                         <input className="form-input" placeholder="Company Name" value={exp.company} onChange={(e) => handleExpChange(exp.id, 'company', e.target.value)} />
-                        <input className="form-input" placeholder="Role" value={exp.role} onChange={(e) => handleExpChange(exp.id, 'role', e.target.value)} />
+                        <input className="form-input" placeholder="Role / Title" value={exp.role} onChange={(e) => handleExpChange(exp.id, 'role', e.target.value)} />
                       </div>
                       <div className="form-row" style={{ marginBottom: '6px' }}>
-                        <input className="form-input" placeholder="Duration" value={exp.duration} onChange={(e) => handleExpChange(exp.id, 'duration', e.target.value)} />
+                        <input className="form-input" placeholder="Duration (e.g. 2022 - Present)" value={exp.duration} onChange={(e) => handleExpChange(exp.id, 'duration', e.target.value)} />
                         <input className="form-input" placeholder="Location" value={exp.location} onChange={(e) => handleExpChange(exp.id, 'location', e.target.value)} />
                       </div>
-                      <textarea className="form-textarea" rows={3} placeholder="Responsibilities" value={exp.description} onChange={(e) => handleExpChange(exp.id, 'description', e.target.value)} />
+                      <textarea className="form-textarea" rows={3} placeholder="Key Achievements & Responsibilities" value={exp.description} onChange={(e) => handleExpChange(exp.id, 'description', e.target.value)} />
                       <div style={{ marginTop: '8px', borderTop: '1px solid #1a273f', paddingTop: '6px' }}>
                         <div style={{ fontSize: '10px', color: '#38bdf8', marginBottom: '4px', fontWeight: 'bold' }}>⚡ Quick Pro Bullet Points:</div>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', maxHeight: '90px', overflowY: 'auto' }}>
@@ -710,11 +799,11 @@ export default function ResumeBuilder() {
                   {resumeData.education.map((edu) => (
                     <div key={edu.id} className="form-card">
                       <button onClick={() => removeEducation(edu.id)} style={{ position: 'absolute', top: '8px', right: '8px', background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer' }} type="button"><Trash2 size={13} /></button>
-                      <div className="form-field" style={{ marginBottom: '6px' }}><input className="form-input" placeholder="Institution" value={edu.institution} onChange={(e) => handleEduChange(edu.id, 'institution', e.target.value)} /></div>
-                      <div className="form-field" style={{ marginBottom: '6px' }}><input className="form-input" placeholder="Degree" value={edu.degree} onChange={(e) => handleEduChange(edu.id, 'degree', e.target.value)} /></div>
+                      <div className="form-field" style={{ marginBottom: '6px' }}><input className="form-input" placeholder="Institution / University" value={edu.institution} onChange={(e) => handleEduChange(edu.id, 'institution', e.target.value)} /></div>
+                      <div className="form-field" style={{ marginBottom: '6px' }}><input className="form-input" placeholder="Degree / Course" value={edu.degree} onChange={(e) => handleEduChange(edu.id, 'degree', e.target.value)} /></div>
                       <div className="form-row">
-                        <input className="form-input" placeholder="Duration" value={edu.duration} onChange={(e) => handleEduChange(edu.id, 'duration', e.target.value)} />
-                        <input className="form-input" placeholder="Grade/CGPA" value={edu.grade} onChange={(e) => handleEduChange(edu.id, 'grade', e.target.value)} />
+                        <input className="form-input" placeholder="Duration (e.g. 2020 - 2024)" value={edu.duration} onChange={(e) => handleEduChange(edu.id, 'duration', e.target.value)} />
+                        <input className="form-input" placeholder="Grade / GPA" value={edu.grade} onChange={(e) => handleEduChange(edu.id, 'grade', e.target.value)} />
                       </div>
                     </div>
                   ))}
@@ -724,8 +813,9 @@ export default function ResumeBuilder() {
               {activeTab === 'skills' && (
                 <>
                   <div className="form-field"><label className="form-label">Languages</label><input className="form-input" value={resumeData.skillCategories.languages} onChange={(e) => setResumeData({ ...resumeData, skillCategories: { ...resumeData.skillCategories, languages: e.target.value } })} /></div>
-                  <div className="form-field"><label className="form-label">Tools</label><input className="form-input" value={resumeData.skillCategories.tools} onChange={(e) => setResumeData({ ...resumeData, skillCategories: { ...resumeData.skillCategories, tools: e.target.value } })} /></div>
-                  <div className="form-field"><label className="form-label">Frameworks</label><input className="form-input" value={resumeData.skillCategories.frameworks} onChange={(e) => setResumeData({ ...resumeData, skillCategories: { ...resumeData.skillCategories, frameworks: e.target.value } })} /></div>
+                  <div className="form-field"><label className="form-label">Tools & Cloud</label><input className="form-input" value={resumeData.skillCategories.tools} onChange={(e) => setResumeData({ ...resumeData, skillCategories: { ...resumeData.skillCategories, tools: e.target.value } })} /></div>
+                  <div className="form-field"><label className="form-label">Frameworks & Libraries</label><input className="form-input" value={resumeData.skillCategories.frameworks} onChange={(e) => setResumeData({ ...resumeData, skillCategories: { ...resumeData.skillCategories, frameworks: e.target.value } })} /></div>
+                  <div className="form-field"><label className="form-label">Soft Skills</label><input className="form-input" value={resumeData.skillCategories.softSkills} onChange={(e) => setResumeData({ ...resumeData, skillCategories: { ...resumeData.skillCategories, softSkills: e.target.value } })} /></div>
                 </>
               )}
 
@@ -738,14 +828,16 @@ export default function ResumeBuilder() {
                   {resumeData.projects.map((proj) => (
                     <div key={proj.id} className="form-card">
                       <button onClick={() => removeProject(proj.id)} style={{ position: 'absolute', top: '8px', right: '8px', background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer' }} type="button"><Trash2 size={13} /></button>
-                      <div className="form-row" style={{ marginBottom: '6px' }}><input className="form-input" placeholder="Title" value={proj.title} onChange={(e) => handleProjChange(proj.id, 'title', e.target.value)} /></div>
-                      <textarea className="form-textarea" rows={3} placeholder="Description" value={proj.description} onChange={(e) => handleProjChange(proj.id, 'description', e.target.value)} />
+                      <div className="form-row" style={{ marginBottom: '6px' }}>
+                        <input className="form-input" placeholder="Project Title" value={proj.title} onChange={(e) => handleProjChange(proj.id, 'title', e.target.value)} />
+                        <input className="form-input" placeholder="Tech Stack Used" value={proj.tech} onChange={(e) => handleProjChange(proj.id, 'tech', e.target.value)} />
+                      </div>
+                      <textarea className="form-textarea" rows={3} placeholder="Project Description & Results" value={proj.description} onChange={(e) => handleProjChange(proj.id, 'description', e.target.value)} />
                     </div>
                   ))}
                 </>
               )}
 
-              {/* AI ATS Check Tab (85%+ Target Guidance) */}
               {activeTab === 'atsScore' && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                   <div style={{ background: '#060b14', border: '1px solid #1a273f', padding: '16px', borderRadius: '10px', textAlign: 'center' }}>
