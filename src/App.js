@@ -6,7 +6,7 @@ import {
   Download, CheckCircle2, Trash2, Plus, Image as ImageIcon, 
   Palette, Eye, EyeOff, Layers, Mail, Phone, MapPin, Globe,
   ZoomIn, ZoomOut, Smartphone, Monitor, Printer, Maximize2, Sparkles, FileDown, Type, CheckCircle, AlertTriangle, X,
-  ChevronUp, ChevronDown
+  ChevronUp, ChevronDown, UploadCloud, FileText, Loader2
 } from 'lucide-react';
 import { FaGithub, FaLinkedin } from 'react-icons/fa';
 
@@ -75,8 +75,15 @@ export default function ResumeBuilder() {
     return DEFAULT_PRESET_BULLETS;
   });
 
+  // Import Modal & Loading States
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [isParsingDoc, setIsParsingDoc] = useState(false);
+  const [pasteResumeText, setPasteResumeText] = useState('');
+  const [importStatusMsg, setImportStatusMsg] = useState('');
+
   const resumeRef = useRef(null);
   const previewWrapperRef = useRef(null);
+  const fileInputRef = useRef(null);
 
   const [visibility, setVisibility] = useState({
     summary: true,
@@ -95,7 +102,7 @@ export default function ResumeBuilder() {
 
   const [resumeData, setResumeData] = useState(() => {
     if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('pro_resume_builder_data_v6');
+      const saved = localStorage.getItem('pro_resume_builder_data_v7');
       if (saved) {
         try { return JSON.parse(saved); } catch (e) { console.error(e); }
       }
@@ -170,7 +177,7 @@ export default function ResumeBuilder() {
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      localStorage.setItem('pro_resume_builder_data_v6', JSON.stringify(resumeData));
+      localStorage.setItem('pro_resume_builder_data_v7', JSON.stringify(resumeData));
     }
   }, [resumeData]);
 
@@ -195,6 +202,219 @@ export default function ResumeBuilder() {
     window.addEventListener('resize', autoFitScale);
     return () => window.removeEventListener('resize', autoFitScale);
   }, [mobileView]);
+
+  // ================= DOCUMENT IMPORT & PARSING ENGINES =================
+  const loadPdfJs = () => new Promise((resolve, reject) => {
+    if (typeof window !== 'undefined' && window.pdfjsLib) return resolve(window.pdfjsLib);
+    const s = document.createElement('script');
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+    s.onload = () => {
+      window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+      resolve(window.pdfjsLib);
+    };
+    s.onerror = () => reject(new Error('Failed to load PDF Parser'));
+    document.head.appendChild(s);
+  });
+
+  const loadMammoth = () => new Promise((resolve, reject) => {
+    if (typeof window !== 'undefined' && window.mammoth) return resolve(window.mammoth);
+    const s = document.createElement('script');
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js';
+    s.onload = () => resolve(window.mammoth);
+    s.onerror = () => reject(new Error('Failed to load Word DOCX Parser'));
+    document.head.appendChild(s);
+  });
+
+  // Heuristic Smart Resume Parser
+  const parseResumeTextIntoState = (rawText) => {
+    if (!rawText || rawText.trim().length < 15) {
+      alert('Document me paryapt text nahi mila. Kripya dusri file upload karein ya text paste karein.');
+      return;
+    }
+
+    const lines = rawText.split('\n').map(l => l.trim()).filter(Boolean);
+    const cleanFullText = rawText;
+
+    // 1. Email extraction
+    const emailMatch = cleanFullText.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
+    const email = emailMatch ? emailMatch[0] : '';
+
+    // 2. Phone extraction
+    const phoneMatch = cleanFullText.match(/(?:\+?\d{1,3}[-.\s]?)?\(?\d{2,4}\)?[-.\s]?\d{3,5}[-.\s]?\d{4}/);
+    const phone = phoneMatch ? phoneMatch[0] : '';
+
+    // 3. LinkedIn & GitHub
+    const linkedinMatch = cleanFullText.match(/(?:linkedin\.com\/in\/|linkedin:\s*)([a-zA-Z0-9_-]+)/i);
+    const linkedin = linkedinMatch ? `linkedin.com/in/${linkedinMatch[1]}` : '';
+
+    const githubMatch = cleanFullText.match(/(?:github\.com\/|github:\s*)([a-zA-Z0-9_-]+)/i);
+    const github = githubMatch ? `github.com/${githubMatch[1]}` : '';
+
+    // 4. Candidate Name: usually the first non-contact line
+    let fullName = '';
+    for (let i = 0; i < Math.min(lines.length, 5); i++) {
+      const line = lines[i];
+      if (!line.includes('@') && !line.includes('http') && !line.match(/\d{5,}/) && line.length < 35) {
+        fullName = line;
+        break;
+      }
+    }
+
+    // 5. Section segmentation
+    let currentSection = 'summary';
+    let summaryArr = [];
+    let experienceArr = [];
+    let educationArr = [];
+    let skillsArr = [];
+    let projectsArr = [];
+
+    lines.forEach((line) => {
+      const lower = line.toLowerCase();
+      if (lower.includes('work experience') || lower.includes('experience') || lower.includes('employment')) {
+        currentSection = 'experience';
+      } else if (lower.includes('education') || lower.includes('academic') || lower.includes('qualifications')) {
+        currentSection = 'education';
+      } else if (lower.includes('skills') || lower.includes('technologies') || lower.includes('tech stack')) {
+        currentSection = 'skills';
+      } else if (lower.includes('projects') || lower.includes('personal projects')) {
+        currentSection = 'projects';
+      } else if (lower.includes('summary') || lower.includes('profile') || lower.includes('objective')) {
+        currentSection = 'summary';
+      } else {
+        if (currentSection === 'summary') summaryArr.push(line);
+        else if (currentSection === 'experience') experienceArr.push(line);
+        else if (currentSection === 'education') educationArr.push(line);
+        else if (currentSection === 'skills') skillsArr.push(line);
+        else if (currentSection === 'projects') projectsArr.push(line);
+      }
+    });
+
+    setResumeData((prev) => {
+      const updated = { ...prev };
+      if (fullName) updated.personalInfo.fullName = fullName;
+      if (email) updated.personalInfo.email = email;
+      if (phone) updated.personalInfo.phone = phone;
+      if (linkedin) updated.personalInfo.linkedin = linkedin;
+      if (github) updated.personalInfo.github = github;
+
+      if (summaryArr.length > 0) {
+        updated.summary = summaryArr.slice(0, 4).join(' ');
+      }
+
+      if (skillsArr.length > 0) {
+        updated.skillCategories.languages = skillsArr.slice(0, 6).join(', ');
+      }
+
+      if (experienceArr.length > 0) {
+        updated.experience = [
+          {
+            id: `exp-${Date.now()}`,
+            role: "Role / Designation (Extracted)",
+            company: "Company Name",
+            location: prev.personalInfo.address || "Location",
+            duration: "Recent",
+            description: experienceArr.slice(0, 5).map(l => l.startsWith('•') ? l : `• ${l}`).join('\n')
+          },
+          ...prev.experience
+        ];
+      }
+
+      return updated;
+    });
+
+    setImportStatusMsg('✅ Document se data extract karke resume update kar diya gaya!');
+    setTimeout(() => {
+      setIsImportModalOpen(false);
+      setImportStatusMsg('');
+    }, 1500);
+  };
+
+  const handleDocumentUpload = async (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+
+    setIsParsingDoc(true);
+    setImportStatusMsg(`Parsing ${file.name}...`);
+
+    try {
+      const fileName = file.name.toLowerCase();
+
+      // Case 1: JSON File
+      if (fileName.endsWith('.json')) {
+        const text = await file.text();
+        const parsed = JSON.parse(text);
+        if (parsed.personalInfo) {
+          setResumeData(parsed);
+          setImportStatusMsg('✅ JSON resume successfully restored!');
+          setTimeout(() => setIsImportModalOpen(false), 1200);
+          return;
+        }
+      }
+
+      // Case 2: Plain Text / Markdown
+      if (fileName.endsWith('.txt') || fileName.endsWith('.md')) {
+        const text = await file.text();
+        parseResumeTextIntoState(text);
+        return;
+      }
+
+      // Case 3: Word Document (.docx)
+      if (fileName.endsWith('.docx')) {
+        const arrayBuffer = await file.arrayBuffer();
+        const mammoth = await loadMammoth();
+        const result = await mammoth.extractRawText({ arrayBuffer });
+        parseResumeTextIntoState(result.value);
+        return;
+      }
+
+      // Case 4: PDF Document (.pdf)
+      if (fileName.endsWith('.pdf')) {
+        const arrayBuffer = await file.arrayBuffer();
+        const pdfjsLib = await loadPdfJs();
+        const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
+        const pdf = await loadingTask.promise;
+        let fullPdfText = '';
+
+        for (let i = 1; i <= pdf.numPages; i++) {
+          const page = await pdf.getPage(i);
+          const textContent = await page.getTextContent();
+          const pageText = textContent.items.map(item => item.str).join(' ');
+          fullPdfText += pageText + '\n';
+        }
+
+        parseResumeTextIntoState(fullPdfText);
+        return;
+      }
+
+      alert('Kripya PDF, DOCX, TXT ya JSON format ki file upload karein.');
+    } catch (err) {
+      console.error(err);
+      alert('Document read karne me dikkat aayi. Kripya Text copy-paste karke try karein.');
+    } finally {
+      setIsParsingDoc(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
+  const handleManualTextImport = () => {
+    if (!pasteResumeText.trim()) return;
+    setIsParsingDoc(true);
+    parseResumeTextIntoState(pasteResumeText);
+    setIsParsingDoc(false);
+  };
+
+  // Reorder Items Function
+  const moveItem = (section, index, direction) => {
+    setResumeData((prev) => {
+      const items = [...prev[section]];
+      const targetIndex = direction === 'up' ? index - 1 : index + 1;
+      if (targetIndex < 0 || targetIndex >= items.length) return prev;
+      const temp = items[index];
+      items[index] = items[targetIndex];
+      items[targetIndex] = temp;
+      return { ...prev, [section]: items };
+    });
+  };
 
   const handlePersonalChange = (e) => {
     const { name, value } = e.target;
@@ -228,20 +448,7 @@ export default function ResumeBuilder() {
     }));
   };
 
-  // ================= REORDER / SHIFT FUNCTION (MOVE UP / DOWN) =================
-  const moveItem = (section, index, direction) => {
-    setResumeData((prev) => {
-      const items = [...prev[section]];
-      const targetIndex = direction === 'up' ? index - 1 : index + 1;
-      if (targetIndex < 0 || targetIndex >= items.length) return prev;
-      const temp = items[index];
-      items[index] = items[targetIndex];
-      items[targetIndex] = temp;
-      return { ...prev, [section]: items };
-    });
-  };
-
-  // ================= EXPERIENCE HANDLERS (ALWAYS ADD AT TOP) =================
+  // ================= EXPERIENCE =================
   const handleExpChange = (id, field, value) => {
     setResumeData((prev) => ({
       ...prev,
@@ -252,7 +459,6 @@ export default function ResumeBuilder() {
   const addExperience = () => {
     setResumeData((prev) => ({
       ...prev,
-      // Prepend to top instead of bottom
       experience: [{ id: `exp-${Date.now()}`, role: '', company: '', location: '', duration: '', description: '' }, ...prev.experience]
     }));
   };
@@ -297,7 +503,7 @@ export default function ResumeBuilder() {
     }));
   };
 
-  // ================= EDUCATION HANDLERS (ALWAYS ADD AT TOP) =================
+  // ================= EDUCATION =================
   const handleEduChange = (id, field, value) => {
     setResumeData((prev) => ({
       ...prev,
@@ -308,7 +514,6 @@ export default function ResumeBuilder() {
   const addEducation = () => {
     setResumeData((prev) => ({
       ...prev,
-      // Prepend to top
       education: [{ id: `edu-${Date.now()}`, degree: '', institution: '', location: '', duration: '', grade: '' }, ...prev.education]
     }));
   };
@@ -320,7 +525,7 @@ export default function ResumeBuilder() {
     }));
   };
 
-  // ================= PROJECT HANDLERS (ALWAYS ADD AT TOP) =================
+  // ================= PROJECTS =================
   const handleProjChange = (id, field, value) => {
     setResumeData((prev) => ({
       ...prev,
@@ -331,7 +536,6 @@ export default function ResumeBuilder() {
   const addProject = () => {
     setResumeData((prev) => ({
       ...prev,
-      // Prepend to top
       projects: [{ id: `proj-${Date.now()}`, title: '', tech: '', duration: '', description: '' }, ...prev.projects]
     }));
   };
@@ -348,7 +552,6 @@ export default function ResumeBuilder() {
     let score = 25;
     const checks = [];
 
-    // Reverse chronological order check (Passed by default due to top sorting)
     score += 15;
     checks.push({ pass: true, msg: "Reverse-Chronological Order: Latest experiences & projects placed at the top." });
 
@@ -689,13 +892,14 @@ export default function ResumeBuilder() {
         body { margin: 0; padding: 0; background-color: #ffffff; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
         .app-wrapper { min-height: 100vh; background-color: #060b14; color: #f8fafc; display: flex; flex-direction: column; }
         .top-navbar { border-bottom: 1px solid #1a273f; background-color: #ffffff; position: sticky; top: 0; z-index: 100; padding: 10px 24px; box-shadow: 0 4px 20px rgba(0,0,0,0.4); }
-        .top-navbar-inner { max-width: 1720px; margin: 0 auto; display: flex; align-items: center; }
+        .top-navbar-inner { max-width: 1720px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; }
         .brand-logo-img { height: 42px; width: auto; max-width: 190px; object-fit: contain; }
         .action-group { display: flex; align-items: center; justify-content: center; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
         .custom-select { background-color: #0e192d; color: #ffffff; border: 1px solid #243552; padding: 8px 12px; border-radius: 8px; font-size: 12px; font-weight: 600; outline: none; cursor: pointer; }
         .custom-btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; border: 1px solid #243552; background-color: #0e192d; color: #f8fafc; transition: all 0.2s; }
         .custom-btn:hover { background-color: #172744; border-color: #3b82f6; }
         .custom-btn-primary { background: linear-gradient(135deg, #2563eb, #1d4ed8); border-color: #2563eb; color: #ffffff; }
+        .custom-btn-success { background: linear-gradient(135deg, #059669, #047857); border-color: #059669; color: #ffffff; }
         .mobile-mode-bar { display: none; margin-top: 12px; justify-content: center; gap: 8px; width: 100%; }
         .mobile-mode-btn { flex: 1; max-width: 180px; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 8px 12px; border-radius: 8px; font-size: 12px; font-weight: 600; border: 1px solid #1a273f; background-color: #0e192d; color: #94a3b8; cursor: pointer; }
         .mobile-mode-btn.active { background-color: #2563eb; color: #ffffff; }
@@ -723,6 +927,13 @@ export default function ResumeBuilder() {
         .canvas-scroll-viewport { flex: 1; overflow-y: auto; overflow-x: auto; padding: 16px; display: flex; justify-content: center; align-items: flex-start; }
         .canvas-scale-wrapper { display: flex; justify-content: center; transform-origin: top center; transition: all 0.2s ease-out; margin: 0 auto; }
         .canvas-shadow { box-shadow: 0 20px 45px rgba(0, 0, 0, 0.75); border-radius: 3px; }
+        
+        /* Modal Styles */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.75); backdrop-filter: blur(4px); z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 20px; }
+        .modal-card { background: #0a1222; border: 1px solid #243552; border-radius: 14px; width: 100%; max-width: 580px; padding: 22px; color: #ffffff; box-shadow: 0 25px 50px rgba(0,0,0,0.5); }
+        .dropzone { border: 2px dashed #243552; border-radius: 10px; padding: 26px 20px; text-align: center; cursor: pointer; background: #060b14; transition: all 0.2s; }
+        .dropzone:hover { border-color: #3b82f6; background: rgba(59, 130, 246, 0.05); }
+
         @media (max-width: 1080px) {
           .mobile-mode-bar { display: flex; }
           .main-workspace { height: auto; padding: 8px; }
@@ -732,7 +943,7 @@ export default function ResumeBuilder() {
           .preview-container.mobile-active { display: flex; }
         }
         @media print {
-          .top-navbar, .mobile-mode-bar, .resume-hero, .editor-container, .preview-topbar, .zoom-controls { display: none !important; }
+          .top-navbar, .mobile-mode-bar, .resume-hero, .editor-container, .preview-topbar, .zoom-controls, .modal-overlay { display: none !important; }
           .app-wrapper, .main-workspace, .preview-container, .canvas-scroll-viewport { display: block !important; background: transparent !important; border: none !important; margin: 0 !important; padding: 0 !important; height: auto !important; width: 100% !important; }
           .canvas-scale-wrapper { transform: none !important; width: 210mm !important; height: 297mm !important; }
           .canvas-shadow { box-shadow: none !important; width: 210mm !important; height: 297mm !important; }
@@ -745,13 +956,23 @@ export default function ResumeBuilder() {
             <div className="brand-box">
               <img src="/logo.png" alt="Logo" className="brand-logo-img" onError={(e)=>{e.target.style.display='none'}} />
             </div>
+
+            <button 
+              onClick={() => setIsImportModalOpen(true)}
+              className="custom-btn"
+              style={{ background: '#1e3a8a', borderColor: '#3b82f6', color: '#ffffff' }}
+              type="button"
+            >
+              <UploadCloud size={14} />
+              <span>📥 Import Doc (PDF/Word/TXT)</span>
+            </button>
           </div>
         </header>
 
         <section className={`resume-hero ${mobileView === 'preview' ? 'hide-on-preview' : ''}`}>
-          <span className="resume-hero-badge"><Sparkles size={12} /> ATS Optimizer & Font Customizer</span>
+          <span className="resume-hero-badge"><Sparkles size={12} /> ATS Optimizer & Smart Doc Importer</span>
           <h1>Free ATS-Friendly Resume Builder</h1>
-          <p>Reorder projects and experience seamlessly, add current roles to the top, and guarantee top-tier ATS screening results.</p>
+          <p>Import existing resumes from PDF, Word, or TXT, reorder projects seamlessly, and guarantee top-tier ATS screening results.</p>
 
           <div className="action-group">
             <select value={selectedTemplate} onChange={(e) => setSelectedTemplate(e.target.value)} className="custom-select">
@@ -883,7 +1104,6 @@ export default function ResumeBuilder() {
 
                   {resumeData.experience.map((exp, index) => (
                     <div key={exp.id} className="form-card">
-                      {/* Card Header with Position Indicator & Shift Buttons */}
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', borderBottom: '1px solid #1a273f', paddingBottom: '6px' }}>
                         <span style={{ fontSize: '11px', fontWeight: 'bold', color: '#38bdf8' }}>
                           #{index + 1} {exp.role || 'Role'} {index === 0 ? '⭐ (Current / Top)' : ''}
@@ -1000,7 +1220,7 @@ export default function ResumeBuilder() {
                 </>
               )}
 
-              {/* ============ EDUCATION WITH SHIFTING & TOP ADD ============ */}
+              {/* ============ EDUCATION ============ */}
               {activeTab === 'education' && (
                 <>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -1064,7 +1284,7 @@ export default function ResumeBuilder() {
                 </>
               )}
 
-              {/* ============ PROJECTS WITH SHIFTING & TOP ADD ============ */}
+              {/* ============ PROJECTS ============ */}
               {activeTab === 'projects' && (
                 <>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -1079,7 +1299,6 @@ export default function ResumeBuilder() {
 
                   {resumeData.projects.map((proj, index) => (
                     <div key={proj.id} className="form-card">
-                      {/* Card Header with Shift Position Controls */}
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', borderBottom: '1px solid #1a273f', paddingBottom: '6px' }}>
                         <span style={{ fontSize: '11px', fontWeight: 'bold', color: '#38bdf8' }}>
                           #{index + 1} {proj.title || 'Project'} {index === 0 ? '⭐ (Top / Featured)' : ''}
@@ -1089,7 +1308,7 @@ export default function ResumeBuilder() {
                           <button 
                             onClick={() => moveItem('projects', index, 'up')} 
                             disabled={index === 0} 
-                            title="Shift Upwards (e.g., #5 to #4)"
+                            title="Shift Upwards"
                             type="button" 
                             style={{ background: '#0e192d', border: '1px solid #243552', color: '#ffffff', borderRadius: '4px', padding: '3px 6px', cursor: index === 0 ? 'not-allowed' : 'pointer', opacity: index === 0 ? 0.3 : 1 }}
                           >
@@ -1200,6 +1419,80 @@ export default function ResumeBuilder() {
             </div>
           </section>
         </div>
+
+        {/* ============ IMPORT DOCUMENT / RESUME MODAL ============ */}
+        {isImportModalOpen && (
+          <div className="modal-overlay">
+            <div className="modal-card">
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <FileText size={18} color="#38bdf8" />
+                  <span style={{ fontSize: '15px', fontWeight: 'bold' }}>Import Resume Document</span>
+                </div>
+                <button 
+                  onClick={() => setIsImportModalOpen(false)}
+                  style={{ background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer' }}
+                  type="button"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+
+              <p style={{ fontSize: '11.5px', color: '#94a3b8', margin: '0 0 16px 0', lineHeight: '1.4' }}>
+                Apna purana resume upload karein. System apne aap text read karke <b>Full Name, Experience, Skills & Contacts</b> auto-fill kar dega.
+              </p>
+
+              {/* File Dropzone */}
+              <div className="dropzone" onClick={() => fileInputRef.current && fileInputRef.current.click()}>
+                <input 
+                  type="file" 
+                  ref={fileInputRef} 
+                  onChange={handleDocumentUpload} 
+                  accept=".pdf,.docx,.txt,.json" 
+                  style={{ display: 'none' }} 
+                />
+                <UploadCloud size={28} color="#38bdf8" style={{ margin: '0 auto 8px auto', display: 'block' }} />
+                <div style={{ fontSize: '13px', fontWeight: 'bold', color: '#f8fafc' }}>Click to Upload Resume File</div>
+                <div style={{ fontSize: '11px', color: '#64748b', marginTop: '4px' }}>Supports <b>PDF (.pdf), Word (.docx), Text (.txt), JSON (.json)</b></div>
+              </div>
+
+              {/* Status Message */}
+              {isParsingDoc && (
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginTop: '12px', fontSize: '12px', color: '#38bdf8' }}>
+                  <Loader2 size={16} className="animate-spin" />
+                  <span>Document ko analyze aur extract kiya jaa raha hai...</span>
+                </div>
+              )}
+
+              {importStatusMsg && (
+                <div style={{ textAlign: 'center', marginTop: '12px', fontSize: '12px', color: '#22c55e', fontWeight: 'bold' }}>
+                  {importStatusMsg}
+                </div>
+              )}
+
+              {/* Alternative: Direct Text Paste */}
+              <div style={{ marginTop: '18px', borderTop: '1px solid #1a273f', paddingTop: '14px' }}>
+                <div style={{ fontSize: '11.5px', fontWeight: 'bold', color: '#cbd5e1', marginBottom: '6px' }}>Ya seedha Resume ka Text Paste karein:</div>
+                <textarea 
+                  className="form-textarea" 
+                  rows={4} 
+                  placeholder="Paste complete resume text here (Name, Email, Roles, Skills etc.)..."
+                  value={pasteResumeText}
+                  onChange={(e) => setPasteResumeText(e.target.value)}
+                />
+                <button 
+                  onClick={handleManualTextImport}
+                  disabled={!pasteResumeText.trim() || isParsingDoc}
+                  className="custom-btn custom-btn-primary" 
+                  style={{ width: '100%', marginTop: '8px', justifyContent: 'center' }}
+                  type="button"
+                >
+                  ⚡ Parse & Update Resume
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </main>
     </>
   );
