@@ -5,20 +5,50 @@ import {
   User, Briefcase, GraduationCap, Award, Code, 
   Download, CheckCircle2, Trash2, Plus, Image as ImageIcon, 
   Palette, Eye, EyeOff, Layers, Mail, Phone, MapPin, Globe,
-  ZoomIn, ZoomOut, Smartphone, Monitor, Printer, Maximize2, Sparkles, FileDown, Type, CheckCircle, AlertTriangle
+  ZoomIn, ZoomOut, Smartphone, Monitor, Printer, Maximize2, Sparkles, FileDown, Type, CheckCircle, AlertTriangle, X
 } from 'lucide-react';
 import { FaGithub, FaLinkedin } from 'react-icons/fa';
 
 // 100% Reliable Base64 Avatar
 const DEFAULT_AVATAR = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48Y2lyY2xlIGN4PSI1MCIgY3k9IjUwIiByPSI1MCIgZmlsbD0iI2UyZThmMCIvPjxjaXJjbGUgY3g9IjUwIiBjeT0iMzgiIHI9IjE4IiBmaWxsPSIjNjQ3NDhiIi8+PHBhdGggZD0iTTIwIDg2Yz0tMTYuNSAxMy41LTMwIDMwLTMwczMwIDEzLjUgMzAgMzB6IiBmaWxsPSIjNjQ3NDhiIi8+PC9zdmc+";
 
-const SUGGESTED_BULLETS = [
-  "Developed responsive web applications using React.js, Node.js, Express.js, and MongoDB.",
-  "Implemented secure JWT authentication and optimized RESTful APIs for security and speed.",
-  "Improved application page load speed by 35% through code splitting and asset optimization.",
-  "Collaborated with UI/UX designers and backend engineers in an Agile environment.",
-  "Wrote unit and integration tests using Jest, reducing production bug reports by 40%."
-];
+// Pre-defined role-wise bullet categories
+const DEFAULT_PRESET_BULLETS = {
+  tech: [
+    "Developed responsive web applications using React.js, Node.js, Express.js, and MongoDB.",
+    "Implemented secure JWT authentication and optimized RESTful APIs for security and speed.",
+    "Improved application page load speed by 35% through code splitting and asset optimization.",
+    "Collaborated with UI/UX designers and backend engineers in an Agile environment.",
+    "Wrote unit and integration tests using Jest, reducing production bug reports by 40%."
+  ],
+  marketing: [
+    "Executed multi-channel digital marketing campaigns, boosting qualified leads by 45%.",
+    "Managed SEO and content optimization, improving organic web traffic by 60% in 6 months.",
+    "Monitored KPIs and CAC using Google Analytics to optimize ad spend efficiency.",
+    "Collaborated with design teams to produce high-converting landing pages and creatives."
+  ],
+  finance: [
+    "Conducted financial variance analysis and prepared monthly forecasts with 98% accuracy.",
+    "Streamlined invoice reconciliation workflows, cutting turnaround time by 30%.",
+    "Maintained full compliance with auditing regulations and statutory reporting standards.",
+    "Prepared monthly financial statements and performance decks for senior leadership."
+  ],
+  management: [
+    "Led cross-functional teams of 8+ members, delivering complex deliverables on schedule.",
+    "Facilitated daily standups, sprint retrospectives, and resource allocation in Agile.",
+    "Optimized operational workflows, resulting in a 15% reduction in overall operating costs.",
+    "Mentored junior professionals, improving team output and retention rate."
+  ],
+  fresher: [
+    "Successfully developed academic capstone projects utilizing modern web frameworks.",
+    "Demonstrated problem-solving and clean coding standards through competitive programming.",
+    "Assisted senior engineers in writing technical documentation, API tests, and bug fixes.",
+    "Fast learner with strong foundational knowledge of computer science fundamentals."
+  ],
+  custom: [
+    "Achieved key performance milestones and exceeded quarterly productivity targets."
+  ]
+};
 
 export default function ResumeBuilder() {
   const [activeTab, setActiveTab] = useState('personal');
@@ -30,6 +60,19 @@ export default function ResumeBuilder() {
   const [isExportingDocx, setIsExportingDocx] = useState(false);
   const [mobileView, setMobileView] = useState('editor'); 
   const [previewScale, setPreviewScale] = useState(0.85);
+
+  // Quick Bullets Category & Custom Input State
+  const [bulletCategory, setBulletCategory] = useState('tech');
+  const [newBulletText, setNewBulletText] = useState('');
+  const [bulletList, setBulletList] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('pro_resume_custom_bullets_v2');
+      if (saved) {
+        try { return JSON.parse(saved); } catch (e) { console.error(e); }
+      }
+    }
+    return DEFAULT_PRESET_BULLETS;
+  });
 
   const resumeRef = useRef(null);
   const previewWrapperRef = useRef(null);
@@ -51,7 +94,7 @@ export default function ResumeBuilder() {
 
   const [resumeData, setResumeData] = useState(() => {
     if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('pro_resume_builder_data_v4');
+      const saved = localStorage.getItem('pro_resume_builder_data_v5');
       if (saved) {
         try { return JSON.parse(saved); } catch (e) { console.error(e); }
       }
@@ -95,7 +138,7 @@ export default function ResumeBuilder() {
           company: "Tech Solutions Inc.",
           location: "New York, USA",
           duration: "Jan 2023 – Present",
-          description: "Developed responsive web applications using React.js, Node.js, Express.js, and MongoDB.\nImplemented secure authentication and REST APIs for web applications.",
+          description: "• Developed responsive web applications using React.js, Node.js, Express.js, and MongoDB.\n• Implemented secure authentication and REST APIs for web applications.",
         }
       ],
       skillCategories: {
@@ -126,9 +169,15 @@ export default function ResumeBuilder() {
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      localStorage.setItem('pro_resume_builder_data_v4', JSON.stringify(resumeData));
+      localStorage.setItem('pro_resume_builder_data_v5', JSON.stringify(resumeData));
     }
   }, [resumeData]);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('pro_resume_custom_bullets_v2', JSON.stringify(bulletList));
+    }
+  }, [bulletList]);
 
   const autoFitScale = () => {
     if (previewWrapperRef.current) {
@@ -185,16 +234,39 @@ export default function ResumeBuilder() {
     }));
   };
 
+  // Add Bullet Point with clean formatting (•)
   const addBulletToExperience = (id, bulletText) => {
+    const clean = bulletText.trim();
+    const formatted = clean.startsWith('•') ? clean : `• ${clean}`;
+
     setResumeData((prev) => ({
       ...prev,
       experience: prev.experience.map(item => {
         if (item.id === id) {
-          const newDesc = item.description ? `${item.description}\n${bulletText}` : bulletText;
+          const currentDesc = (item.description || '').trim();
+          const newDesc = currentDesc ? `${currentDesc}\n${formatted}` : formatted;
           return { ...item, description: newDesc };
         }
         return item;
       })
+    }));
+  };
+
+  // Add new user-defined bullet point to the selected category
+  const handleAddNewBullet = () => {
+    if (!newBulletText.trim()) return;
+    setBulletList((prev) => ({
+      ...prev,
+      [bulletCategory]: [...(prev[bulletCategory] || []), newBulletText.trim()]
+    }));
+    setNewBulletText('');
+  };
+
+  // Delete bullet from list
+  const handleDeleteBullet = (category, index) => {
+    setBulletList((prev) => ({
+      ...prev,
+      [category]: (prev[category] || []).filter((_, idx) => idx !== index)
     }));
   };
 
@@ -412,20 +484,13 @@ export default function ResumeBuilder() {
             {resumeData.personalInfo.jobTitle}
           </div>
           
-          {/* Contact & Social Links Bar */}
           <div style={{ fontSize: '10px', display: 'flex', flexWrap: 'wrap', gap: '8px', justifyContent: showPhoto && resumeData.personalInfo.photo ? 'flex-start' : 'center', alignItems: 'center', color: '#1e293b' }}>
             {resumeData.personalInfo.address && <span>📍 {resumeData.personalInfo.address}</span>}
             {resumeData.personalInfo.phone && <span>• 📞 {resumeData.personalInfo.phone}</span>}
             {resumeData.personalInfo.email && <span>• ✉️ {resumeData.personalInfo.email}</span>}
-            {resumeData.personalInfo.linkedin && (
-              <span>• <strong>in</strong> {resumeData.personalInfo.linkedin.replace(/^https?:\/\//, '')}</span>
-            )}
-            {resumeData.personalInfo.github && (
-              <span>• <strong>git</strong> {resumeData.personalInfo.github.replace(/^https?:\/\//, '')}</span>
-            )}
-            {resumeData.personalInfo.portfolio && (
-              <span>• 🌐 {resumeData.personalInfo.portfolio.replace(/^https?:\/\//, '')}</span>
-            )}
+            {resumeData.personalInfo.linkedin && <span>• <strong>in</strong> {resumeData.personalInfo.linkedin.replace(/^https?:\/\//, '')}</span>}
+            {resumeData.personalInfo.github && <span>• <strong>git</strong> {resumeData.personalInfo.github.replace(/^https?:\/\//, '')}</span>}
+            {resumeData.personalInfo.portfolio && <span>• 🌐 {resumeData.personalInfo.portfolio.replace(/^https?:\/\//, '')}</span>}
           </div>
         </div>
 
@@ -639,7 +704,7 @@ export default function ResumeBuilder() {
         <section className={`resume-hero ${mobileView === 'preview' ? 'hide-on-preview' : ''}`}>
           <span className="resume-hero-badge"><Sparkles size={12} /> ATS Optimizer & Font Customizer</span>
           <h1>Free ATS-Friendly Resume Builder</h1>
-          <p>Choose from 10 original templates, customize contact & social links instantly, and check ATS compatibility.</p>
+          <p>Choose from 10 original templates, edit customizable bullets, and boost your resume's ATS score in real time.</p>
 
           <div className="action-group">
             <select value={selectedTemplate} onChange={(e) => setSelectedTemplate(e.target.value)} className="custom-select">
@@ -742,7 +807,6 @@ export default function ResumeBuilder() {
                     <div className="form-field"><label className="form-label">Phone Number</label><input className="form-input" type="text" name="phone" value={resumeData.personalInfo.phone} onChange={handlePersonalChange} placeholder="+1 555-010-0000" /></div>
                   </div>
 
-                  {/* Enhanced Address & Social Inputs */}
                   <div className="form-row">
                     <div className="form-field"><label className="form-label">Address / Location</label><input className="form-input" type="text" name="address" value={resumeData.personalInfo.address} onChange={handlePersonalChange} placeholder="e.g. New York, USA" /></div>
                     <div className="form-field"><label className="form-label">LinkedIn Profile URL</label><input className="form-input" type="text" name="linkedin" value={resumeData.personalInfo.linkedin} onChange={handlePersonalChange} placeholder="linkedin.com/in/username" /></div>
@@ -775,14 +839,72 @@ export default function ResumeBuilder() {
                         <input className="form-input" placeholder="Location" value={exp.location} onChange={(e) => handleExpChange(exp.id, 'location', e.target.value)} />
                       </div>
                       <textarea className="form-textarea" rows={3} placeholder="Key Achievements & Responsibilities" value={exp.description} onChange={(e) => handleExpChange(exp.id, 'description', e.target.value)} />
-                      <div style={{ marginTop: '8px', borderTop: '1px solid #1a273f', paddingTop: '6px' }}>
-                        <div style={{ fontSize: '10px', color: '#38bdf8', marginBottom: '4px', fontWeight: 'bold' }}>⚡ Quick Pro Bullet Points:</div>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', maxHeight: '90px', overflowY: 'auto' }}>
-                          {SUGGESTED_BULLETS.map((bullet, idx) => (
-                            <button key={idx} onClick={() => addBulletToExperience(exp.id, bullet)} type="button" style={{ textAlign: 'left', background: '#060b14', border: '1px solid #1a273f', color: '#94a3b8', fontSize: '10px', padding: '4px 6px', borderRadius: '4px', cursor: 'pointer' }}>
-                              + {bullet}
-                            </button>
-                          ))}
+                      
+                      {/* ============ FULLY EDITABLE QUICK PRO BULLETS ============ */}
+                      <div style={{ marginTop: '10px', borderTop: '1px solid #1a273f', paddingTop: '8px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px', flexWrap: 'wrap', gap: '4px' }}>
+                          <span style={{ fontSize: '10.5px', color: '#38bdf8', fontWeight: 'bold' }}>⚡ Quick Pro Bullets:</span>
+                          
+                          {/* Role Categories Dropdown */}
+                          <select 
+                            value={bulletCategory} 
+                            onChange={(e) => setBulletCategory(e.target.value)}
+                            style={{ background: '#0e192d', color: '#38bdf8', border: '1px solid #243552', borderRadius: '4px', fontSize: '10.5px', padding: '2px 6px', outline: 'none' }}
+                          >
+                            <option value="tech">💻 Software & Tech</option>
+                            <option value="marketing">📈 Marketing & Sales</option>
+                            <option value="finance">💰 Finance & Accounts</option>
+                            <option value="management">💼 Management & HR</option>
+                            <option value="fresher">🎓 Fresher & Intern</option>
+                            <option value="custom">⭐ My Custom Bullets</option>
+                          </select>
+                        </div>
+
+                        {/* Add Your Own Bullet Input Box */}
+                        <div style={{ display: 'flex', gap: '5px', marginBottom: '8px' }}>
+                          <input 
+                            type="text" 
+                            placeholder={`Type new bullet point for ${bulletCategory}...`}
+                            value={newBulletText}
+                            onChange={(e) => setNewBulletText(e.target.value)}
+                            onKeyDown={(e) => { if (e.key === 'Enter') handleAddNewBullet(); }}
+                            style={{ flex: 1, background: '#060b14', border: '1px solid #1a273f', borderRadius: '4px', padding: '5px 8px', fontSize: '10px', color: '#ffffff', outline: 'none' }}
+                          />
+                          <button 
+                            type="button" 
+                            onClick={handleAddNewBullet}
+                            style={{ background: '#2563eb', color: '#ffffff', border: 'none', borderRadius: '4px', padding: '4px 10px', fontSize: '10px', fontWeight: 'bold', cursor: 'pointer' }}
+                          >
+                            + Save
+                          </button>
+                        </div>
+
+                        {/* Bullets List with Add (+) and Delete (✕) options */}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', maxHeight: '115px', overflowY: 'auto' }}>
+                          {(!bulletList[bulletCategory] || bulletList[bulletCategory].length === 0) ? (
+                            <div style={{ fontSize: '10px', color: '#64748b', fontStyle: 'italic', padding: '4px' }}>No bullets in this category. Type above and click "+ Save" to add!</div>
+                          ) : (
+                            bulletList[bulletCategory].map((bullet, idx) => (
+                              <div key={idx} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '6px', background: '#060b14', border: '1px solid #1a273f', borderRadius: '4px', padding: '3px 6px' }}>
+                                <button 
+                                  type="button" 
+                                  onClick={() => addBulletToExperience(exp.id, bullet)}
+                                  title="Click to insert this bullet"
+                                  style={{ flex: 1, textAlign: 'left', background: 'transparent', border: 'none', color: '#cbd5e1', fontSize: '10px', cursor: 'pointer', padding: '2px 0' }}
+                                >
+                                  + {bullet}
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleDeleteBullet(bulletCategory, idx)}
+                                  title="Delete this bullet suggestion"
+                                  style={{ background: 'transparent', border: 'none', color: '#ef4444', fontSize: '12px', cursor: 'pointer', padding: '0 4px', lineHeight: 1 }}
+                                >
+                                  ✕
+                                </button>
+                              </div>
+                            ))
+                          )}
                         </div>
                       </div>
                     </div>
