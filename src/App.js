@@ -84,6 +84,7 @@ export default function ResumeBuilder() {
   const resumeRef = useRef(null);
   const previewWrapperRef = useRef(null);
   const fileInputRef = useRef(null);
+  const pasteTextareaRef = useRef(null);
 
   const [visibility, setVisibility] = useState({
     summary: true,
@@ -205,35 +206,49 @@ export default function ResumeBuilder() {
 
   // ================= DOCUMENT IMPORT & PARSING ENGINES =================
   const loadPdfJs = () => new Promise((resolve, reject) => {
-    if (typeof window !== 'undefined' && window.pdfjsLib) return resolve(window.pdfjsLib);
+    if (typeof window !== 'undefined' && window.pdfjsLib) {
+      return resolve(window.pdfjsLib);
+    }
     const s = document.createElement('script');
     s.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
     s.onload = () => {
       window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
       resolve(window.pdfjsLib);
     };
-    s.onerror = () => reject(new Error('Failed to load PDF Parser'));
+    s.onerror = () => reject(new Error('Failed to load PDF Parser script'));
     document.head.appendChild(s);
   });
 
   const loadMammoth = () => new Promise((resolve, reject) => {
-    if (typeof window !== 'undefined' && window.mammoth) return resolve(window.mammoth);
+    if (typeof window !== 'undefined' && window.mammoth) {
+      return resolve(window.mammoth);
+    }
     const s = document.createElement('script');
     s.src = 'https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js';
     s.onload = () => resolve(window.mammoth);
-    s.onerror = () => reject(new Error('Failed to load Word DOCX Parser'));
+    s.onerror = () => reject(new Error('Failed to load Word DOCX Parser script'));
     document.head.appendChild(s);
   });
 
   // Heuristic Smart Resume Parser
   const parseResumeTextIntoState = (rawText) => {
-    if (!rawText || rawText.trim().length < 15) {
-      alert('Document me paryapt text nahi mila. Kripya dusri file upload karein ya text paste karein.');
+    const trimmed = (rawText || '').trim();
+    if (trimmed.length < 15) {
+      alert(
+        '⚠️ Document se selectable text extract nahi ho paya.\n\n' +
+        'Karan:\n' +
+        '• File Canva ya scanner se bani Image-only PDF ho sakti hai.\n' +
+        '• Word file me text shapes ya boxes ke andar ho sakta hai.\n\n' +
+        'Samadhan: Apne resume ka text copy karein aur neeche diye gaye box me paste kar ke "⚡ Parse & Update Resume" par click karein.'
+      );
+      if (pasteTextareaRef.current) {
+        pasteTextareaRef.current.focus();
+      }
       return;
     }
 
-    const lines = rawText.split('\n').map(l => l.trim()).filter(Boolean);
-    const cleanFullText = rawText;
+    const lines = trimmed.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+    const cleanFullText = trimmed;
 
     // 1. Email extraction
     const emailMatch = cleanFullText.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
@@ -252,9 +267,9 @@ export default function ResumeBuilder() {
 
     // 4. Candidate Name: usually the first non-contact line
     let fullName = '';
-    for (let i = 0; i < Math.min(lines.length, 5); i++) {
+    for (let i = 0; i < Math.min(lines.length, 6); i++) {
       const line = lines[i];
-      if (!line.includes('@') && !line.includes('http') && !line.match(/\d{5,}/) && line.length < 35) {
+      if (!line.includes('@') && !line.includes('http') && !line.match(/\d{5,}/) && line.length > 2 && line.length < 35) {
         fullName = line;
         break;
       }
@@ -262,23 +277,23 @@ export default function ResumeBuilder() {
 
     // 5. Section segmentation
     let currentSection = 'summary';
-    let summaryArr = [];
-    let experienceArr = [];
-    let educationArr = [];
-    let skillsArr = [];
-    let projectsArr = [];
+    const summaryArr = [];
+    const experienceArr = [];
+    const educationArr = [];
+    const skillsArr = [];
+    const projectsArr = [];
 
     lines.forEach((line) => {
       const lower = line.toLowerCase();
-      if (lower.includes('work experience') || lower.includes('experience') || lower.includes('employment')) {
+      if (lower.includes('work experience') || lower.includes('experience') || lower.includes('employment history')) {
         currentSection = 'experience';
       } else if (lower.includes('education') || lower.includes('academic') || lower.includes('qualifications')) {
         currentSection = 'education';
-      } else if (lower.includes('skills') || lower.includes('technologies') || lower.includes('tech stack')) {
+      } else if (lower.includes('skills') || lower.includes('technologies') || lower.includes('technical stack')) {
         currentSection = 'skills';
-      } else if (lower.includes('projects') || lower.includes('personal projects')) {
+      } else if (lower.includes('projects') || lower.includes('key projects') || lower.includes('academic projects')) {
         currentSection = 'projects';
-      } else if (lower.includes('summary') || lower.includes('profile') || lower.includes('objective')) {
+      } else if (lower.includes('summary') || lower.includes('profile') || lower.includes('about me') || lower.includes('objective')) {
         currentSection = 'summary';
       } else {
         if (currentSection === 'summary') summaryArr.push(line);
@@ -298,31 +313,44 @@ export default function ResumeBuilder() {
       if (github) updated.personalInfo.github = github;
 
       if (summaryArr.length > 0) {
-        updated.summary = summaryArr.slice(0, 4).join(' ');
+        updated.summary = summaryArr.slice(0, 5).join(' ');
       }
 
       if (skillsArr.length > 0) {
-        updated.skillCategories.languages = skillsArr.slice(0, 6).join(', ');
+        updated.skillCategories.languages = skillsArr.slice(0, 8).join(', ');
       }
 
       if (experienceArr.length > 0) {
         updated.experience = [
           {
             id: `exp-${Date.now()}`,
-            role: "Role / Designation (Extracted)",
+            role: "Extracted Role / Designation",
             company: "Company Name",
             location: prev.personalInfo.address || "Location",
             duration: "Recent",
-            description: experienceArr.slice(0, 5).map(l => l.startsWith('•') ? l : `• ${l}`).join('\n')
+            description: experienceArr.slice(0, 6).map(l => l.startsWith('•') ? l : `• ${l}`).join('\n')
           },
           ...prev.experience
+        ];
+      }
+
+      if (projectsArr.length > 0) {
+        updated.projects = [
+          {
+            id: `proj-${Date.now()}`,
+            title: "Extracted Project",
+            tech: "Key Technologies",
+            duration: "Recent",
+            description: projectsArr.slice(0, 4).join(' ')
+          },
+          ...prev.projects
         ];
       }
 
       return updated;
     });
 
-    setImportStatusMsg('✅ Document se data extract karke resume update kar diya gaya!');
+    setImportStatusMsg('✅ Document se data successfully extract ho gaya!');
     setTimeout(() => {
       setIsImportModalOpen(false);
       setImportStatusMsg('');
@@ -339,7 +367,7 @@ export default function ResumeBuilder() {
     try {
       const fileName = file.name.toLowerCase();
 
-      // Case 1: JSON File
+      // Case 1: JSON File (Direct restore)
       if (fileName.endsWith('.json')) {
         const text = await file.text();
         const parsed = JSON.parse(text);
@@ -363,11 +391,12 @@ export default function ResumeBuilder() {
         const arrayBuffer = await file.arrayBuffer();
         const mammoth = await loadMammoth();
         const result = await mammoth.extractRawText({ arrayBuffer });
-        parseResumeTextIntoState(result.value);
+        const docxText = result && result.value ? result.value : '';
+        parseResumeTextIntoState(docxText);
         return;
       }
 
-      // Case 4: PDF Document (.pdf)
+      // Case 4: PDF Document (.pdf) - Enhanced text extraction
       if (fileName.endsWith('.pdf')) {
         const arrayBuffer = await file.arrayBuffer();
         const pdfjsLib = await loadPdfJs();
@@ -378,7 +407,13 @@ export default function ResumeBuilder() {
         for (let i = 1; i <= pdf.numPages; i++) {
           const page = await pdf.getPage(i);
           const textContent = await page.getTextContent();
-          const pageText = textContent.items.map(item => item.str).join(' ');
+          
+          // Safe filtering: check for actual text items and prevent undefined
+          const pageText = (textContent.items || [])
+            .map((item) => (item && typeof item.str === 'string' ? item.str : ''))
+            .filter((str) => str.trim().length > 0)
+            .join(' ');
+
           fullPdfText += pageText + '\n';
         }
 
@@ -386,9 +421,9 @@ export default function ResumeBuilder() {
         return;
       }
 
-      alert('Kripya PDF, DOCX, TXT ya JSON format ki file upload karein.');
+      alert('Kripya PDF (.pdf), Word (.docx), Text (.txt), ya JSON (.json) format ki file upload karein.');
     } catch (err) {
-      console.error(err);
+      console.error('File parsing error:', err);
       alert('Document read karne me dikkat aayi. Kripya Text copy-paste karke try karein.');
     } finally {
       setIsParsingDoc(false);
@@ -547,7 +582,7 @@ export default function ResumeBuilder() {
     }));
   };
 
-  // ================= ATS SCORE RANK #1 CHECKER =================
+  // ================= ATS SCORE CHECKER =================
   const calculateAtsScore = () => {
     let score = 25;
     const checks = [];
@@ -555,20 +590,40 @@ export default function ResumeBuilder() {
     score += 15;
     checks.push({ pass: true, msg: "Reverse-Chronological Order: Latest experiences & projects placed at the top." });
 
-    if (resumeData.personalInfo.fullName.trim().length > 2) { score += 10; checks.push({ pass: true, msg: "Full Name provided clearly." }); } 
-    else checks.push({ pass: false, msg: "Add a valid Full Name." });
+    if (resumeData.personalInfo.fullName.trim().length > 2) { 
+      score += 10; 
+      checks.push({ pass: true, msg: "Full Name provided clearly." }); 
+    } else {
+      checks.push({ pass: false, msg: "Add a valid Full Name." });
+    }
 
-    if (resumeData.personalInfo.email.includes('@')) { score += 10; checks.push({ pass: true, msg: "Professional Email format is valid." }); } 
-    else checks.push({ pass: false, msg: "Add a professional Email address." });
+    if (resumeData.personalInfo.email.includes('@')) { 
+      score += 10; 
+      checks.push({ pass: true, msg: "Professional Email format is valid." }); 
+    } else {
+      checks.push({ pass: false, msg: "Add a professional Email address." });
+    }
 
-    if (resumeData.personalInfo.linkedin?.trim().length > 5) { score += 10; checks.push({ pass: true, msg: "LinkedIn Profile URL included." }); }
-    else checks.push({ pass: false, msg: "Add LinkedIn link for automated recruiter parsing." });
+    if (resumeData.personalInfo.linkedin && resumeData.personalInfo.linkedin.trim().length > 5) { 
+      score += 10; 
+      checks.push({ pass: true, msg: "LinkedIn Profile URL included." }); 
+    } else {
+      checks.push({ pass: false, msg: "Add LinkedIn link for automated recruiter parsing." });
+    }
 
-    if (resumeData.personalInfo.address?.trim().length > 3) { score += 5; checks.push({ pass: true, msg: "Location (City, Country) specified." }); }
-    else checks.push({ pass: false, msg: "Add your Location/City." });
+    if (resumeData.personalInfo.address && resumeData.personalInfo.address.trim().length > 3) { 
+      score += 5; 
+      checks.push({ pass: true, msg: "Location (City, Country) specified." }); 
+    } else {
+      checks.push({ pass: false, msg: "Add your Location/City." });
+    }
 
-    if (resumeData.summary.length > 50) { score += 10; checks.push({ pass: true, msg: "Professional Summary is comprehensive (>50 chars)." }); } 
-    else checks.push({ pass: false, msg: "Expand your summary to at least 50 characters." });
+    if (resumeData.summary.length > 50) { 
+      score += 10; 
+      checks.push({ pass: true, msg: "Professional Summary is comprehensive (>50 chars)." }); 
+    } else {
+      checks.push({ pass: false, msg: "Expand your summary to at least 50 characters." });
+    }
 
     const hasNumbersInExp = resumeData.experience.some(e => /\d+|%|\$/.test(e.description));
     if (resumeData.experience.length > 0 && resumeData.experience[0].description.length > 20) {
@@ -591,7 +646,9 @@ export default function ResumeBuilder() {
 
   const ensurePdfTools = async () => {
     const getHtml2Canvas = () => new Promise((resolve, reject) => {
-      if (typeof window !== 'undefined' && typeof window.html2canvas === 'function') return resolve(window.html2canvas);
+      if (typeof window !== 'undefined' && typeof window.html2canvas === 'function') {
+        return resolve(window.html2canvas);
+      }
       const s = document.createElement('script');
       s.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
       s.onload = () => resolve(window.html2canvas);
@@ -600,11 +657,14 @@ export default function ResumeBuilder() {
     });
 
     const getJsPDF = () => new Promise((resolve, reject) => {
-      const existingClass = window.jspdf?.jsPDF || window.jsPDF;
+      const existingClass = window.jspdf && window.jspdf.jsPDF ? window.jspdf.jsPDF : window.jsPDF;
       if (typeof existingClass === 'function') return resolve(existingClass);
       const s = document.createElement('script');
       s.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
-      s.onload = () => resolve(window.jspdf?.jsPDF || window.jsPDF);
+      s.onload = () => {
+        const loadedClass = window.jspdf && window.jspdf.jsPDF ? window.jspdf.jsPDF : window.jsPDF;
+        resolve(loadedClass);
+      };
       s.onerror = () => reject(new Error('Failed to load jsPDF'));
       document.head.appendChild(s);
     });
@@ -1474,6 +1534,7 @@ export default function ResumeBuilder() {
               <div style={{ marginTop: '18px', borderTop: '1px solid #1a273f', paddingTop: '14px' }}>
                 <div style={{ fontSize: '11.5px', fontWeight: 'bold', color: '#cbd5e1', marginBottom: '6px' }}>Ya seedha Resume ka Text Paste karein:</div>
                 <textarea 
+                  ref={pasteTextareaRef}
                   className="form-textarea" 
                   rows={4} 
                   placeholder="Paste complete resume text here (Name, Email, Roles, Skills etc.)..."
