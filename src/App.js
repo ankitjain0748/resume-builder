@@ -110,16 +110,16 @@ export default function ResumeBuilder() {
     }
     return {
       personalInfo: {
-        fullName: "Alex Morgan",
-        jobTitle: "Full Stack Web Developer",
+        fullName: "Ankit Kumar Jain",
+        jobTitle: "Full Stack Developer",
         email: "alex.morgan@example.com",
-        phone: "+1 555-010-2048",
-        address: "New York, USA",
-        city: "New York",
-        country: "USA",
-        linkedin: "linkedin.com/in/alexmorgan",
-        github: "github.com/alexmorgan",
-        portfolio: "alexmorgan.dev",
+        phone: "+91 8306661517",
+        address: "Jaipur, Rajasthan, India",
+        city: "Jaipur",
+        country: "India",
+        linkedin: "linkedin.com/in/ankit-kumar-jain",
+        github: "github.com/ankitjain0748",
+        portfolio: "ankit-jain-portfolio.vercel.app",
         licenseNo: "DEMO-123456",
         declaration: "I hereby declare that the information provided above is true and accurate.",
         photo: DEFAULT_AVATAR,
@@ -135,7 +135,7 @@ export default function ResumeBuilder() {
           id: "edu-1",
           degree: "Bachelor of Technology in Computer Science",
           institution: "Example Institute of Technology",
-          location: "New York, USA",
+          location: "Jaipur, India",
           duration: "Aug 2020 – May 2024",
           grade: "8.5 CGPA",
         }
@@ -144,9 +144,9 @@ export default function ResumeBuilder() {
         {
           id: "exp-1",
           role: "Full Stack Developer",
-          company: "Tech Solutions Inc.",
-          location: "New York, USA",
-          duration: "Jan 2023 – Present",
+          company: "Collegesathi Pvt. Ltd.",
+          location: "Jaipur, Rajasthan",
+          duration: "Nov 2025 – Present",
           description: "• Developed responsive web applications using React.js, Node.js, Express.js, and MongoDB.\n• Implemented secure JWT authentication and optimized REST APIs for security and speed.\n• Improved application page load speed by 35% through asset optimization.",
         }
       ],
@@ -159,9 +159,9 @@ export default function ResumeBuilder() {
       projects: [
         {
           id: "proj-1",
-          title: "E-Commerce Platform",
-          tech: "React.js, Node.js, MongoDB, Stripe",
-          duration: "Jan 2024 – Apr 2024",
+          title: "ATS Pro Resume Builder",
+          tech: "React.js, Next.js, Tailwind CSS",
+          duration: "Jan 2024 – Present",
           description: "Developed a responsive e-commerce platform with product listings, search, and checkout with 99.9% uptime.",
         }
       ],
@@ -408,7 +408,6 @@ export default function ResumeBuilder() {
           const page = await pdf.getPage(i);
           const textContent = await page.getTextContent();
           
-          // Safe filtering: check for actual text items and prevent undefined
           const pageText = (textContent.items || [])
             .map((item) => (item && typeof item.str === 'string' ? item.str : ''))
             .filter((str) => str.trim().length > 0)
@@ -604,6 +603,13 @@ export default function ResumeBuilder() {
       checks.push({ pass: false, msg: "Add a professional Email address." });
     }
 
+    if (resumeData.personalInfo.phone && resumeData.personalInfo.phone.trim().length > 6) {
+      score += 5;
+      checks.push({ pass: true, msg: "Direct Contact Phone Number provided." });
+    } else {
+      checks.push({ pass: false, msg: "Add a reliable phone number." });
+    }
+
     if (resumeData.personalInfo.linkedin && resumeData.personalInfo.linkedin.trim().length > 5) { 
       score += 10; 
       checks.push({ pass: true, msg: "LinkedIn Profile URL included." }); 
@@ -721,7 +727,9 @@ export default function ResumeBuilder() {
           <h1 style="color: #1e3a8a; text-transform: uppercase;">${resumeData.personalInfo.fullName}</h1>
           <p><b>${resumeData.personalInfo.jobTitle}</b></p>
           <p>
-            ${resumeData.personalInfo.email} | ${resumeData.personalInfo.phone} | ${resumeData.personalInfo.address || resumeData.personalInfo.city}
+            ${resumeData.personalInfo.phone ? `${resumeData.personalInfo.phone} | ` : ''}
+            ${resumeData.personalInfo.email ? `${resumeData.personalInfo.email} | ` : ''}
+            ${resumeData.personalInfo.address || resumeData.personalInfo.city || ''}
             ${resumeData.personalInfo.linkedin ? ` | LinkedIn: ${resumeData.personalInfo.linkedin}` : ''}
             ${resumeData.personalInfo.github ? ` | GitHub: ${resumeData.personalInfo.github}` : ''}
             ${resumeData.personalInfo.portfolio ? ` | Portfolio: ${resumeData.personalInfo.portfolio}` : ''}
@@ -767,174 +775,223 @@ export default function ResumeBuilder() {
     fontFamily: selectedFont
   };
 
+  // Helper to build standard clean contact list (Phone -> Email -> Location -> LinkedIn -> GitHub -> Portfolio)
+  const getStandardContactItems = () => [
+    resumeData.personalInfo.phone ? { text: resumeData.personalInfo.phone, link: `tel:${resumeData.personalInfo.phone}` } : null,
+    resumeData.personalInfo.email ? { text: resumeData.personalInfo.email, link: `mailto:${resumeData.personalInfo.email}` } : null,
+    resumeData.personalInfo.address ? { text: resumeData.personalInfo.address, link: null } : null,
+    resumeData.personalInfo.linkedin ? { 
+      text: `linkedin.com/in/${resumeData.personalInfo.linkedin.replace(/^https?:\/\/(www\.)?linkedin\.com\/in\//, '').replace(/\/$/, '')}`, 
+      link: resumeData.personalInfo.linkedin.startsWith('http') ? resumeData.personalInfo.linkedin : `https://${resumeData.personalInfo.linkedin}` 
+    } : null,
+    resumeData.personalInfo.github ? { 
+      text: `github.com/${resumeData.personalInfo.github.replace(/^https?:\/\/(www\.)?github\.com\//, '').replace(/\/$/, '')}`, 
+      link: resumeData.personalInfo.github.startsWith('http') ? resumeData.personalInfo.github : `https://${resumeData.personalInfo.github}` 
+    } : null,
+    resumeData.personalInfo.portfolio ? { 
+      text: resumeData.personalInfo.portfolio.replace(/^https?:\/\//, '').replace(/\/$/, ''), 
+      link: resumeData.personalInfo.portfolio.startsWith('http') ? resumeData.personalInfo.portfolio : `https://${resumeData.personalInfo.portfolio}` 
+    } : null,
+  ].filter(Boolean);
+
   // ================= 01. HARVARD ATS TEMPLATE =================
-  const renderAnkitHarvardATS = () => (
-    <div style={{ ...a4CanvasStyle, padding: '34px 42px', fontSize: '11px', lineHeight: '1.4' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1.5px solid #000000', paddingBottom: '10px', marginBottom: '12px' }}>
-        <div style={{ flex: 1, textAlign: showPhoto && resumeData.personalInfo.photo ? 'left' : 'center' }}>
-          <h1 style={{ fontSize: '24px', fontWeight: 'bold', margin: '0 0 4px 0', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-            {resumeData.personalInfo.fullName}
-          </h1>
-          <div style={{ fontSize: '12px', fontWeight: '600', color: '#334155', marginBottom: '6px' }}>
-            {resumeData.personalInfo.jobTitle}
+  const renderAnkitHarvardATS = () => {
+    const contactItems = getStandardContactItems();
+
+    return (
+      <div style={{ ...a4CanvasStyle, padding: '34px 42px', fontSize: '11px', lineHeight: '1.4' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1.5px solid #000000', paddingBottom: '10px', marginBottom: '12px' }}>
+          <div style={{ flex: 1, textAlign: showPhoto && resumeData.personalInfo.photo ? 'left' : 'center' }}>
+            <h1 style={{ fontSize: '24px', fontWeight: 'bold', margin: '0 0 4px 0', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              {resumeData.personalInfo.fullName}
+            </h1>
+            <div style={{ fontSize: '12px', fontWeight: '600', color: '#334155', marginBottom: '6px' }}>
+              {resumeData.personalInfo.jobTitle}
+            </div>
+            
+            {/* Standard ATS Order: Phone • Email • Location • LinkedIn • GitHub • Portfolio */}
+            <div style={{ 
+              fontSize: '10px', 
+              display: 'flex', 
+              flexWrap: 'wrap', 
+              gap: '6px 8px', 
+              justifyContent: showPhoto && resumeData.personalInfo.photo ? 'flex-start' : 'center', 
+              alignItems: 'center', 
+              color: '#1e293b' 
+            }}>
+              {contactItems.map((item, idx) => (
+                <React.Fragment key={idx}>
+                  {idx > 0 && <span style={{ color: '#475569', fontWeight: 'bold' }}>•</span>}
+                  {item.link ? (
+                    <a href={item.link} target="_blank" rel="noreferrer" style={{ color: '#1e293b', textDecoration: 'none' }}>
+                      {item.text}
+                    </a>
+                  ) : (
+                    <span>{item.text}</span>
+                  )}
+                </React.Fragment>
+              ))}
+            </div>
           </div>
-          
-          <div style={{ fontSize: '10px', display: 'flex', flexWrap: 'wrap', gap: '8px', justifyContent: showPhoto && resumeData.personalInfo.photo ? 'flex-start' : 'center', alignItems: 'center', color: '#1e293b' }}>
-            {resumeData.personalInfo.address && <span>📍 {resumeData.personalInfo.address}</span>}
-            {resumeData.personalInfo.phone && <span>• 📞 {resumeData.personalInfo.phone}</span>}
-            {resumeData.personalInfo.email && <span>• ✉️ {resumeData.personalInfo.email}</span>}
-            {resumeData.personalInfo.linkedin && <span>• <strong>in</strong> {resumeData.personalInfo.linkedin.replace(/^https?:\/\//, '')}</span>}
-            {resumeData.personalInfo.github && <span>• <strong>git</strong> {resumeData.personalInfo.github.replace(/^https?:\/\//, '')}</span>}
-            {resumeData.personalInfo.portfolio && <span>• 🌐 {resumeData.personalInfo.portfolio.replace(/^https?:\/\//, '')}</span>}
-          </div>
+
+          {showPhoto && resumeData.personalInfo.photo && (
+            <div style={{ width: '75px', height: '88px', border: '1.5px solid #000000', padding: '2px', backgroundColor: '#ffffff', marginLeft: '16px', flexShrink: 0 }}>
+              <img src={resumeData.personalInfo.photo} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} crossOrigin="anonymous" />
+            </div>
+          )}
         </div>
 
-        {showPhoto && resumeData.personalInfo.photo && (
-          <div style={{ width: '75px', height: '88px', border: '1.5px solid #000000', padding: '2px', backgroundColor: '#ffffff', marginLeft: '16px', flexShrink: 0 }}>
-            <img src={resumeData.personalInfo.photo} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} crossOrigin="anonymous" />
+        {visibility.summary && resumeData.summary && (
+          <div style={{ marginBottom: '12px' }}>
+            <div style={{ fontSize: '12.5px', fontWeight: 'bold', borderBottom: '1px solid #000000', textTransform: 'uppercase', marginBottom: '5px' }}>Professional Summary</div>
+            <p style={{ margin: 0, fontSize: '10.5px', lineHeight: '1.5', textAlign: 'justify' }}>{resumeData.summary}</p>
+          </div>
+        )}
+
+        {visibility.experience && resumeData.experience.length > 0 && (
+          <div style={{ marginBottom: '12px' }}>
+            <div style={{ fontSize: '12.5px', fontWeight: 'bold', borderBottom: '1px solid #000000', textTransform: 'uppercase', marginBottom: '5px' }}>Work Experience</div>
+            {resumeData.experience.map((exp) => (
+              <div key={exp.id} style={{ marginBottom: '8px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11.5px' }}><strong>{exp.company}</strong><strong>{exp.duration}</strong></div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10.5px', fontStyle: 'italic', color: '#333333', marginBottom: '3px' }}><span>{exp.role}</span><span>{exp.location}</span></div>
+                <div style={{ fontSize: '10.5px', whiteSpace: 'pre-line', lineHeight: '1.45', paddingLeft: '8px' }}>{exp.description}</div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {visibility.projects && resumeData.projects.length > 0 && (
+          <div style={{ marginBottom: '12px' }}>
+            <div style={{ fontSize: '12.5px', fontWeight: 'bold', borderBottom: '1px solid #000000', textTransform: 'uppercase', marginBottom: '5px' }}>Key Projects</div>
+            {resumeData.projects.map((proj) => (
+              <div key={proj.id} style={{ marginBottom: '6px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11.5px' }}>
+                  <strong>{proj.title} {proj.tech ? <span style={{ fontWeight: 'normal', fontSize: '10px', color: '#475569' }}>| {proj.tech}</span> : ''}</strong>
+                  <strong>{proj.duration}</strong>
+                </div>
+                <div style={{ fontSize: '10.5px', lineHeight: '1.4', paddingLeft: '8px' }}>{proj.description}</div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {visibility.education && resumeData.education.length > 0 && (
+          <div style={{ marginBottom: '12px' }}>
+            <div style={{ fontSize: '12.5px', fontWeight: 'bold', borderBottom: '1px solid #000000', textTransform: 'uppercase', marginBottom: '5px' }}>Education</div>
+            {resumeData.education.map((edu) => (
+              <div key={edu.id} style={{ marginBottom: '6px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11.5px' }}><strong>{edu.institution}</strong><strong>{edu.duration}</strong></div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10.5px', fontStyle: 'italic', color: '#333333' }}><span>{edu.degree} {edu.grade ? `(${edu.grade})` : ''}</span><span>{edu.location}</span></div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {visibility.skills && (
+          <div style={{ marginBottom: '10px' }}>
+            <div style={{ fontSize: '12.5px', fontWeight: 'bold', borderBottom: '1px solid #000000', textTransform: 'uppercase', marginBottom: '5px' }}>Technical & Core Skills</div>
+            <div style={{ fontSize: '10.5px', lineHeight: '1.5' }}>
+              {resumeData.skillCategories.languages && <div><strong>Languages:</strong> {resumeData.skillCategories.languages}</div>}
+              {resumeData.skillCategories.frameworks && <div><strong>Frameworks & Libraries:</strong> {resumeData.skillCategories.frameworks}</div>}
+              {resumeData.skillCategories.tools && <div><strong>Developer Tools:</strong> {resumeData.skillCategories.tools}</div>}
+              {resumeData.skillCategories.softSkills && <div><strong>Soft Skills:</strong> {resumeData.skillCategories.softSkills}</div>}
+            </div>
           </div>
         )}
       </div>
-
-      {visibility.summary && resumeData.summary && (
-        <div style={{ marginBottom: '12px' }}>
-          <div style={{ fontSize: '12.5px', fontWeight: 'bold', borderBottom: '1px solid #000000', textTransform: 'uppercase', marginBottom: '5px' }}>Professional Summary</div>
-          <p style={{ margin: 0, fontSize: '10.5px', lineHeight: '1.5', textAlign: 'justify' }}>{resumeData.summary}</p>
-        </div>
-      )}
-
-      {visibility.experience && resumeData.experience.length > 0 && (
-        <div style={{ marginBottom: '12px' }}>
-          <div style={{ fontSize: '12.5px', fontWeight: 'bold', borderBottom: '1px solid #000000', textTransform: 'uppercase', marginBottom: '5px' }}>Work Experience</div>
-          {resumeData.experience.map((exp) => (
-            <div key={exp.id} style={{ marginBottom: '8px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11.5px' }}><strong>{exp.company}</strong><strong>{exp.duration}</strong></div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10.5px', fontStyle: 'italic', color: '#333333', marginBottom: '3px' }}><span>{exp.role}</span><span>{exp.location}</span></div>
-              <div style={{ fontSize: '10.5px', whiteSpace: 'pre-line', lineHeight: '1.45', paddingLeft: '8px' }}>{exp.description}</div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {visibility.projects && resumeData.projects.length > 0 && (
-        <div style={{ marginBottom: '12px' }}>
-          <div style={{ fontSize: '12.5px', fontWeight: 'bold', borderBottom: '1px solid #000000', textTransform: 'uppercase', marginBottom: '5px' }}>Key Projects</div>
-          {resumeData.projects.map((proj) => (
-            <div key={proj.id} style={{ marginBottom: '6px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11.5px' }}>
-                <strong>{proj.title} {proj.tech ? <span style={{ fontWeight: 'normal', fontSize: '10px', color: '#475569' }}>| {proj.tech}</span> : ''}</strong>
-                <strong>{proj.duration}</strong>
-              </div>
-              <div style={{ fontSize: '10.5px', lineHeight: '1.4', paddingLeft: '8px' }}>{proj.description}</div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {visibility.education && resumeData.education.length > 0 && (
-        <div style={{ marginBottom: '12px' }}>
-          <div style={{ fontSize: '12.5px', fontWeight: 'bold', borderBottom: '1px solid #000000', textTransform: 'uppercase', marginBottom: '5px' }}>Education</div>
-          {resumeData.education.map((edu) => (
-            <div key={edu.id} style={{ marginBottom: '6px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11.5px' }}><strong>{edu.institution}</strong><strong>{edu.duration}</strong></div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10.5px', fontStyle: 'italic', color: '#333333' }}><span>{edu.degree} {edu.grade ? `(${edu.grade})` : ''}</span><span>{edu.location}</span></div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {visibility.skills && (
-        <div style={{ marginBottom: '10px' }}>
-          <div style={{ fontSize: '12.5px', fontWeight: 'bold', borderBottom: '1px solid #000000', textTransform: 'uppercase', marginBottom: '5px' }}>Technical & Core Skills</div>
-          <div style={{ fontSize: '10.5px', lineHeight: '1.5' }}>
-            {resumeData.skillCategories.languages && <div><strong>Languages:</strong> {resumeData.skillCategories.languages}</div>}
-            {resumeData.skillCategories.frameworks && <div><strong>Frameworks & Libraries:</strong> {resumeData.skillCategories.frameworks}</div>}
-            {resumeData.skillCategories.tools && <div><strong>Developer Tools:</strong> {resumeData.skillCategories.tools}</div>}
-            {resumeData.skillCategories.softSkills && <div><strong>Soft Skills:</strong> {resumeData.skillCategories.softSkills}</div>}
-          </div>
-        </div>
-      )}
-    </div>
-  );
+    );
+  };
 
   // ================= 02. CLASSIC CORPORATE ATS TEMPLATE =================
-  const renderClassicATS = () => (
-    <div style={{ ...a4CanvasStyle, padding: '34px 42px' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: `2.5px solid ${accentColor}`, paddingBottom: '10px', marginBottom: '12px' }}>
-        <div style={{ flex: 1 }}>
-          <h1 style={{ fontSize: '22px', fontWeight: 'bold', textTransform: 'uppercase', margin: 0, color: '#0f172a' }}>{resumeData.personalInfo.fullName}</h1>
-          <div style={{ fontSize: '12px', fontWeight: 'bold', color: accentColor, marginTop: '3px' }}>{resumeData.personalInfo.jobTitle}</div>
-          
-          <div style={{ fontSize: '9.5px', color: '#475569', marginTop: '6px', display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center' }}>
-            {resumeData.personalInfo.email && <span>{resumeData.personalInfo.email}</span>}
-            {resumeData.personalInfo.phone && <span>• {resumeData.personalInfo.phone}</span>}
-            {resumeData.personalInfo.address && <span>• {resumeData.personalInfo.address}</span>}
-            {resumeData.personalInfo.linkedin && <span>• in/{resumeData.personalInfo.linkedin.replace(/^https?:\/\/(www\.)?linkedin\.com\/in\//, '')}</span>}
-            {resumeData.personalInfo.github && <span>• git/{resumeData.personalInfo.github.replace(/^https?:\/\/(www\.)?github\.com\//, '')}</span>}
+  const renderClassicATS = () => {
+    const contactItems = getStandardContactItems();
+
+    return (
+      <div style={{ ...a4CanvasStyle, padding: '34px 42px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: `2.5px solid ${accentColor}`, paddingBottom: '10px', marginBottom: '12px' }}>
+          <div style={{ flex: 1 }}>
+            <h1 style={{ fontSize: '22px', fontWeight: 'bold', textTransform: 'uppercase', margin: 0, color: '#0f172a' }}>{resumeData.personalInfo.fullName}</h1>
+            <div style={{ fontSize: '12px', fontWeight: 'bold', color: accentColor, marginTop: '3px' }}>{resumeData.personalInfo.jobTitle}</div>
+            
+            <div style={{ fontSize: '9.5px', color: '#475569', marginTop: '6px', display: 'flex', flexWrap: 'wrap', gap: '6px 8px', alignItems: 'center' }}>
+              {contactItems.map((item, idx) => (
+                <React.Fragment key={idx}>
+                  {idx > 0 && <span style={{ color: '#94a3b8' }}>•</span>}
+                  {item.link ? (
+                    <a href={item.link} target="_blank" rel="noreferrer" style={{ color: '#475569', textDecoration: 'none' }}>
+                      {item.text}
+                    </a>
+                  ) : (
+                    <span>{item.text}</span>
+                  )}
+                </React.Fragment>
+              ))}
+            </div>
           </div>
+          {showPhoto && resumeData.personalInfo.photo && (
+            <div style={{ width: '74px', height: '74px', borderRadius: '10px', overflow: 'hidden', border: `2px solid ${accentColor}`, flexShrink: 0 }}>
+              <img src={resumeData.personalInfo.photo} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} crossOrigin="anonymous" />
+            </div>
+          )}
         </div>
-        {showPhoto && resumeData.personalInfo.photo && (
-          <div style={{ width: '74px', height: '74px', borderRadius: '10px', overflow: 'hidden', border: `2px solid ${accentColor}`, flexShrink: 0 }}>
-            <img src={resumeData.personalInfo.photo} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} crossOrigin="anonymous" />
+
+        {visibility.summary && resumeData.summary && <p style={{ fontSize: '9.5px', lineHeight: '1.45', color: '#334155', marginBottom: '12px' }}>{resumeData.summary}</p>}
+
+        {visibility.experience && resumeData.experience.length > 0 && (
+          <div style={{ marginBottom: '12px' }}>
+            <div style={{ fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', color: accentColor, borderBottom: '1px solid #cbd5e1', marginBottom: '6px', paddingBottom: '2px' }}>Work Experience</div>
+            {resumeData.experience.map(e => (
+              <div key={e.id} style={{ marginBottom: '8px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10.5px' }}>
+                  <span><strong>{e.role}</strong> — <span style={{ color: '#475569' }}>{e.company}</span></span>
+                  <span style={{ color: '#64748b', fontSize: '9.5px' }}>{e.duration}</span>
+                </div>
+                <div style={{ fontSize: '9.5px', color: '#334155', whiteSpace: 'pre-line', marginTop: '2px' }}>{e.description}</div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {visibility.projects && resumeData.projects.length > 0 && (
+          <div style={{ marginBottom: '12px' }}>
+            <div style={{ fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', color: accentColor, borderBottom: '1px solid #cbd5e1', marginBottom: '6px', paddingBottom: '2px' }}>Projects</div>
+            {resumeData.projects.map(proj => (
+              <div key={proj.id} style={{ marginBottom: '6px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10.5px' }}>
+                  <strong>{proj.title}</strong>
+                  <span style={{ color: '#64748b', fontSize: '9.5px' }}>{proj.duration}</span>
+                </div>
+                <div style={{ fontSize: '9.5px', color: '#334155' }}>{proj.description}</div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {visibility.education && resumeData.education.length > 0 && (
+          <div style={{ marginBottom: '12px' }}>
+            <div style={{ fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', color: accentColor, borderBottom: '1px solid #cbd5e1', marginBottom: '6px', paddingBottom: '2px' }}>Education</div>
+            {resumeData.education.map(ed => (
+              <div key={ed.id} style={{ marginBottom: '4px', display: 'flex', justifyContent: 'space-between', fontSize: '10px' }}>
+                <span><strong>{ed.degree}</strong>, {ed.institution}</span>
+                <span style={{ color: '#64748b' }}>{ed.duration}</span>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {visibility.skills && (
+          <div>
+            <div style={{ fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', color: accentColor, borderBottom: '1px solid #cbd5e1', marginBottom: '6px', paddingBottom: '2px' }}>Skills & Competencies</div>
+            <div style={{ fontSize: '9.5px', lineHeight: '1.5', color: '#334155' }}>
+              <div><strong>Tech Stack:</strong> {resumeData.skillCategories.languages}, {resumeData.skillCategories.frameworks}</div>
+              <div><strong>Tools:</strong> {resumeData.skillCategories.tools}</div>
+            </div>
           </div>
         )}
       </div>
-
-      {visibility.summary && resumeData.summary && <p style={{ fontSize: '9.5px', lineHeight: '1.45', color: '#334155', marginBottom: '12px' }}>{resumeData.summary}</p>}
-
-      {visibility.experience && resumeData.experience.length > 0 && (
-        <div style={{ marginBottom: '12px' }}>
-          <div style={{ fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', color: accentColor, borderBottom: '1px solid #cbd5e1', marginBottom: '6px', paddingBottom: '2px' }}>Work Experience</div>
-          {resumeData.experience.map(e => (
-            <div key={e.id} style={{ marginBottom: '8px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10.5px' }}>
-                <span><strong>{e.role}</strong> — <span style={{ color: '#475569' }}>{e.company}</span></span>
-                <span style={{ color: '#64748b', fontSize: '9.5px' }}>{e.duration}</span>
-              </div>
-              <div style={{ fontSize: '9.5px', color: '#334155', whiteSpace: 'pre-line', marginTop: '2px' }}>{e.description}</div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {visibility.projects && resumeData.projects.length > 0 && (
-        <div style={{ marginBottom: '12px' }}>
-          <div style={{ fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', color: accentColor, borderBottom: '1px solid #cbd5e1', marginBottom: '6px', paddingBottom: '2px' }}>Projects</div>
-          {resumeData.projects.map(proj => (
-            <div key={proj.id} style={{ marginBottom: '6px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10.5px' }}>
-                <strong>{proj.title}</strong>
-                <span style={{ color: '#64748b', fontSize: '9.5px' }}>{proj.duration}</span>
-              </div>
-              <div style={{ fontSize: '9.5px', color: '#334155' }}>{proj.description}</div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {visibility.education && resumeData.education.length > 0 && (
-        <div style={{ marginBottom: '12px' }}>
-          <div style={{ fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', color: accentColor, borderBottom: '1px solid #cbd5e1', marginBottom: '6px', paddingBottom: '2px' }}>Education</div>
-          {resumeData.education.map(ed => (
-            <div key={ed.id} style={{ marginBottom: '4px', display: 'flex', justifyContent: 'space-between', fontSize: '10px' }}>
-              <span><strong>{ed.degree}</strong>, {ed.institution}</span>
-              <span style={{ color: '#64748b' }}>{ed.duration}</span>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {visibility.skills && (
-        <div>
-          <div style={{ fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', color: accentColor, borderBottom: '1px solid #cbd5e1', marginBottom: '6px', paddingBottom: '2px' }}>Skills & Competencies</div>
-          <div style={{ fontSize: '9.5px', lineHeight: '1.5', color: '#334155' }}>
-            <div><strong>Tech Stack:</strong> {resumeData.skillCategories.languages}, {resumeData.skillCategories.frameworks}</div>
-            <div><strong>Tools:</strong> {resumeData.skillCategories.tools}</div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
+    );
+  };
 
   const renderNovoresumeClean = () => renderClassicATS();
   const renderModernDev = () => renderClassicATS();
@@ -1131,12 +1188,12 @@ export default function ResumeBuilder() {
                   </div>
 
                   <div className="form-row">
+                    <div className="form-field"><label className="form-label">Phone Number</label><input className="form-input" type="text" name="phone" value={resumeData.personalInfo.phone} onChange={handlePersonalChange} placeholder="+91 8306661517" /></div>
                     <div className="form-field"><label className="form-label">Email Address</label><input className="form-input" type="email" name="email" value={resumeData.personalInfo.email} onChange={handlePersonalChange} placeholder="name@domain.com" /></div>
-                    <div className="form-field"><label className="form-label">Phone Number</label><input className="form-input" type="text" name="phone" value={resumeData.personalInfo.phone} onChange={handlePersonalChange} placeholder="+1 555-010-0000" /></div>
                   </div>
 
                   <div className="form-row">
-                    <div className="form-field"><label className="form-label">Address / Location</label><input className="form-input" type="text" name="address" value={resumeData.personalInfo.address} onChange={handlePersonalChange} placeholder="e.g. New York, USA" /></div>
+                    <div className="form-field"><label className="form-label">Address / Location</label><input className="form-input" type="text" name="address" value={resumeData.personalInfo.address} onChange={handlePersonalChange} placeholder="e.g. Jaipur, Rajasthan, India" /></div>
                     <div className="form-field"><label className="form-label">LinkedIn Profile URL</label><input className="form-input" type="text" name="linkedin" value={resumeData.personalInfo.linkedin} onChange={handlePersonalChange} placeholder="linkedin.com/in/username" /></div>
                   </div>
 
