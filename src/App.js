@@ -4,10 +4,11 @@ import React, { useState, useRef, useEffect } from 'react';
 import { 
   User, Briefcase, GraduationCap, Award, Code, 
   Download, CheckCircle2, Trash2, Plus, Image as ImageIcon, 
-  Palette, Eye, EyeOff, Layers, 
-  ZoomIn, ZoomOut, Smartphone, Monitor, Printer, Maximize2, Sparkles, FileDown, CheckCircle, AlertTriangle, X,
-  ChevronUp, ChevronDown, UploadCloud, FileText, Loader2,
+  Palette, Eye, EyeOff, Layers, Mail, Phone, MapPin, Globe,
+  ZoomIn, ZoomOut, Smartphone, Monitor, Printer, Maximize2, Sparkles, FileDown, Type, CheckCircle, AlertTriangle, X,
+  ChevronUp, ChevronDown, UploadCloud, FileText, Loader2, ExternalLink
 } from 'lucide-react';
+import { FaGithub, FaLinkedin } from 'react-icons/fa';
 
 // 100% Reliable Base64 Avatar
 const DEFAULT_AVATAR = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48Y2lyY2xlIGN4PSI1MCIgY3k9IjUwIiByPSI1MCIgZmlsbD0iI2UyZThmMCIvPjxjaXJjbGUgY3g9IjUwIiBjeT0iMzgiIHI9IjE4IiBmaWxsPSIjNjQ3NDhiIi8+PHBhdGggZD0iTTIwIDg2Yz0tMTYuNSAxMy41LTMwIDMwLTMwczMwIDEzLjUgMzAgMzB6IiBmaWxsPSIjNjQ3NDhiIi8+PC9zdmc+";
@@ -268,25 +269,11 @@ export default function ResumeBuilder() {
     const phone = phoneMatch ? phoneMatch[0] : '';
 
     // 3. LinkedIn & GitHub extraction
-const linkedinMatch = cleanFullText.match(
-  /(?:https?:\/\/)?(?:www\.)?linkedin\.com\/in\/([a-zA-Z0-9_.-]+)/i
-);
+    const linkedinMatch = cleanFullText.match(/(?:https?:\/\/)?(?:www\.)?linkedin\.com\/in\/([a-zA-Z0-9_\-\.]+)/i);
+    const linkedin = linkedinMatch ? `linkedin.com/in/${linkedinMatch[1]}` : (cleanFullText.match(/linkedin:\s*([a-zA-Z0-9_\-\.]+)/i) ? `linkedin.com/in/${RegExp.$1}` : '');
 
-const linkedin = linkedinMatch
-  ? `linkedin.com/in/${linkedinMatch[1]}`
-  : (cleanFullText.match(/linkedin:\s*([a-zA-Z0-9_.-]+)/i)
-      ? `linkedin.com/in/${RegExp.$1}`
-      : '');
-
-const githubMatch = cleanFullText.match(
-  /(?:https?:\/\/)?(?:www\.)?github\.com\/([a-zA-Z0-9_.-]+)/i
-);
-
-const github = githubMatch
-  ? `github.com/${githubMatch[1]}`
-  : (cleanFullText.match(/github:\s*([a-zA-Z0-9_.-]+)/i)
-      ? `github.com/${RegExp.$1}`
-      : '');
+    const githubMatch = cleanFullText.match(/(?:https?:\/\/)?(?:www\.)?github\.com\/([a-zA-Z0-9_\-\.]+)/i);
+    const github = githubMatch ? `github.com/${githubMatch[1]}` : (cleanFullText.match(/github:\s*([a-zA-Z0-9_\-\.]+)/i) ? `github.com/${RegExp.$1}` : '');
 
     // 4. Candidate Name: checks first non-contact lines OR falls back to file name
     let fullName = '';
