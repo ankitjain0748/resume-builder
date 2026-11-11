@@ -1,5 +1,3 @@
-
-
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
@@ -8,7 +6,7 @@ import {
   Download, CheckCircle2, Trash2, Plus, Image as ImageIcon, 
   Palette, Eye, EyeOff, Layers, 
   ZoomIn, ZoomOut, Smartphone, Monitor, Printer, Maximize2, Sparkles, FileDown, CheckCircle, AlertTriangle, X,
-  ChevronUp, ChevronDown, UploadCloud, FileText, Loader2,  RotateCcw, Save, List, AlignLeft
+  ChevronUp, ChevronDown, RotateCcw, Save, List, AlignLeft
 } from 'lucide-react';
 
 // 100% Reliable Base64 Avatar
@@ -129,6 +127,12 @@ const formatUrl = (url) => {
   return trimmed;
 };
 
+// Clean Display Helper: Shows real clean URL text
+const displayCleanUrl = (url) => {
+  if (!url) return '';
+  return url.replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, '');
+};
+
 export default function ResumeBuilder() {
   const [activeTab, setActiveTab] = useState('personal');
   const [selectedTemplate, setSelectedTemplate] = useState('ankit_harvard'); 
@@ -147,16 +151,8 @@ export default function ResumeBuilder() {
   const [newBulletText, setNewBulletText] = useState('');
   const [bulletList, setBulletList] = useState(DEFAULT_PRESET_BULLETS);
 
-  // Import Modal & Loading States
-  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
-  const [isParsingDoc, setIsParsingDoc] = useState(false);
-  const [pasteResumeText, setPasteResumeText] = useState('');
-  const [importStatusMsg, setImportStatusMsg] = useState('');
-
   const resumeRef = useRef(null);
   const previewWrapperRef = useRef(null);
-  const fileInputRef = useRef(null);
-  const pasteTextareaRef = useRef(null);
 
   const [visibility, setVisibility] = useState({
     summary: true,
@@ -171,7 +167,7 @@ export default function ResumeBuilder() {
 
   const [resumeData, setResumeData] = useState(INITIAL_RESUME_DATA);
 
-  // ================= 1. ROBUST LOCALSTORAGE LOAD SYSTEM =================
+  // ================= 1. LOCALSTORAGE LOAD SYSTEM =================
   useEffect(() => {
     if (typeof window === 'undefined') return;
     try {
@@ -194,7 +190,7 @@ export default function ResumeBuilder() {
     }
   }, []);
 
-  // ================= 2. ROBUST LOCALSTORAGE AUTO-SAVE SYSTEM =================
+  // ================= 2. LOCALSTORAGE AUTO-SAVE SYSTEM =================
   useEffect(() => {
     if (!hasLoadedStorage || typeof window === 'undefined') return;
     try {
@@ -244,403 +240,6 @@ export default function ResumeBuilder() {
     window.addEventListener('resize', autoFitScale);
     return () => window.removeEventListener('resize', autoFitScale);
   }, [mobileView]);
-
-  // ================= DOCUMENT IMPORT & ROBUST PARSING ENGINES =================
-  const loadPdfJs = () => new Promise((resolve, reject) => {
-    if (typeof window !== 'undefined' && window.pdfjsLib) {
-      return resolve(window.pdfjsLib);
-    }
-    const s = document.createElement('script');
-    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
-    s.onload = () => {
-      try {
-        const workerBlob = new Blob([
-          `importScripts('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js');`
-        ], { type: 'application/javascript' });
-        window.pdfjsLib.GlobalWorkerOptions.workerSrc = URL.createObjectURL(workerBlob);
-      } catch (err) {
-        window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-      }
-      resolve(window.pdfjsLib);
-    };
-    s.onerror = () => reject(new Error('Failed to load PDF Parser script'));
-    document.head.appendChild(s);
-  });
-
-  const loadMammoth = () => new Promise((resolve, reject) => {
-    if (typeof window !== 'undefined' && window.mammoth) {
-      return resolve(window.mammoth);
-    }
-    const s = document.createElement('script');
-    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js';
-    s.onload = () => resolve(window.mammoth);
-    s.onerror = () => reject(new Error('Failed to load Word DOCX Parser script'));
-    document.head.appendChild(s);
-  });
-
-  const loadTesseract = () => new Promise((resolve, reject) => {
-    if (typeof window !== 'undefined' && window.Tesseract) {
-      return resolve(window.Tesseract);
-    }
-    const s = document.createElement('script');
-    s.src = 'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';
-    s.onload = () => resolve(window.Tesseract);
-    s.onerror = () => reject(new Error('Failed to load OCR Engine'));
-    document.head.appendChild(s);
-  });
-
-  const parseResumeTextIntoState = (rawText, originalFileName = '') => {
-    const trimmed = (rawText || '').trim();
-    if (trimmed.length < 15) {
-      alert(
-        '⚠️ Document se text extract nahi ho paya.\n\n' +
-        'Kripya resume ka text copy karke box me paste karein aur "⚡ Parse & Update Resume" dabayein.'
-      );
-      if (pasteTextareaRef.current) pasteTextareaRef.current.focus();
-      return;
-    }
-
-    setPasteResumeText(trimmed);
-
-    const cleanFullText = trimmed;
-    const lines = cleanFullText.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
-
-    const emailMatch = cleanFullText.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
-    const email = emailMatch ? emailMatch[0] : '';
-
-    const phoneMatch = cleanFullText.match(/(?:(?:\+|0{0,2})91[\s.-]?)?[6-9]\d{4}[\s.-]?\d{5}|(?:\+?\d{1,3}[-.\s]?)?\(?\d{2,4}\)?[-.\s]?\d{3,5}[-.\s]?\d{4}/);
-    const phone = phoneMatch ? phoneMatch[0] : '';
-
-    const linkedinMatch = cleanFullText.match(/(?:https?:\/\/)?(?:www\.)?linkedin\.com\/in\/([a-zA-Z0-9_.-]+)/i);
-    const linkedin = linkedinMatch ? `linkedin.com/in/${linkedinMatch[1]}` : '';
-
-    const githubMatch = cleanFullText.match(/(?:https?:\/\/)?(?:www\.)?github\.com\/([a-zA-Z0-9_.-]+)/i);
-    const github = githubMatch ? `github.com/${githubMatch[1]}` : '';
-
-    let fullName = '';
-    for (let i = 0; i < Math.min(lines.length, 6); i++) {
-      const line = lines[i];
-      if (!line.includes('@') && 
-          !line.includes('http') && 
-          !line.match(/\d{5,}/) && 
-          !/resume|curriculum|vitae|cv|page/i.test(line) &&
-          line.length > 2 && line.length < 35) {
-        fullName = line.replace(/resume|cv/gi, '').trim();
-        if (fullName.length > 2) break;
-      }
-    }
-
-    if (!fullName && originalFileName) {
-      const cleanName = originalFileName
-        .replace(/\.[^/.]+$/, "")
-        .replace(/resume|cv|biodata|profile/gi, "")
-        .replace(/[_-]+/g, " ")
-        .trim();
-      if (cleanName.length > 2 && cleanName.length < 35) {
-        fullName = cleanName.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
-      }
-    }
-
-    let jobTitle = '';
-    for (let i = 0; i < Math.min(lines.length, 8); i++) {
-      const l = lines[i];
-      if (l !== fullName && !l.includes('@') && !l.includes('http') && !l.match(/\d{4,}/)) {
-        if (/developer|engineer|designer|manager|consultant|analyst|intern|specialist|lead|architect|executive/i.test(l)) {
-          jobTitle = l;
-          break;
-        }
-      }
-    }
-
-    let currentSection = 'summary';
-    const sections = {
-      summary: [],
-      experience: [],
-      education: [],
-      skills: [],
-      projects: []
-    };
-
-    lines.forEach((line) => {
-      const lower = line.toLowerCase();
-      if (/^(?:work\s+)?experience|employment|work\s+history|internship/i.test(line) || lower === 'experience' || lower === 'work experience') {
-        currentSection = 'experience';
-      } else if (/^education|academics|qualifications|academic\s+background/i.test(line) || lower === 'education') {
-        currentSection = 'education';
-      } else if (/^skills|technical\s+skills|tech\s+stack|core\s+competencies|technologies/i.test(line) || lower === 'skills') {
-        currentSection = 'skills';
-      } else if (/^projects|key\s+projects|academic\s+projects|personal\s+projects/i.test(line) || lower === 'projects') {
-        currentSection = 'projects';
-      } else if (/^summary|profile|about\s+me|career\s+objective|professional\s+summary/i.test(line) || lower === 'summary') {
-        currentSection = 'summary';
-      } else {
-        if (currentSection === 'summary' && (line === fullName || line === email || line === phone || line.includes('linkedin.com'))) {
-          return;
-        }
-        sections[currentSection].push(line);
-      }
-    });
-
-    let languages = '';
-    let frameworks = '';
-    let tools = '';
-    let softSkills = '';
-
-    if (sections.skills.length > 0) {
-      sections.skills.forEach(sLine => {
-        const sLower = sLine.toLowerCase();
-        if (sLower.includes('language') || sLower.includes('programming')) {
-          languages = sLine.replace(/languages?(\s*:\s*)?/i, '').trim();
-        } else if (sLower.includes('framework') || sLower.includes('libraries') || sLower.includes('technologies')) {
-          frameworks = sLine.replace(/(frameworks?|libraries|technologies)(\s*:\s*)?/i, '').trim();
-        } else if (sLower.includes('tool') || sLower.includes('cloud') || sLower.includes('database')) {
-          tools = sLine.replace(/(tools?|cloud|databases?)(\s*:\s*)?/i, '').trim();
-        } else if (sLower.includes('soft') || sLower.includes('interpersonal')) {
-          softSkills = sLine.replace(/soft\s+skills?(\s*:\s*)?/i, '').trim();
-        }
-      });
-      if (!languages && !frameworks && !tools) {
-        languages = sections.skills.join(', ');
-      }
-    }
-
-    const parsedEducation = [];
-    if (sections.education.length > 0) {
-      let curEdu = { id: `edu-${Date.now()}-1`, degree: '', institution: '', location: '', duration: '', grade: '' };
-      sections.education.forEach(line => {
-        if (/b\.tech|bachelor|master|m\.tech|b\.sc|m\.sc|diploma|phd|high\s+school|secondary|cbse|icse|degree/i.test(line)) {
-          if (curEdu.degree) {
-            parsedEducation.push(curEdu);
-            curEdu = { id: `edu-${Date.now()}-${parsedEducation.length + 1}`, degree: '', institution: '', location: '', duration: '', grade: '' };
-          }
-          curEdu.degree = line;
-        } else if (/university|college|institute|school|academy/i.test(line)) {
-          curEdu.institution = line;
-        } else if (/\b(20\d\d|19\d\d)\b/.test(line)) {
-          curEdu.duration = line;
-        } else if (/cgpa|gpa|%|percentage|marks/i.test(line)) {
-          curEdu.grade = line;
-        } else if (!curEdu.institution) {
-          curEdu.institution = line;
-        } else if (!curEdu.location) {
-          curEdu.location = line;
-        }
-      });
-      if (curEdu.degree || curEdu.institution) {
-        parsedEducation.push(curEdu);
-      }
-    }
-
-    const parsedExperience = [];
-    if (sections.experience.length > 0) {
-      let curExp = { id: `exp-${Date.now()}-1`, role: '', company: '', location: '', duration: '', description: '' };
-      let descBullets = [];
-
-      sections.experience.forEach(line => {
-        const hasDate = /\b(20\d\d|19\d\d|present|current)\b/i.test(line);
-        const isBullet = line.startsWith('•') || line.startsWith('-') || line.startsWith('*');
-
-        if (hasDate && !isBullet) {
-          if (curExp.role || curExp.company) {
-            curExp.description = descBullets.join('\n');
-            parsedExperience.push(curExp);
-            descBullets = [];
-            curExp = { id: `exp-${Date.now()}-${parsedExperience.length + 1}`, role: '', company: '', location: '', duration: '', description: '' };
-          }
-          curExp.duration = line;
-        } else if (!curExp.role && !isBullet && line.length < 50) {
-          curExp.role = line;
-        } else if (!curExp.company && !isBullet && line.length < 60) {
-          curExp.company = line;
-        } else {
-          descBullets.push(isBullet ? line : `• ${line}`);
-        }
-      });
-
-      if (curExp.role || curExp.company || descBullets.length > 0) {
-        curExp.description = descBullets.join('\n');
-        if (!curExp.role) curExp.role = jobTitle || "Role / Designation";
-        parsedExperience.push(curExp);
-      }
-    }
-
-    const parsedProjects = [];
-    if (sections.projects.length > 0) {
-      let curProj = { id: `proj-${Date.now()}-1`, title: '', tech: '', duration: '', link: '', description: '' };
-      let projDesc = [];
-
-      sections.projects.forEach(line => {
-        if (/https?:\/\/|github\.com/i.test(line) && !curProj.link) {
-          curProj.link = line;
-          return;
-        }
-        if (!curProj.title && line.length < 50 && !line.startsWith('•')) {
-          if (curProj.title) {
-            curProj.description = projDesc.join('\n');
-            parsedProjects.push(curProj);
-            projDesc = [];
-            curProj = { id: `proj-${Date.now()}-${parsedProjects.length + 1}`, title: '', tech: '', duration: '', link: '', description: '' };
-          }
-          curProj.title = line;
-        } else {
-          projDesc.push(line);
-        }
-      });
-
-      if (curProj.title || projDesc.length > 0) {
-        curProj.description = projDesc.join('\n');
-        parsedProjects.push(curProj);
-      }
-    }
-
-    setResumeData((prev) => ({
-      ...prev,
-      personalInfo: {
-        ...prev.personalInfo,
-        fullName: fullName || prev.personalInfo.fullName,
-        jobTitle: jobTitle || prev.personalInfo.jobTitle,
-        email: email || prev.personalInfo.email,
-        phone: phone || prev.personalInfo.phone,
-        linkedin: linkedin || prev.personalInfo.linkedin,
-        github: github || prev.personalInfo.github
-      },
-      summary: sections.summary.length > 0 ? sections.summary.slice(0, 6).join(' ') : prev.summary,
-      skillCategories: {
-        languages: languages || prev.skillCategories.languages,
-        frameworks: frameworks || prev.skillCategories.frameworks,
-        tools: tools || prev.skillCategories.tools,
-        softSkills: softSkills || prev.skillCategories.softSkills
-      },
-      education: parsedEducation.length > 0 ? parsedEducation : prev.education,
-      experience: parsedExperience.length > 0 ? parsedExperience : prev.experience,
-      projects: parsedProjects.length > 0 ? parsedProjects : prev.projects
-    }));
-
-    setImportStatusMsg('✅ Document se data successfully extract aur save ho gaya!');
-    setTimeout(() => {
-      setIsImportModalOpen(false);
-      setImportStatusMsg('');
-    }, 1500);
-  };
-
-  const handleDocumentUpload = async (e) => {
-    const file = e.target.files && e.target.files[0];
-    if (!file) return;
-
-    setIsParsingDoc(true);
-    setImportStatusMsg(`Parsing ${file.name}...`);
-
-    try {
-      const fileName = file.name.toLowerCase();
-
-      if (fileName.endsWith('.json')) {
-        const text = await file.text();
-        const parsed = JSON.parse(text);
-        if (parsed.personalInfo) {
-          setResumeData(parsed);
-          setImportStatusMsg('✅ JSON resume successfully restored!');
-          setTimeout(() => setIsImportModalOpen(false), 1200);
-          return;
-        }
-      }
-
-      if (fileName.endsWith('.txt') || fileName.endsWith('.md')) {
-        const text = await file.text();
-        parseResumeTextIntoState(text, file.name);
-        return;
-      }
-
-      if (fileName.endsWith('.docx')) {
-        const arrayBuffer = await file.arrayBuffer();
-        const mammoth = await loadMammoth();
-        const result = await mammoth.extractRawText({ arrayBuffer });
-        const docxText = result && result.value ? result.value : '';
-        parseResumeTextIntoState(docxText, file.name);
-        return;
-      }
-
-      if (fileName.endsWith('.png') || fileName.endsWith('.jpg') || fileName.endsWith('.jpeg')) {
-        setImportStatusMsg('🔍 Image file detect hui! AI OCR se text scan ho raha hai...');
-        const tesseract = await loadTesseract();
-        const { data: { text } } = await tesseract.recognize(file, 'eng');
-        parseResumeTextIntoState(text, file.name);
-        return;
-      }
-
-      if (fileName.endsWith('.pdf')) {
-        const arrayBuffer = await file.arrayBuffer();
-        const pdfjsLib = await loadPdfJs();
-        
-        const loadingTask = pdfjsLib.getDocument({ 
-          data: new Uint8Array(arrayBuffer),
-          cMapUrl: 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/cmaps/',
-          cMapPacked: true,
-          standardFontDataUrl: 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/standard_fonts/',
-        });
-        const pdf = await loadingTask.promise;
-        let fullPdfText = '';
-
-        for (let i = 1; i <= pdf.numPages; i++) {
-          const page = await pdf.getPage(i);
-          const textContent = await page.getTextContent();
-          
-          let lastY;
-          let pageText = '';
-          for (const item of (textContent.items || [])) {
-            if (item && item.str) {
-              if (lastY !== undefined && Math.abs(item.transform[5] - lastY) > 5) {
-                pageText += '\n';
-              } else if (pageText.length > 0 && !pageText.endsWith(' ') && !pageText.endsWith('\n')) {
-                pageText += ' ';
-              }
-              pageText += item.str;
-              lastY = item.transform[5];
-            }
-          }
-          fullPdfText += pageText + '\n';
-        }
-
-        if (fullPdfText.trim().length < 20) {
-          setImportStatusMsg('🔍 Canva/Image PDF detect hua! AI OCR Text Scanner start ho raha hai...');
-          const tesseract = await loadTesseract();
-          let ocrFullText = '';
-
-          for (let i = 1; i <= Math.min(pdf.numPages, 3); i++) {
-            setImportStatusMsg(`📖 Page ${i}/${pdf.numPages} ko scan kiya ja raha hai...`);
-            const page = await pdf.getPage(i);
-            const viewport = page.getViewport({ scale: 2.0 });
-            const canvas = document.createElement('canvas');
-            canvas.width = viewport.width;
-            canvas.height = viewport.height;
-            const ctx = canvas.getContext('2d');
-            await page.render({ canvasContext: ctx, viewport }).promise;
-
-            const { data: { text } } = await tesseract.recognize(canvas, 'eng');
-            ocrFullText += text + '\n';
-          }
-          fullPdfText = ocrFullText;
-        }
-
-        parseResumeTextIntoState(fullPdfText, file.name);
-        return;
-      }
-
-      alert('Kripya PDF (.pdf), Word (.docx), Image (.png, .jpg), Text (.txt), ya JSON (.json) file upload karein.');
-    } catch (err) {
-      console.error('File parsing error:', err);
-      alert('Document read karne me dikkat aayi. Kripya Text copy-paste karke try karein.');
-    } finally {
-      setIsParsingDoc(false);
-      if (fileInputRef.current) fileInputRef.current.value = '';
-    }
-  };
-
-  const handleManualTextImport = () => {
-    if (!pasteResumeText.trim()) return;
-    setIsParsingDoc(true);
-    parseResumeTextIntoState(pasteResumeText);
-    setIsParsingDoc(false);
-  };
 
   const moveItem = (section, index, direction) => {
     setResumeData((prev) => {
@@ -1258,7 +857,7 @@ export default function ResumeBuilder() {
                         title={`Open ${proj.link}`}
                         style={{ color: '#2563eb', fontWeight: 'bold', textDecoration: 'underline' }}
                       >
-                        🔗 {(proj.link)}
+                        🔗 {displayCleanUrl(proj.link)}
                       </a>
                     </span>
                   )}
@@ -1365,7 +964,7 @@ export default function ResumeBuilder() {
                         title={`Open ${proj.link}`}
                         style={{ color: accentColor, fontWeight: 'bold', textDecoration: 'underline' }}
                       >
-                        🔗 {(proj.link)}
+                        🔗 {displayCleanUrl(proj.link)}
                       </a>
                     </span>
                   )}
@@ -1453,12 +1052,6 @@ export default function ResumeBuilder() {
         .canvas-scroll-viewport { flex: 1; overflow-y: auto; overflow-x: auto; padding: 16px; display: flex; justify-content: center; align-items: flex-start; }
         .canvas-scale-wrapper { display: flex; justify-content: center; transform-origin: top center; transition: all 0.2s ease-out; margin: 0 auto; }
         .canvas-shadow { box-shadow: 0 20px 45px rgba(0, 0, 0, 0.75); border-radius: 3px; position: relative; }
-        
-        /* Modal Styles */
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.75); backdrop-filter: blur(4px); z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 20px; }
-        .modal-card { background: #0a1222; border: 1px solid #243552; border-radius: 14px; width: 100%; max-width: 580px; padding: 22px; color: #ffffff; box-shadow: 0 25px 50px rgba(0,0,0,0.5); }
-        .dropzone { border: 2px dashed #243552; border-radius: 10px; padding: 26px 20px; text-align: center; cursor: pointer; background: #060b14; transition: all 0.2s; }
-        .dropzone:hover { border-color: #3b82f6; background: rgba(59, 130, 246, 0.05); }
 
         @media (max-width: 1080px) {
           .mobile-mode-bar { display: flex; }
@@ -1469,7 +1062,7 @@ export default function ResumeBuilder() {
           .preview-container.mobile-active { display: flex; }
         }
         @media print {
-          .top-navbar, .mobile-mode-bar, .resume-hero, .editor-container, .preview-topbar, .zoom-controls, .modal-overlay, .page-break-line { display: none !important; }
+          .top-navbar, .mobile-mode-bar, .resume-hero, .editor-container, .preview-topbar, .zoom-controls { display: none !important; }
           .app-wrapper, .main-workspace, .preview-container, .canvas-scroll-viewport { display: block !important; background: transparent !important; border: none !important; margin: 0 !important; padding: 0 !important; height: auto !important; width: 100% !important; }
           .canvas-scale-wrapper { transform: none !important; width: 100% !important; height: auto !important; }
           .canvas-shadow { box-shadow: none !important; width: 100% !important; height: auto !important; }
@@ -1499,24 +1092,14 @@ export default function ResumeBuilder() {
                 <RotateCcw size={12} />
                 <span>Reset Demo</span>
               </button>
-
-              <button 
-                onClick={() => setIsImportModalOpen(true)}
-                className="custom-btn custom-btn-primary"
-                style={{ color: '#ffffff', fontWeight: 'bold' }}
-                type="button"
-              >
-                <UploadCloud size={14} />
-                <span>📥 Import Document (PDF/Word/Images)</span>
-              </button>
             </div>
           </div>
         </header>
 
         <section className={`resume-hero ${mobileView === 'preview' ? 'hide-on-preview' : ''}`}>
-          <span className="resume-hero-badge"><Sparkles size={12} /> Auto LocalStorage Saved & AI Document Importer</span>
+          <span className="resume-hero-badge"><Sparkles size={12} /> Auto LocalStorage Saved ATS Resume Builder</span>
           <h1>Free ATS-Friendly Resume Builder</h1>
-          <p>Import resumes directly from PDF (including Canva/Scanned), Word, or Images. Changes stay safely saved in your browser automatically.</p>
+          <p>Create clean, professional, and ATS-compliant resumes with multi-page automatic flow and active clickable URL links.</p>
 
           <div className="action-group">
             <select value={selectedTemplate} onChange={(e) => setSelectedTemplate(e.target.value)} className="custom-select">
@@ -1838,7 +1421,7 @@ export default function ResumeBuilder() {
                 </>
               )}
 
-              {/* ============ PROJECTS WITH DUAL POINTER / PARAGRAPH MODE ============ */}
+              {/* ============ PROJECTS ============ */}
               {activeTab === 'projects' && (
                 <>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -2012,81 +1595,6 @@ export default function ResumeBuilder() {
             </div>
           </section>
         </div>
-
-        {/* ============ IMPORT DOCUMENT / RESUME MODAL ============ */}
-        {isImportModalOpen && (
-          <div className="modal-overlay">
-            <div className="modal-card">
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <FileText size={18} color="#38bdf8" />
-                  <span style={{ fontSize: '15px', fontWeight: 'bold' }}>Import Resume Document</span>
-                </div>
-                <button 
-                  onClick={() => setIsImportModalOpen(false)}
-                  style={{ background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer' }}
-                  type="button"
-                >
-                  <X size={18} />
-                </button>
-              </div>
-
-              <p style={{ fontSize: '11.5px', color: '#94a3b8', margin: '0 0 16px 0', lineHeight: '1.4' }}>
-                Apna resume upload karein. File se <b>Full Name, Experience, Skills & Contacts</b> auto-fill hokar <b>LocalStorage me save</b> ho jayenge.
-              </p>
-
-              {/* File Dropzone */}
-              <div className="dropzone" onClick={() => fileInputRef.current && fileInputRef.current.click()}>
-                <input 
-                  type="file" 
-                  ref={fileInputRef} 
-                  onChange={handleDocumentUpload} 
-                  accept=".pdf,.docx,.txt,.json,.png,.jpg,.jpeg" 
-                  style={{ display: 'none' }} 
-                />
-                <UploadCloud size5={28} color="#38bdf8" style={{ margin: '0 auto 8px auto', display: 'block' }} />
-                <div style={{ fontSize: '13px', fontWeight: 'bold', color: '#f8fafc' }}>Click to Upload Resume File</div>
-                <div style={{ fontSize: '11px', color: '#64748b', marginTop: '4px' }}>Supports <b>PDF (.pdf), Word (.docx), Images (.png, .jpg), Text (.txt), JSON (.json)</b></div>
-              </div>
-
-              {/* Status Message */}
-              {isParsingDoc && (
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginTop: '12px', fontSize: '12px', color: '#38bdf8' }}>
-                  <Loader2 size={16} className="animate-spin" />
-                  <span>{importStatusMsg || 'Document ko analyze kiya ja raha hai...'}</span>
-                </div>
-              )}
-
-              {importStatusMsg && !isParsingDoc && (
-                <div style={{ textAlign: 'center', marginTop: '12px', fontSize: '12px', color: '#22c55e', fontWeight: 'bold' }}>
-                  {importStatusMsg}
-                </div>
-              )}
-
-              {/* Alternative: Direct Text Paste */}
-              <div style={{ marginTop: '18px', borderTop: '1px solid #1a273f', paddingTop: '14px' }}>
-                <div style={{ fontSize: '11.5px', fontWeight: 'bold', color: '#cbd5e1', marginBottom: '6px' }}>Ya seedha Resume ka Text Paste karein:</div>
-                <textarea 
-                  ref={pasteTextareaRef}
-                  className="form-textarea" 
-                  rows={4} 
-                  placeholder="Paste complete resume text here (Name, Email, Roles, Skills etc.)..."
-                  value={pasteResumeText}
-                  onChange={(e) => setPasteResumeText(e.target.value)}
-                />
-                <button 
-                  onClick={handleManualTextImport}
-                  disabled={!pasteResumeText.trim() || isParsingDoc}
-                  className="custom-btn custom-btn-primary" 
-                  style={{ width: '100%', marginTop: '8px', justifyContent: 'center' }}
-                  type="button"
-                >
-                  ⚡ Parse & Update Resume
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
       </main>
     </>
   );
