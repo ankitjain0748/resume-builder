@@ -7,7 +7,7 @@ import {
   Download, CheckCircle2, Trash2, Plus, Image as ImageIcon, 
   Palette, Eye, EyeOff, Layers, 
   ZoomIn, ZoomOut, Smartphone, Monitor, Printer, Maximize2, Sparkles, FileDown, CheckCircle, AlertTriangle, X,
-  ChevronUp, ChevronDown, UploadCloud, FileText, Loader2, RotateCcw, Save
+  ChevronUp, ChevronDown, UploadCloud, FileText, Loader2,  RotateCcw, Save, List, AlignLeft
 } from 'lucide-react';
 
 // 100% Reliable Base64 Avatar
@@ -106,7 +106,7 @@ const INITIAL_RESUME_DATA = {
       tech: "React.js, Node.js, MongoDB, Stripe",
       duration: "Jan 2024 – Apr 2024",
       link: "https://github.com/alexmorgan/ecommerce-store",
-      description: "Developed a responsive e-commerce platform with product listings, search, and checkout with 99.9% uptime.",
+      description: "• Developed a high-conversion e-commerce platform with search and checkout.\n• Integrated Stripe payment gateway with 99.9% transaction success rate.\n• Optimized backend queries reducing page load times by 40%.",
     }
   ],
   certifications: [
@@ -117,6 +117,15 @@ const INITIAL_RESUME_DATA = {
       year: "2024",
     }
   ]
+};
+
+// Helper function to safely format URLs for click navigation
+const formatUrl = (url) => {
+  if (!url) return '';
+  const trimmed = url.trim();
+  if (/^https?:\/\//i.test(trimmed)) return trimmed;
+  if (/^[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/i.test(trimmed)) return `https://${trimmed}`;
+  return trimmed;
 };
 
 export default function ResumeBuilder() {
@@ -206,7 +215,7 @@ export default function ResumeBuilder() {
   }, [resumeData, selectedTemplate, accentColor, selectedFont, showPhoto, visibility, bulletList, hasLoadedStorage]);
 
   const handleResetToDefault = () => {
-    if (window.confirm("Kya aap sample resume restore karna chahte hain? Aapka current changes reset ho jayega.")) {
+    if (window.confirm("Kya aap sample resume restore karna chahte hain? Aapka current edit reset ho jayega.")) {
       setResumeData(INITIAL_RESUME_DATA);
       setSelectedTemplate('ankit_harvard');
       setAccentColor('#1e3a8a');
@@ -279,7 +288,7 @@ export default function ResumeBuilder() {
     document.head.appendChild(s);
   });
 
-  // Accurate Parser: extracts candidate info rather than generic text
+  // Intelligent parser
   const parseResumeTextIntoState = (rawText, originalFileName = '') => {
     const trimmed = (rawText || '').trim();
     if (trimmed.length < 15) {
@@ -300,22 +309,18 @@ export default function ResumeBuilder() {
     const emailMatch = cleanFullText.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
     const email = emailMatch ? emailMatch[0] : '';
 
-    // 2. Phone extraction (Supports +91, Indian 10-digit, and international)
+    // 2. Phone extraction
     const phoneMatch = cleanFullText.match(/(?:(?:\+|0{0,2})91[\s.-]?)?[6-9]\d{4}[\s.-]?\d{5}|(?:\+?\d{1,3}[-.\s]?)?\(?\d{2,4}\)?[-.\s]?\d{3,5}[-.\s]?\d{4}/);
     const phone = phoneMatch ? phoneMatch[0] : '';
 
-    // 3. LinkedIn & GitHub & Portfolio
-const linkedinMatch = cleanFullText.match(
-  /(?:https?:\/\/)?(?:www\.)?linkedin\.com\/in\/([a-zA-Z0-9_.-]+)/i
-);
+    // 3. LinkedIn & GitHub
+    const linkedinMatch = cleanFullText.match(/(?:https?:\/\/)?(?:www\.)?linkedin\.com\/in\/([a-zA-Z0-9_.-]+)/i);
     const linkedin = linkedinMatch ? `linkedin.com/in/${linkedinMatch[1]}` : '';
 
-const githubMatch = cleanFullText.match(
-  /(?:https?:\/\/)?(?:www\.)?github\.com\/([a-zA-Z0-9_.-]+)/i
-);
+    const githubMatch = cleanFullText.match(/(?:https?:\/\/)?(?:www\.)?github\.com\/([a-zA-Z0-9_.-]+)/i);
     const github = githubMatch ? `github.com/${githubMatch[1]}` : '';
 
-    // 4. Candidate Name: checks first lines or cleans originalFileName (e.g. Ankit_Kumar_jain_Resume.pdf)
+    // 4. Candidate Name
     let fullName = '';
     for (let i = 0; i < Math.min(lines.length, 6); i++) {
       const line = lines[i];
@@ -481,7 +486,7 @@ const githubMatch = cleanFullText.match(
         }
         if (!curProj.title && line.length < 50 && !line.startsWith('•')) {
           if (curProj.title) {
-            curProj.description = projDesc.join(' ');
+            curProj.description = projDesc.join('\n');
             parsedProjects.push(curProj);
             projDesc = [];
             curProj = { id: `proj-${Date.now()}-${parsedProjects.length + 1}`, title: '', tech: '', duration: '', link: '', description: '' };
@@ -493,12 +498,11 @@ const githubMatch = cleanFullText.match(
       });
 
       if (curProj.title || projDesc.length > 0) {
-        curProj.description = projDesc.join(' ');
+        curProj.description = projDesc.join('\n');
         parsedProjects.push(curProj);
       }
     }
 
-    // UPDATE STATE WITH CANDIDATE'S ACTUAL CREDENTIALS
     setResumeData((prev) => ({
       ...prev,
       personalInfo: {
@@ -522,7 +526,7 @@ const githubMatch = cleanFullText.match(
       projects: parsedProjects.length > 0 ? parsedProjects : prev.projects
     }));
 
-    setImportStatusMsg('✅ Document se pura data successfully extract aur save ho gaya!');
+    setImportStatusMsg('✅ Document se data successfully extract aur save ho gaya!');
     setTimeout(() => {
       setIsImportModalOpen(false);
       setImportStatusMsg('');
@@ -776,7 +780,7 @@ const githubMatch = cleanFullText.match(
     }));
   };
 
-  // ================= PROJECTS =================
+  // ================= PROJECTS (SMART DUAL PATTERN: POINTER OR PARAGRAPH) =================
   const handleProjChange = (id, field, value) => {
     setResumeData((prev) => ({
       ...prev,
@@ -798,7 +802,69 @@ const githubMatch = cleanFullText.match(
     }));
   };
 
-  // ================= ATS SCORE CHECKER WITH DETAILED REASONS =================
+  const convertProjectToPointers = (id) => {
+    setResumeData((prev) => ({
+      ...prev,
+      projects: prev.projects.map(proj => {
+        if (proj.id === id) {
+          const lines = (proj.description || '').split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+          if (lines.length === 0) return { ...proj, description: "• " };
+          const formatted = lines.map(l => l.startsWith('•') || l.startsWith('-') ? l : `• ${l}`).join('\n');
+          return { ...proj, description: formatted };
+        }
+        return proj;
+      })
+    }));
+  };
+
+  const convertProjectToParagraph = (id) => {
+    setResumeData((prev) => ({
+      ...prev,
+      projects: prev.projects.map(proj => {
+        if (proj.id === id) {
+        const cleaned = (proj.description || '')
+  .split(/\r?\n/)
+  .map(l => l.replace(/^[•*-]\s*\*?/, '').trim())
+  .filter(Boolean)
+  .join(' ');
+
+return { ...proj, description: cleaned };
+        }
+        return proj;
+      })
+    }));
+  };
+
+  // SMART RENDERER: Automatically renders as pointers (list) or paragraph depending on how user typed it
+  const renderSmartDescription = (text, textColor = '#333333', fontSize = '10.5px') => {
+    if (!text) return null;
+    const rawLines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+    
+    const isPointerFormat = rawLines.some(l => l.startsWith('•') || l.startsWith('-') || l.startsWith('*') || /^\d+\./.test(l)) || rawLines.length > 1;
+
+    if (isPointerFormat) {
+      return (
+        <ul style={{ margin: '3px 0 0 0', paddingLeft: '16px', fontSize, lineHeight: '1.45', color: textColor, listStyleType: 'disc' }}>
+          {rawLines.map((line, idx) => {
+const cleanLine = line.replace(/^[•*-]\s*\*?|^\d+\.\s*/, '');
+            return (
+              <li key={idx} style={{ marginBottom: '2px', textAlign: 'justify' }}>
+                {cleanLine}
+              </li>
+            );
+          })}
+        </ul>
+      );
+    }
+
+    return (
+      <p style={{ margin: '3px 0 0 0', fontSize, lineHeight: '1.45', textAlign: 'justify', color: textColor, paddingLeft: '2px' }}>
+        {text}
+      </p>
+    );
+  };
+
+  // ================= ATS SCORE CHECKER =================
   const calculateAtsScore = () => {
     let score = 20;
     const checks = [];
@@ -955,7 +1021,7 @@ const githubMatch = cleanFullText.match(
 
   const ensurePdfTools = async () => {
     const getHtml2Canvas = () => new Promise((resolve, reject) => {
-      if (typeof window !== 'undefined' && window.html2canvas === 'function') {
+      if (typeof window !== 'undefined' && typeof window.html2canvas === 'function') {
         return resolve(window.html2canvas);
       }
       const s = document.createElement('script');
@@ -981,7 +1047,7 @@ const githubMatch = cleanFullText.match(
     return Promise.all([getHtml2Canvas(), getJsPDF()]);
   };
 
-  // MULTI-PAGE SMART PDF GENERATOR (KABHI TEXT CUT NAHI HOTA)
+  // MULTI-PAGE SMART PDF GENERATOR WITH 100% WORKING CLICKABLE HYPERLINKS
   const handleDownloadPDF = async () => {
     if (!resumeRef.current) return;
     setIsExporting(true);
@@ -1023,16 +1089,46 @@ const githubMatch = cleanFullText.match(
       let heightLeft = imgHeight;
       let position = 0;
 
-      // First Page
+      // Add pages
       pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight, undefined, 'FAST');
       heightLeft -= pageHeight;
 
-      // Automatically adds Page 2, Page 3 if content is longer
       while (heightLeft > 2) {
         position = position - pageHeight;
         pdf.addPage();
         pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight, undefined, 'FAST');
         heightLeft -= pageHeight;
+      }
+
+      // ================= EMBED LIVE CLICKABLE HYPERLINKS INTO PDF =================
+      try {
+        const resumeDom = resumeRef.current;
+        const resumeBoundingRect = resumeDom.getBoundingClientRect();
+        const mmFactor = 210 / resumeDom.offsetWidth; // 210mm per width
+
+        const allAnchorTags = resumeDom.querySelectorAll('a[href]');
+        allAnchorTags.forEach((aTag) => {
+          const href = aTag.getAttribute('href');
+if (!href || href === '#' || /^\s*javascript:/i.test(href)) return;
+          const rect = aTag.getBoundingClientRect();
+          if (rect.width === 0 || rect.height === 0) return;
+
+          // Compute exact millimeter position on A4 canvas
+          const relX = (rect.left - resumeBoundingRect.left) * mmFactor;
+          const relY = (rect.top - resumeBoundingRect.top) * mmFactor;
+          const relW = rect.width * mmFactor;
+          const relH = rect.height * mmFactor;
+
+          const pageNum = Math.floor(relY / 297) + 1;
+          const yOnPage = relY - ((pageNum - 1) * 297);
+
+          if (pageNum <= pdf.getNumberOfPages()) {
+            pdf.setPage(pageNum);
+            pdf.link(relX, yOnPage, relW, relH, { url: href });
+          }
+        });
+      } catch (linkError) {
+        console.warn("Could not attach clickable link annotations to PDF:", linkError);
       }
 
       pdf.save(`${(resumeData.personalInfo.fullName || 'Resume').replace(/\s+/g, '_')}_Resume.pdf`);
@@ -1044,6 +1140,7 @@ const githubMatch = cleanFullText.match(
     }
   };
 
+  // MS Word (DOCX) Export with clickable <a> links
   const handleDownloadDocx = () => {
     setIsExportingDocx(true);
     try {
@@ -1054,10 +1151,12 @@ const githubMatch = cleanFullText.match(
           <h1 style="color: #1e3a8a; text-transform: uppercase;">${resumeData.personalInfo.fullName}</h1>
           <p><b>${resumeData.personalInfo.jobTitle}</b></p>
           <p>
-            ${resumeData.personalInfo.email} | ${resumeData.personalInfo.phone} | ${resumeData.personalInfo.address || resumeData.personalInfo.city}
-            ${resumeData.personalInfo.linkedin ? ` | LinkedIn: ${resumeData.personalInfo.linkedin}` : ''}
-            ${resumeData.personalInfo.github ? ` | GitHub: ${resumeData.personalInfo.github}` : ''}
-            ${resumeData.personalInfo.portfolio ? ` | Portfolio: ${resumeData.personalInfo.portfolio}` : ''}
+            <a href="mailto:${resumeData.personalInfo.email}">${resumeData.personalInfo.email}</a> | 
+            <a href="tel:${resumeData.personalInfo.phone}">${resumeData.personalInfo.phone}</a> | 
+            ${resumeData.personalInfo.address || resumeData.personalInfo.city}
+            ${resumeData.personalInfo.linkedin ? ` | <a href="${formatUrl(resumeData.personalInfo.linkedin)}">LinkedIn</a>` : ''}
+            ${resumeData.personalInfo.github ? ` | <a href="${formatUrl(resumeData.personalInfo.github)}">GitHub</a>` : ''}
+            ${resumeData.personalInfo.portfolio ? ` | <a href="${formatUrl(resumeData.personalInfo.portfolio)}">Portfolio</a>` : ''}
           </p>
           <hr />
           <h3>Summary</h3>
@@ -1067,7 +1166,7 @@ const githubMatch = cleanFullText.match(
           <h3>Education</h3>
           ${resumeData.education.map(ed => `<div><b>${ed.degree}</b> - ${ed.institution} ${ed.location ? `(${ed.location})` : ''} (${ed.duration})</div>`).join('')}
           <h3>Projects</h3>
-          ${resumeData.projects.map(p => `<div><b>${p.title}</b> ${p.link ? `(${p.link})` : ''}<br/>${p.description}</div>`).join('')}
+          ${resumeData.projects.map(p => `<div><b>${p.title}</b> ${p.link ? `(<a href="${formatUrl(p.link)}">${p.link}</a>)` : ''}<br/>${p.description}</div>`).join('')}
         </body></html>
       `;
       const blob = new Blob(['\ufeff' + htmlContent], { type: 'application/msword' });
@@ -1101,7 +1200,7 @@ const githubMatch = cleanFullText.match(
     fontFamily: selectedFont
   };
 
-  // ================= 01. HARVARD ATS TEMPLATE =================
+  // ================= 01. HARVARD ATS TEMPLATE (WITH CLICKABLE LINKS) =================
   const renderAnkitHarvardATS = () => (
     <div style={{ ...a4CanvasStyle, padding: '34px 42px', fontSize: '11px', lineHeight: '1.4' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1.5px solid #000000', paddingBottom: '10px', marginBottom: '12px' }}>
@@ -1115,11 +1214,21 @@ const githubMatch = cleanFullText.match(
           
           <div style={{ fontSize: '10px', display: 'flex', flexWrap: 'wrap', gap: '8px', justifyContent: showPhoto && resumeData.personalInfo.photo ? 'flex-start' : 'center', alignItems: 'center', color: '#1e293b' }}>
             {resumeData.personalInfo.address && <span>📍 {resumeData.personalInfo.address}</span>}
-            {resumeData.personalInfo.phone && <span>• 📞 {resumeData.personalInfo.phone}</span>}
-            {resumeData.personalInfo.email && <span>• ✉️ {resumeData.personalInfo.email}</span>}
-            {resumeData.personalInfo.linkedin && <span>• <strong>in</strong> {resumeData.personalInfo.linkedin.replace(/^https?:\/\//, '')}</span>}
-            {resumeData.personalInfo.github && <span>• <strong>git</strong> {resumeData.personalInfo.github.replace(/^https?:\/\//, '')}</span>}
-            {resumeData.personalInfo.portfolio && <span>• 🌐 {resumeData.personalInfo.portfolio.replace(/^https?:\/\//, '')}</span>}
+            {resumeData.personalInfo.phone && (
+              <span>• <a href={`tel:${resumeData.personalInfo.phone.replace(/\s+/g, '')}`} style={{ color: 'inherit', textDecoration: 'none' }}>📞 {resumeData.personalInfo.phone}</a></span>
+            )}
+            {resumeData.personalInfo.email && (
+              <span>• <a href={`mailto:${resumeData.personalInfo.email}`} style={{ color: 'inherit', textDecoration: 'none' }}>✉️ {resumeData.personalInfo.email}</a></span>
+            )}
+            {resumeData.personalInfo.linkedin && (
+              <span>• <a href={formatUrl(resumeData.personalInfo.linkedin)} target="_blank" rel="noopener noreferrer" style={{ color: '#1e3a8a', textDecoration: 'none' }}><strong>in</strong> {resumeData.personalInfo.linkedin.replace(/^https?:\/\/(www\.)?/, '')}</a></span>
+            )}
+            {resumeData.personalInfo.github && (
+              <span>• <a href={formatUrl(resumeData.personalInfo.github)} target="_blank" rel="noopener noreferrer" style={{ color: '#0f172a', textDecoration: 'none' }}><strong>git</strong> {resumeData.personalInfo.github.replace(/^https?:\/\/(www\.)?/, '')}</a></span>
+            )}
+            {resumeData.personalInfo.portfolio && (
+              <span>• <a href={formatUrl(resumeData.personalInfo.portfolio)} target="_blank" rel="noopener noreferrer" style={{ color: '#2563eb', textDecoration: 'none' }}>🌐 {resumeData.personalInfo.portfolio.replace(/^https?:\/\/(www\.)?/, '')}</a></span>
+            )}
           </div>
         </div>
 
@@ -1144,7 +1253,7 @@ const githubMatch = cleanFullText.match(
             <div key={exp.id} style={{ marginBottom: '8px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11.5px' }}><strong>{exp.company}</strong><strong>{exp.duration}</strong></div>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10.5px', fontStyle: 'italic', color: '#333333', marginBottom: '3px' }}><span>{exp.role}</span><span>{exp.location}</span></div>
-              <div style={{ fontSize: '10.5px', whiteSpace: 'pre-line', lineHeight: '1.45', paddingLeft: '8px' }}>{exp.description}</div>
+              {renderSmartDescription(exp.description, '#111827', '10.5px')}
             </div>
           ))}
         </div>
@@ -1154,20 +1263,29 @@ const githubMatch = cleanFullText.match(
         <div style={{ marginBottom: '12px' }}>
           <div style={{ fontSize: '12.5px', fontWeight: 'bold', borderBottom: '1px solid #000000', textTransform: 'uppercase', marginBottom: '5px' }}>Key Projects</div>
           {resumeData.projects.map((proj) => (
-            <div key={proj.id} style={{ marginBottom: '6px' }}>
+            <div key={proj.id} style={{ marginBottom: '8px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11.5px' }}>
                 <div>
                   <strong>{proj.title}</strong>
                   {proj.tech ? <span style={{ fontWeight: 'normal', fontSize: '10px', color: '#475569' }}> | {proj.tech}</span> : ''}
                   {proj.link && (
-                    <span style={{ marginLeft: '6px', fontSize: '10px', color: '#2563eb' }}>
-                      [<a href={proj.link.startsWith('http') ? proj.link : `https://${proj.link}`} target="_blank" rel="noreferrer" style={{ color: '#2563eb', textDecoration: 'none' }}>🔗 Link</a>]
+                    <span style={{ marginLeft: '6px', fontSize: '10.5px' }}>
+                      <a 
+                        href={formatUrl(proj.link)} 
+                        target="_blank" 
+                        rel="noopener noreferrer" 
+                        title={`Open ${proj.link}`}
+                        style={{ color: '#2563eb', fontWeight: 'bold', textDecoration: 'underline' }}
+                      >
+                        🔗 Live Link
+                      </a>
                     </span>
                   )}
                 </div>
                 <strong>{proj.duration}</strong>
               </div>
-              <div style={{ fontSize: '10.5px', lineHeight: '1.4', paddingLeft: '8px' }}>{proj.description}</div>
+              {/* Smart Dual Pattern: Pointers OR Paragraph */}
+              {renderSmartDescription(proj.description, '#334155', '10.5px')}
             </div>
           ))}
         </div>
@@ -1202,7 +1320,7 @@ const githubMatch = cleanFullText.match(
     </div>
   );
 
-  // ================= 02. CLASSIC CORPORATE ATS TEMPLATE =================
+  // ================= 02. CLASSIC CORPORATE ATS TEMPLATE (WITH CLICKABLE LINKS) =================
   const renderClassicATS = () => (
     <div style={{ ...a4CanvasStyle, padding: '34px 42px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: `2.5px solid ${accentColor}`, paddingBottom: '10px', marginBottom: '12px' }}>
@@ -1211,11 +1329,19 @@ const githubMatch = cleanFullText.match(
           <div style={{ fontSize: '12px', fontWeight: 'bold', color: accentColor, marginTop: '3px' }}>{resumeData.personalInfo.jobTitle}</div>
           
           <div style={{ fontSize: '9.5px', color: '#475569', marginTop: '6px', display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center' }}>
-            {resumeData.personalInfo.email && <span>{resumeData.personalInfo.email}</span>}
-            {resumeData.personalInfo.phone && <span>• {resumeData.personalInfo.phone}</span>}
+            {resumeData.personalInfo.email && (
+              <a href={`mailto:${resumeData.personalInfo.email}`} style={{ color: 'inherit', textDecoration: 'none' }}>{resumeData.personalInfo.email}</a>
+            )}
+            {resumeData.personalInfo.phone && (
+              <span>• <a href={`tel:${resumeData.personalInfo.phone.replace(/\s+/g, '')}`} style={{ color: 'inherit', textDecoration: 'none' }}>{resumeData.personalInfo.phone}</a></span>
+            )}
             {resumeData.personalInfo.address && <span>• {resumeData.personalInfo.address}</span>}
-            {resumeData.personalInfo.linkedin && <span>• in/{resumeData.personalInfo.linkedin.replace(/^https?:\/\/(www\.)?linkedin\.com\/in\//, '')}</span>}
-            {resumeData.personalInfo.github && <span>• git/{resumeData.personalInfo.github.replace(/^https?:\/\/(www\.)?github\.com\//, '')}</span>}
+            {resumeData.personalInfo.linkedin && (
+              <span>• <a href={formatUrl(resumeData.personalInfo.linkedin)} target="_blank" rel="noopener noreferrer" style={{ color: accentColor, textDecoration: 'none' }}>in/{resumeData.personalInfo.linkedin.replace(/^https?:\/\/(www\.)?linkedin\.com\/in\//, '')}</a></span>
+            )}
+            {resumeData.personalInfo.github && (
+              <span>• <a href={formatUrl(resumeData.personalInfo.github)} target="_blank" rel="noopener noreferrer" style={{ color: '#0f172a', textDecoration: 'none' }}>git/{resumeData.personalInfo.github.replace(/^https?:\/\/(www\.)?github\.com\//, '')}</a></span>
+            )}
           </div>
         </div>
         {showPhoto && resumeData.personalInfo.photo && (
@@ -1236,7 +1362,7 @@ const githubMatch = cleanFullText.match(
                 <span><strong>{e.role}</strong> — <span style={{ color: '#475569' }}>{e.company}</span></span>
                 <span style={{ color: '#64748b', fontSize: '9.5px' }}>{e.duration}</span>
               </div>
-              <div style={{ fontSize: '9.5px', color: '#334155', whiteSpace: 'pre-line', marginTop: '2px' }}>{e.description}</div>
+              {renderSmartDescription(e.description, '#334155', '9.5px')}
             </div>
           ))}
         </div>
@@ -1246,19 +1372,28 @@ const githubMatch = cleanFullText.match(
         <div style={{ marginBottom: '12px' }}>
           <div style={{ fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', color: accentColor, borderBottom: '1px solid #cbd5e1', marginBottom: '6px', paddingBottom: '2px' }}>Projects</div>
           {resumeData.projects.map(proj => (
-            <div key={proj.id} style={{ marginBottom: '6px' }}>
+            <div key={proj.id} style={{ marginBottom: '8px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10.5px' }}>
                 <div>
                   <strong>{proj.title}</strong>
                   {proj.link && (
-                    <span style={{ marginLeft: '6px', fontSize: '9.5px', color: accentColor }}>
-                      [<a href={proj.link.startsWith('http') ? proj.link : `https://${proj.link}`} target="_blank" rel="noreferrer" style={{ color: accentColor, textDecoration: 'none' }}>Link</a>]
+                    <span style={{ marginLeft: '6px', fontSize: '9.5px' }}>
+                      <a 
+                        href={formatUrl(proj.link)} 
+                        target="_blank" 
+                        rel="noopener noreferrer" 
+                        title={`Open ${proj.link}`}
+                        style={{ color: accentColor, fontWeight: 'bold', textDecoration: 'underline' }}
+                      >
+                        🔗 Link
+                      </a>
                     </span>
                   )}
                 </div>
                 <span style={{ color: '#64748b', fontSize: '9.5px' }}>{proj.duration}</span>
               </div>
-              <div style={{ fontSize: '9.5px', color: '#334155' }}>{proj.description}</div>
+              {/* Smart Dual Pattern: Pointers OR Paragraph */}
+              {renderSmartDescription(proj.description, '#334155', '9.5px')}
             </div>
           ))}
         </div>
@@ -1386,7 +1521,7 @@ const githubMatch = cleanFullText.match(
                 <span>Reset Demo</span>
               </button>
 
-              {/* <button 
+              <button 
                 onClick={() => setIsImportModalOpen(true)}
                 className="custom-btn custom-btn-primary"
                 style={{ color: '#ffffff', fontWeight: 'bold' }}
@@ -1394,7 +1529,7 @@ const githubMatch = cleanFullText.match(
               >
                 <UploadCloud size={14} />
                 <span>📥 Import Document (PDF/Word/Images)</span>
-              </button> */}
+              </button>
             </div>
           </div>
         </header>
@@ -1579,7 +1714,7 @@ const githubMatch = cleanFullText.match(
                         <input className="form-input" placeholder="Duration (e.g. 2023 - Present)" value={exp.duration} onChange={(e) => handleExpChange(exp.id, 'duration', e.target.value)} />
                         <input className="form-input" placeholder="Location (e.g. New York, USA)" value={exp.location} onChange={(e) => handleExpChange(exp.id, 'location', e.target.value)} />
                       </div>
-                      <textarea className="form-textarea" rows={3} placeholder="Key Achievements & Responsibilities" value={exp.description} onChange={(e) => handleExpChange(exp.id, 'description', e.target.value)} />
+                      <textarea className="form-textarea" rows={3} placeholder="Key Achievements & Responsibilities (Use '•' for pointers)" value={exp.description} onChange={(e) => handleExpChange(exp.id, 'description', e.target.value)} />
                       
                       {/* ============ QUICK BULLETS CUSTOMIZER ============ */}
                       <div style={{ marginTop: '10px', borderTop: '1px solid #1a273f', paddingTop: '8px' }}>
@@ -1724,13 +1859,13 @@ const githubMatch = cleanFullText.match(
                 </>
               )}
 
-              {/* ============ PROJECTS ============ */}
+              {/* ============ PROJECTS WITH DUAL POINTER / PARAGRAPH MODE ============ */}
               {activeTab === 'projects' && (
                 <>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <div>
                       <div className="form-label">Projects</div>
-                      <div style={{ fontSize: '10px', color: '#64748b' }}>Shift any project up/down or add newest on top</div>
+                      <div style={{ fontSize: '10px', color: '#64748b' }}>Supports both Bullet Pointers (•) and Paragraph patterns</div>
                     </div>
                     <button onClick={addProject} className="custom-btn custom-btn-primary" style={{ padding: '5px 10px', fontSize: '11px' }} type="button">
                       <Plus size={11} /> + Add Project (Top)
@@ -1787,7 +1922,35 @@ const githubMatch = cleanFullText.match(
                         <input className="form-input" placeholder="Duration (e.g. Jan 2024 - Apr 2024)" value={proj.duration} onChange={(e) => handleProjChange(proj.id, 'duration', e.target.value)} />
                       </div>
 
-                      <textarea className="form-textarea" rows={3} placeholder="Project Description & Achievements" value={proj.description} onChange={(e) => handleProjChange(proj.id, 'description', e.target.value)} />
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                        <label className="form-label">Description (Pointers or Paragraph)</label>
+                        <div style={{ display: 'flex', gap: '6px' }}>
+                          <button 
+                            type="button" 
+                            onClick={() => convertProjectToPointers(proj.id)}
+                            style={{ background: '#0e192d', border: '1px solid #243552', color: '#38bdf8', padding: '2px 6px', borderRadius: '4px', fontSize: '9.5px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '3px' }}
+                            title="Convert lines to • Pointers"
+                          >
+                            <List size={10} /> Bullet Points
+                          </button>
+                          <button 
+                            type="button" 
+                            onClick={() => convertProjectToParagraph(proj.id)}
+                            style={{ background: '#0e192d', border: '1px solid #243552', color: '#94a3b8', padding: '2px 6px', borderRadius: '4px', fontSize: '9.5px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '3px' }}
+                            title="Convert to single paragraph"
+                          >
+                            <AlignLeft size={10} /> Paragraph
+                          </button>
+                        </div>
+                      </div>
+
+                      <textarea 
+                        className="form-textarea" 
+                        rows={3} 
+                        placeholder="Project description... Type with '• ' for bullet pointers, OR write continuous text for paragraph mode." 
+                        value={proj.description} 
+                        onChange={(e) => handleProjChange(proj.id, 'description', e.target.value)} 
+                      />
                     </div>
                   ))}
                 </>
@@ -1853,24 +2016,7 @@ const githubMatch = cleanFullText.match(
               <div className="canvas-scale-wrapper" style={{ width: `${794 * previewScale}px` }}>
                 <div style={{ transform: `scale(${previewScale})`, transformOrigin: 'top center', width: '794px' }}>
                   <div ref={resumeRef} className="canvas-shadow" style={{ width: '794px', minHeight: '1122px', height: 'auto', backgroundColor: '#ffffff', overflow: 'visible' }}>
-                    {/* Visual Page 1 cutoff guide line for user reference */}
-                    <div 
-                      className="page-break-line"
-                      style={{ 
-                        position: 'absolute', 
-                        top: '1122px', 
-                        left: 0, 
-                        width: '100%', 
-                        borderBottom: '2px dashed #94a3b8', 
-                        color: '#64748b', 
-                        fontSize: '10px', 
-                        textAlign: 'center', 
-                        zIndex: 99, 
-                        pointerEvents: 'none' 
-                      }}
-                    >
-                    </div>
-
+                   
                     {selectedTemplate === 'ankit_harvard' && renderAnkitHarvardATS()}
                     {selectedTemplate === 'classic_ats' && renderClassicATS()}
                     {selectedTemplate === 'novoresume_clean' && renderNovoresumeClean()}
