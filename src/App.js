@@ -12,7 +12,6 @@ import {
 // 100% Reliable Base64 Avatar
 const DEFAULT_AVATAR = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48Y2lyY2xlIGN4PSI1MCIgY3k9IjUwIiByPSI1MCIgZmlsbD0iI2UyZThmMCIvPjxjaXJjbGUgY3g9IjUwIiBjeT0iMzgiIHI9IjE4IiBmaWxsPSIjNjQ3NDhiIi8+PHBhdGggZD0iTTIwIDg2Yz0tMTYuNSAxMy41LTMwIDMwLTMwczMwIDEzLjUgMzAgMzB6IiBmaWxsPSIjNjQ3NDhiIi8+PC9zdmc+";
 
-// Pre-defined role-wise bullet categories
 const DEFAULT_PRESET_BULLETS = {
   tech: [
     "Developed responsive web applications using React.js, Node.js, Express.js, and MongoDB.",
@@ -118,7 +117,6 @@ const INITIAL_RESUME_DATA = {
   ]
 };
 
-// Helper function to safely format URLs for click navigation
 const formatUrl = (url) => {
   if (!url) return '';
   const trimmed = url.trim();
@@ -127,7 +125,6 @@ const formatUrl = (url) => {
   return trimmed;
 };
 
-// Clean Display Helper: Shows real clean URL text
 const displayCleanUrl = (url) => {
   if (!url) return '';
   return url.replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, '');
@@ -146,7 +143,6 @@ export default function ResumeBuilder() {
   const [hasLoadedStorage, setHasLoadedStorage] = useState(false);
   const [lastSavedTime, setLastSavedTime] = useState('');
 
-  // Quick Bullets Category & Custom Input State
   const [bulletCategory, setBulletCategory] = useState('tech');
   const [newBulletText, setNewBulletText] = useState('');
   const [bulletList, setBulletList] = useState(DEFAULT_PRESET_BULLETS);
@@ -167,7 +163,6 @@ export default function ResumeBuilder() {
 
   const [resumeData, setResumeData] = useState(INITIAL_RESUME_DATA);
 
-  // ================= 1. LOCALSTORAGE LOAD SYSTEM =================
   useEffect(() => {
     if (typeof window === 'undefined') return;
     try {
@@ -183,14 +178,13 @@ export default function ResumeBuilder() {
         if (parsed.bulletList) setBulletList(parsed.bulletList);
       }
     } catch (e) {
-      console.error('LocalStorage load error:', e);
+      console.error(e);
     } finally {
       setHasLoadedStorage(true);
       setLastSavedTime(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
     }
   }, []);
 
-  // ================= 2. LOCALSTORAGE AUTO-SAVE SYSTEM =================
   useEffect(() => {
     if (!hasLoadedStorage || typeof window === 'undefined') return;
     try {
@@ -207,12 +201,12 @@ export default function ResumeBuilder() {
       localStorage.setItem('resume_builder_v10_storage', JSON.stringify(bundle));
       setLastSavedTime(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
     } catch (e) {
-      console.error('LocalStorage save error:', e);
+      console.error(e);
     }
   }, [resumeData, selectedTemplate, accentColor, selectedFont, showPhoto, visibility, bulletList, hasLoadedStorage]);
 
   const handleResetToDefault = () => {
-    if (window.confirm("Kya aap sample resume restore karna chahte hain? Aapka current edit reset ho jayega.")) {
+    if (window.confirm("Kya aap sample resume restore karna chahte hain?")) {
       setResumeData(INITIAL_RESUME_DATA);
       setSelectedTemplate('ankit_harvard');
       setAccentColor('#1e3a8a');
@@ -285,7 +279,6 @@ export default function ResumeBuilder() {
     }));
   };
 
-  // ================= EXPERIENCE =================
   const handleExpChange = (id, field, value) => {
     setResumeData((prev) => ({
       ...prev,
@@ -310,7 +303,6 @@ export default function ResumeBuilder() {
   const addBulletToExperience = (id, bulletText) => {
     const clean = bulletText.trim();
     const formatted = clean.startsWith('•') ? clean : `• ${clean}`;
-
     setResumeData((prev) => ({
       ...prev,
       experience: prev.experience.map(item => {
@@ -340,7 +332,6 @@ export default function ResumeBuilder() {
     }));
   };
 
-  // ================= EDUCATION =================
   const handleEduChange = (id, field, value) => {
     setResumeData((prev) => ({
       ...prev,
@@ -362,7 +353,6 @@ export default function ResumeBuilder() {
     }));
   };
 
-  // ================= PROJECTS =================
   const handleProjChange = (id, field, value) => {
     setResumeData((prev) => ({
       ...prev,
@@ -419,7 +409,6 @@ export default function ResumeBuilder() {
   const renderSmartDescription = (text, textColor = '#333333', fontSize = '10.5px') => {
     if (!text) return null;
     const rawLines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
-    
     const isPointerFormat = rawLines.some(l => l.startsWith('•') || l.startsWith('-') || l.startsWith('*') || /^\d+\./.test(l)) || rawLines.length > 1;
 
     if (isPointerFormat) {
@@ -444,154 +433,67 @@ export default function ResumeBuilder() {
     );
   };
 
-  // ================= ATS SCORE CHECKER =================
   const calculateAtsScore = () => {
     let score = 20;
     const checks = [];
 
     score += 10;
-    checks.push({ 
-      pass: true, 
-      title: "Reverse-Chronological Layout", 
-      msg: "Latest experiences & projects are placed at the top.",
-      reason: "ATS algorithms rank resumes higher when recent roles appear first, verifying immediate relevance."
-    });
+    checks.push({ pass: true, title: "Reverse-Chronological Layout", msg: "Latest experiences & projects placed at top.", reason: "Verified for maximum relevance." });
 
     if (resumeData.personalInfo.fullName && resumeData.personalInfo.fullName.trim().length > 2) { 
       score += 10; 
-      checks.push({ 
-        pass: true, 
-        title: "Candidate Identification", 
-        msg: "Full Name provided clearly.",
-        reason: "Parsed correctly by recruiter databases into primary applicant records."
-      }); 
+      checks.push({ pass: true, title: "Candidate Identification", msg: "Full Name provided clearly.", reason: "Indexed successfully." }); 
     } else {
-      checks.push({ 
-        pass: false, 
-        title: "Missing Full Name", 
-        msg: "Candidate name is missing or too short.",
-        reason: "ATS cannot index an applicant without a recognized name header, leading to instant filtering."
-      });
+      checks.push({ pass: false, title: "Missing Full Name", msg: "Add a valid Full Name.", reason: "Required for ATS parsing." });
     }
 
     if (resumeData.personalInfo.email && resumeData.personalInfo.email.includes('@')) { 
       score += 10; 
-      checks.push({ 
-        pass: true, 
-        title: "Contact Email", 
-        msg: "Professional Email format is valid.",
-        reason: "Automated communication systems use this for invitation triggers."
-      }); 
+      checks.push({ pass: true, title: "Contact Email", msg: "Professional Email format is valid.", reason: "Valid for triggers." }); 
     } else {
-      checks.push({ 
-        pass: false, 
-        title: "Missing/Invalid Email", 
-        msg: "Add a valid email address.",
-        reason: "Without a valid email, automated screening software cannot dispatch interview links."
-      });
+      checks.push({ pass: false, title: "Missing Email", msg: "Add professional email.", reason: "Required." });
     }
 
     if (resumeData.personalInfo.phone && resumeData.personalInfo.phone.trim().length > 6) { 
       score += 10; 
-      checks.push({ 
-        pass: true, 
-        title: "Direct Phone Number", 
-        msg: "Phone number is provided.",
-        reason: "Essential for recruiter screen calls and SMS notifications."
-      }); 
+      checks.push({ pass: true, title: "Direct Phone Number", msg: "Phone number is provided.", reason: "Essential for recruiter calls." }); 
     } else {
-      checks.push({ 
-        pass: false, 
-        title: "Missing Phone Number", 
-        msg: "Add your contact phone number.",
-        reason: "Recruiters filter out candidates who cannot be reached immediately for quick phone screens."
-      });
+      checks.push({ pass: false, title: "Missing Phone", msg: "Add contact phone number.", reason: "Required." });
     }
 
     if (resumeData.personalInfo.linkedin && resumeData.personalInfo.linkedin.trim().length > 5) { 
       score += 10; 
-      checks.push({ 
-        pass: true, 
-        title: "LinkedIn Profile", 
-        msg: "LinkedIn Profile URL included.",
-        reason: "Recruiters cross-check mutual connections, endorsements, and career history."
-      }); 
+      checks.push({ pass: true, title: "LinkedIn Profile", msg: "LinkedIn Profile URL included.", reason: "Verified identity." }); 
     } else {
-      checks.push({ 
-        pass: false, 
-        title: "LinkedIn Missing", 
-        msg: "Add LinkedIn link for automated recruiter verification.",
-        reason: "Over 85% of MNC ATS bots look for a LinkedIn link to confirm genuine identity."
-      });
+      checks.push({ pass: false, title: "LinkedIn Missing", msg: "Add LinkedIn link.", reason: "Boosts credibility." });
     }
 
     if (resumeData.personalInfo.address && resumeData.personalInfo.address.trim().length > 3) { 
       score += 10; 
-      checks.push({ 
-        pass: true, 
-        title: "Location Specified", 
-        msg: "Location (City, Country) specified.",
-        reason: "Matches geo-location filters for remote or on-site hiring preferences."
-      }); 
+      checks.push({ pass: true, title: "Location Specified", msg: "Location specified.", reason: "Matches location filters." }); 
     } else {
-      checks.push({ 
-        pass: false, 
-        title: "Missing Location", 
-        msg: "Add your Location / City.",
-        reason: "Recruiters often search by city/radius; without a location your resume is excluded from localized queries."
-      });
+      checks.push({ pass: false, title: "Missing Location", msg: "Add City, Country.", reason: "Required." });
     }
 
     if (resumeData.summary && resumeData.summary.length > 50) { 
       score += 10; 
-      checks.push({ 
-        pass: true, 
-        title: "Executive Summary", 
-        msg: "Professional Summary is comprehensive (>50 chars).",
-        reason: "Provides the top keywords matching the job description in the initial 6-second scan."
-      }); 
+      checks.push({ pass: true, title: "Executive Summary", msg: "Summary is comprehensive.", reason: "Good keyword match." }); 
     } else {
-      checks.push({ 
-        pass: false, 
-        title: "Summary Too Short", 
-        msg: "Expand your summary to at least 50 characters.",
-        reason: "Short summaries lack keyword density, lowering your ranking in keyword relevance search."
-      });
+      checks.push({ pass: false, title: "Summary Too Short", msg: "Expand summary (>50 chars).", reason: "Adds keyword weight." });
     }
 
     const hasNumbersInExp = resumeData.experience.some(e => /\d+|%|\$/.test(e.description));
     if (resumeData.experience.length > 0 && resumeData.experience[0].description.length > 20) {
       score += 10;
-      checks.push({ 
-        pass: true, 
-        title: "Action-Driven Experience", 
-        msg: "Work experience includes descriptive bullet points.",
-        reason: "Action verbs (e.g., 'Developed', 'Optimized') match high-scoring ATS keyword lexicons."
-      });
-
+      checks.push({ pass: true, title: "Action Experience", msg: "Experience bullets present.", reason: "High rank." });
       if (hasNumbersInExp) {
         score += 10;
-        checks.push({ 
-          pass: true, 
-          title: "Quantifiable Impact", 
-          msg: "Quantifiable metrics (numbers, %, metrics) detected in experience.",
-          reason: "Resumes with measurable results (e.g. '35%', '5+ members') rank in the top 5% of candidate shortlists."
-        });
+        checks.push({ pass: true, title: "Quantifiable Impact", msg: "Metrics found in experience.", reason: "Ranks in top 5%." });
       } else {
-        checks.push({ 
-          pass: false, 
-          title: "Missing Quantifiable Metrics", 
-          msg: "Tip: Add numbers/metrics (e.g., 'improved by 35%') to rank higher.",
-          reason: "Without numbers, ATS and hiring managers view claims as generic duties rather than actual achievements."
-        });
+        checks.push({ pass: false, title: "Add Metrics", msg: "Tip: Add numbers/percentages (e.g. 35%).", reason: "Improves ranking." });
       }
     } else {
-      checks.push({ 
-        pass: false, 
-        title: "Experience Bullets Missing", 
-        msg: "Add work experience bullet points.",
-        reason: "Empty or thin work descriptions give ATS zero skills to index against the job description."
-      });
+      checks.push({ pass: false, title: "Experience Missing", msg: "Add work experience.", reason: "Required." });
     }
 
     return { score: Math.min(score, 100), checks };
@@ -627,7 +529,7 @@ export default function ResumeBuilder() {
     return Promise.all([getHtml2Canvas(), getJsPDF()]);
   };
 
-  // MULTI-PAGE SMART PDF GENERATOR WITH NO EXTRA TOP GAP ON PAGE 2
+  // MULTI-PAGE SMART PDF GENERATOR WITH ZERO TOP GAP ON SPLIT PAGES
   const handleDownloadPDF = async () => {
     if (!resumeRef.current) return;
     setIsExporting(true);
@@ -669,11 +571,9 @@ export default function ResumeBuilder() {
       let heightLeft = imgHeight;
       let position = 0;
 
-      // Add First Page
       pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight, undefined, 'FAST');
       heightLeft -= pageHeight;
 
-      // Add subsequent pages with zero top spacing gaps
       while (heightLeft > 2) {
         position = position - pageHeight;
         pdf.addPage();
@@ -681,7 +581,6 @@ export default function ResumeBuilder() {
         heightLeft -= pageHeight;
       }
 
-      // ================= EMBED LIVE CLICKABLE HYPERLINKS INTO PDF =================
       try {
         const resumeDom = resumeRef.current;
         const resumeBoundingRect = resumeDom.getBoundingClientRect();
@@ -708,7 +607,7 @@ export default function ResumeBuilder() {
           }
         });
       } catch (linkError) {
-        console.warn("Could not attach clickable link annotations to PDF:", linkError);
+        console.warn("Link annotation error:", linkError);
       }
 
       pdf.save(`${(resumeData.personalInfo.fullName || 'Resume').replace(/\s+/g, '_')}_Resume.pdf`);
@@ -733,9 +632,6 @@ export default function ResumeBuilder() {
             <a href="mailto:${resumeData.personalInfo.email}">${resumeData.personalInfo.email}</a> | 
             <a href="tel:${resumeData.personalInfo.phone}">${resumeData.personalInfo.phone}</a> | 
             ${resumeData.personalInfo.address || resumeData.personalInfo.city}
-            ${resumeData.personalInfo.linkedin ? ` | <a href="${formatUrl(resumeData.personalInfo.linkedin)}">LinkedIn</a>` : ''}
-            ${resumeData.personalInfo.github ? ` | <a href="${formatUrl(resumeData.personalInfo.github)}">GitHub</a>` : ''}
-            ${resumeData.personalInfo.portfolio ? ` | <a href="${formatUrl(resumeData.personalInfo.portfolio)}">Portfolio</a>` : ''}
           </p>
           <hr />
           <h3>Summary</h3>
@@ -743,7 +639,7 @@ export default function ResumeBuilder() {
           <h3>Experience</h3>
           ${resumeData.experience.map(e => `<div><b>${e.role}</b> at ${e.company} (${e.duration})<br/>${e.description}</div>`).join('')}
           <h3>Education</h3>
-          ${resumeData.education.map(ed => `<div><b>${ed.degree}</b> - ${ed.institution} ${ed.location ? `(${ed.location})` : ''} (${ed.duration})</div>`).join('')}
+          ${resumeData.education.map(ed => `<div><b>${ed.degree}</b> - ${ed.institution} (${ed.duration})</div>`).join('')}
           <h3>Projects</h3>
           ${resumeData.projects.map(p => `<div><b>${p.title}</b> ${p.link ? `(<a href="${formatUrl(p.link)}">${p.link}</a>)` : ''}<br/>${p.description}</div>`).join('')}
         </body></html>
@@ -767,7 +663,7 @@ export default function ResumeBuilder() {
 
   const handleNativePrint = () => window.print();
 
-  // Multi-page friendly canvas style with zero top gaps on split pages
+  // Multi-page clean canvas style (avoids text splitting inside items)
   const a4CanvasStyle = {
     width: '794px',
     minHeight: '1122px',
@@ -776,14 +672,13 @@ export default function ResumeBuilder() {
     color: '#000000',
     boxSizing: 'border-box',
     position: 'relative',
-    fontFamily: selectedFont,
-    pageBreakInside: 'auto'
+    fontFamily: selectedFont
   };
 
   // ================= 01. HARVARD ATS TEMPLATE =================
   const renderAnkitHarvardATS = () => (
     <div style={{ ...a4CanvasStyle, padding: '34px 42px', fontSize: '11px', lineHeight: '1.4' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1.5px solid #000000', paddingBottom: '10px', marginBottom: '12px', pageBreakInside: 'avoid' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1.5px solid #000000', paddingBottom: '10px', marginBottom: '12px', pageBreakInside: 'avoid', breakInside: 'avoid' }}>
         <div style={{ flex: 1, textAlign: showPhoto && resumeData.personalInfo.photo ? 'left' : 'center' }}>
           <h1 style={{ fontSize: '24px', fontWeight: 'bold', margin: '0 0 4px 0', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
             {resumeData.personalInfo.fullName}
@@ -820,7 +715,7 @@ export default function ResumeBuilder() {
       </div>
 
       {visibility.summary && resumeData.summary && (
-        <div style={{ marginBottom: '12px', pageBreakInside: 'avoid' }}>
+        <div style={{ marginBottom: '12px', pageBreakInside: 'avoid', breakInside: 'avoid' }}>
           <div style={{ fontSize: '12.5px', fontWeight: 'bold', borderBottom: '1px solid #000000', textTransform: 'uppercase', marginBottom: '5px' }}>Professional Summary</div>
           <p style={{ margin: 0, fontSize: '10.5px', lineHeight: '1.5', textAlign: 'justify' }}>{resumeData.summary}</p>
         </div>
@@ -828,9 +723,9 @@ export default function ResumeBuilder() {
 
       {visibility.experience && resumeData.experience.length > 0 && (
         <div style={{ marginBottom: '12px' }}>
-          <div style={{ fontSize: '12.5px', fontWeight: 'bold', borderBottom: '1px solid #000000', textTransform: 'uppercase', marginBottom: '5px', pageBreakAfter: 'avoid' }}>Work Experience</div>
+          <div style={{ fontSize: '12.5px', fontWeight: 'bold', borderBottom: '1px solid #000000', textTransform: 'uppercase', marginBottom: '5px', pageBreakAfter: 'avoid', breakAfter: 'avoid' }}>Work Experience</div>
           {resumeData.experience.map((exp) => (
-            <div key={exp.id} style={{ marginBottom: '8px', pageBreakInside: 'avoid' }}>
+            <div key={exp.id} style={{ marginBottom: '8px', pageBreakInside: 'avoid', breakInside: 'avoid' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11.5px' }}><strong>{exp.company}</strong><strong>{exp.duration}</strong></div>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10.5px', fontStyle: 'italic', color: '#333333', marginBottom: '3px' }}><span>{exp.role}</span><span>{exp.location}</span></div>
               {renderSmartDescription(exp.description, '#111827', '10.5px')}
@@ -841,9 +736,9 @@ export default function ResumeBuilder() {
 
       {visibility.projects && resumeData.projects.length > 0 && (
         <div style={{ marginBottom: '12px' }}>
-          <div style={{ fontSize: '12.5px', fontWeight: 'bold', borderBottom: '1px solid #000000', textTransform: 'uppercase', marginBottom: '5px', pageBreakAfter: 'avoid' }}>Key Projects</div>
+          <div style={{ fontSize: '12.5px', fontWeight: 'bold', borderBottom: '1px solid #000000', textTransform: 'uppercase', marginBottom: '5px', pageBreakAfter: 'avoid', breakAfter: 'avoid' }}>Key Projects</div>
           {resumeData.projects.map((proj) => (
-            <div key={proj.id} style={{ marginBottom: '8px', pageBreakInside: 'avoid' }}>
+            <div key={proj.id} style={{ marginBottom: '8px', pageBreakInside: 'avoid', breakInside: 'avoid' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11.5px' }}>
                 <div>
                   <strong>{proj.title}</strong>
@@ -871,10 +766,10 @@ export default function ResumeBuilder() {
       )}
 
       {visibility.education && resumeData.education.length > 0 && (
-        <div style={{ marginBottom: '12px', pageBreakInside: 'avoid' }}>
+        <div style={{ marginBottom: '12px', pageBreakInside: 'avoid', breakInside: 'avoid' }}>
           <div style={{ fontSize: '12.5px', fontWeight: 'bold', borderBottom: '1px solid #000000', textTransform: 'uppercase', marginBottom: '5px' }}>Education</div>
           {resumeData.education.map((edu) => (
-            <div key={edu.id} style={{ marginBottom: '6px' }}>
+            <div key={edu.id} style={{ marginBottom: '6px', pageBreakInside: 'avoid', breakInside: 'avoid' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11.5px' }}><strong>{edu.institution}</strong><strong>{edu.duration}</strong></div>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10.5px', fontStyle: 'italic', color: '#333333' }}>
                 <span>{edu.degree} {edu.grade ? `(${edu.grade})` : ''}</span>
@@ -886,7 +781,7 @@ export default function ResumeBuilder() {
       )}
 
       {visibility.skills && (
-        <div style={{ marginBottom: '10px', pageBreakInside: 'avoid' }}>
+        <div style={{ marginBottom: '10px', pageBreakInside: 'avoid', breakInside: 'avoid' }}>
           <div style={{ fontSize: '12.5px', fontWeight: 'bold', borderBottom: '1px solid #000000', textTransform: 'uppercase', marginBottom: '5px' }}>Technical & Core Skills</div>
           <div style={{ fontSize: '10.5px', lineHeight: '1.5' }}>
             {resumeData.skillCategories.languages && <div><strong>Languages:</strong> {resumeData.skillCategories.languages}</div>}
@@ -902,7 +797,7 @@ export default function ResumeBuilder() {
   // ================= 02. CLASSIC CORPORATE ATS TEMPLATE =================
   const renderClassicATS = () => (
     <div style={{ ...a4CanvasStyle, padding: '34px 42px' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: `2.5px solid ${accentColor}`, paddingBottom: '10px', marginBottom: '12px', pageBreakInside: 'avoid' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: `2.5px solid ${accentColor}`, paddingBottom: '10px', marginBottom: '12px', pageBreakInside: 'avoid', breakInside: 'avoid' }}>
         <div style={{ flex: 1 }}>
           <h1 style={{ fontSize: '22px', fontWeight: 'bold', textTransform: 'uppercase', margin: 0, color: '#0f172a' }}>{resumeData.personalInfo.fullName}</h1>
           <div style={{ fontSize: '12px', fontWeight: 'bold', color: accentColor, marginTop: '3px' }}>{resumeData.personalInfo.jobTitle}</div>
@@ -930,13 +825,13 @@ export default function ResumeBuilder() {
         )}
       </div>
 
-      {visibility.summary && resumeData.summary && <p style={{ fontSize: '9.5px', lineHeight: '1.45', color: '#334155', marginBottom: '12px', pageBreakInside: 'avoid' }}>{resumeData.summary}</p>}
+      {visibility.summary && resumeData.summary && <p style={{ fontSize: '9.5px', lineHeight: '1.45', color: '#334155', marginBottom: '12px', pageBreakInside: 'avoid', breakInside: 'avoid' }}>{resumeData.summary}</p>}
 
       {visibility.experience && resumeData.experience.length > 0 && (
         <div style={{ marginBottom: '12px' }}>
-          <div style={{ fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', color: accentColor, borderBottom: '1px solid #cbd5e1', marginBottom: '6px', paddingBottom: '2px', pageBreakAfter: 'avoid' }}>Work Experience</div>
+          <div style={{ fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', color: accentColor, borderBottom: '1px solid #cbd5e1', marginBottom: '6px', paddingBottom: '2px', pageBreakAfter: 'avoid', breakAfter: 'avoid' }}>Work Experience</div>
           {resumeData.experience.map(e => (
-            <div key={e.id} style={{ marginBottom: '8px', pageBreakInside: 'avoid' }}>
+            <div key={e.id} style={{ marginBottom: '8px', pageBreakInside: 'avoid', breakInside: 'avoid' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10.5px' }}>
                 <span><strong>{e.role}</strong> — <span style={{ color: '#475569' }}>{e.company}</span></span>
                 <span style={{ color: '#64748b', fontSize: '9.5px' }}>{e.duration}</span>
@@ -949,9 +844,9 @@ export default function ResumeBuilder() {
 
       {visibility.projects && resumeData.projects.length > 0 && (
         <div style={{ marginBottom: '12px' }}>
-          <div style={{ fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', color: accentColor, borderBottom: '1px solid #cbd5e1', marginBottom: '6px', paddingBottom: '2px', pageBreakAfter: 'avoid' }}>Projects</div>
+          <div style={{ fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', color: accentColor, borderBottom: '1px solid #cbd5e1', marginBottom: '6px', paddingBottom: '2px', pageBreakAfter: 'avoid', breakAfter: 'avoid' }}>Projects</div>
           {resumeData.projects.map(proj => (
-            <div key={proj.id} style={{ marginBottom: '8px', pageBreakInside: 'avoid' }}>
+            <div key={proj.id} style={{ marginBottom: '8px', pageBreakInside: 'avoid', breakInside: 'avoid' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10.5px' }}>
                 <div>
                   <strong>{proj.title}</strong>
@@ -978,10 +873,10 @@ export default function ResumeBuilder() {
       )}
 
       {visibility.education && resumeData.education.length > 0 && (
-        <div style={{ marginBottom: '12px', pageBreakInside: 'avoid' }}>
+        <div style={{ marginBottom: '12px', pageBreakInside: 'avoid', breakInside: 'avoid' }}>
           <div style={{ fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', color: accentColor, borderBottom: '1px solid #cbd5e1', marginBottom: '6px', paddingBottom: '2px' }}>Education</div>
           {resumeData.education.map(ed => (
-            <div key={ed.id} style={{ marginBottom: '4px', display: 'flex', justifyContent: 'space-between', fontSize: '10px' }}>
+            <div key={ed.id} style={{ marginBottom: '4px', display: 'flex', justifyContent: 'space-between', fontSize: '10px', pageBreakInside: 'avoid', breakInside: 'avoid' }}>
               <span><strong>{ed.degree}</strong>, {ed.institution} {ed.location ? `(${ed.location})` : ''}</span>
               <span style={{ color: '#64748b' }}>{ed.duration}</span>
             </div>
@@ -990,7 +885,7 @@ export default function ResumeBuilder() {
       )}
 
       {visibility.skills && (
-        <div style={{ pageBreakInside: 'avoid' }}>
+        <div style={{ pageBreakInside: 'avoid', breakInside: 'avoid' }}>
           <div style={{ fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', color: accentColor, borderBottom: '1px solid #cbd5e1', marginBottom: '6px', paddingBottom: '2px' }}>Skills & Competencies</div>
           <div style={{ fontSize: '9.5px', lineHeight: '1.5', color: '#334155' }}>
             <div><strong>Tech Stack:</strong> {resumeData.skillCategories.languages}, {resumeData.skillCategories.frameworks}</div>
