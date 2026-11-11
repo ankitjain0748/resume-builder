@@ -1521,7 +1521,7 @@ if (!href || href === '#' || /^\s*javascript:/i.test(href)) return;
                 <span>Reset Demo</span>
               </button>
 
-              <button 
+              {/* <button 
                 onClick={() => setIsImportModalOpen(true)}
                 className="custom-btn custom-btn-primary"
                 style={{ color: '#ffffff', fontWeight: 'bold' }}
@@ -1529,7 +1529,7 @@ if (!href || href === '#' || /^\s*javascript:/i.test(href)) return;
               >
                 <UploadCloud size={14} />
                 <span>📥 Import Document (PDF/Word/Images)</span>
-              </button>
+              </button> */}
             </div>
           </div>
         </header>
