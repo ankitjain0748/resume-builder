@@ -4,11 +4,10 @@ import React, { useState, useRef, useEffect } from 'react';
 import { 
   User, Briefcase, GraduationCap, Award, Code, 
   Download, CheckCircle2, Trash2, Plus, Image as ImageIcon, 
-  Palette, Eye, EyeOff, Layers, Mail, Phone, MapPin, Globe,
-  ZoomIn, ZoomOut, Smartphone, Monitor, Printer, Maximize2, Sparkles, FileDown, Type, CheckCircle, AlertTriangle, X,
-  ChevronUp, ChevronDown, UploadCloud, FileText, Loader2
+  Palette, Eye, EyeOff, Layers, 
+  ZoomIn, ZoomOut, Smartphone, Monitor, Printer, Maximize2, Sparkles, FileDown, CheckCircle, AlertTriangle, X,
+  ChevronUp, ChevronDown, UploadCloud, FileText, Loader2,
 } from 'lucide-react';
-import { FaGithub, FaLinkedin } from 'react-icons/fa';
 
 // 100% Reliable Base64 Avatar
 const DEFAULT_AVATAR = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48Y2lyY2xlIGN4PSI1MCIgY3k9IjUwIiByPSI1MCIgZmlsbD0iI2UyZThmMCIvPjxjaXJjbGUgY3g9IjUwIiBjeT0iMzgiIHI9IjE4IiBmaWxsPSIjNjQ3NDhiIi8+PHBhdGggZD0iTTIwIDg2Yz0tMTYuNSAxMy41LTMwIDMwLTMwczMwIDEzLjUgMzAgMzB6IiBmaWxsPSIjNjQ3NDhiIi8+PC9zdmc+";
@@ -103,7 +102,7 @@ export default function ResumeBuilder() {
 
   const [resumeData, setResumeData] = useState(() => {
     if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('pro_resume_builder_data_v7');
+      const saved = localStorage.getItem('pro_resume_builder_data_v9');
       if (saved) {
         try { return JSON.parse(saved); } catch (e) { console.error(e); }
       }
@@ -135,7 +134,7 @@ export default function ResumeBuilder() {
           id: "edu-1",
           degree: "Bachelor of Technology in Computer Science",
           institution: "Example Institute of Technology",
-          location: "New York, USA",
+          location: "New York, NY, USA",
           duration: "Aug 2020 – May 2024",
           grade: "8.5 CGPA",
         }
@@ -162,6 +161,7 @@ export default function ResumeBuilder() {
           title: "E-Commerce Platform",
           tech: "React.js, Node.js, MongoDB, Stripe",
           duration: "Jan 2024 – Apr 2024",
+          link: "https://github.com/alexmorgan/ecommerce-store",
           description: "Developed a responsive e-commerce platform with product listings, search, and checkout with 99.9% uptime.",
         }
       ],
@@ -178,7 +178,7 @@ export default function ResumeBuilder() {
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      localStorage.setItem('pro_resume_builder_data_v7', JSON.stringify(resumeData));
+      localStorage.setItem('pro_resume_builder_data_v9', JSON.stringify(resumeData));
     }
   }, [resumeData]);
 
@@ -204,7 +204,7 @@ export default function ResumeBuilder() {
     return () => window.removeEventListener('resize', autoFitScale);
   }, [mobileView]);
 
-  // ================= DOCUMENT IMPORT & PARSING ENGINES =================
+  // ================= DOCUMENT IMPORT & ROBUST PARSING ENGINES =================
   const loadPdfJs = () => new Promise((resolve, reject) => {
     if (typeof window !== 'undefined' && window.pdfjsLib) {
       return resolve(window.pdfjsLib);
@@ -230,16 +230,25 @@ export default function ResumeBuilder() {
     document.head.appendChild(s);
   });
 
+  // Dynamic Tesseract OCR for Scanned / Image PDFs & Images
+  const loadTesseract = () => new Promise((resolve, reject) => {
+    if (typeof window !== 'undefined' && window.Tesseract) {
+      return resolve(window.Tesseract);
+    }
+    const s = document.createElement('script');
+    s.src = 'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';
+    s.onload = () => resolve(window.Tesseract);
+    s.onerror = () => reject(new Error('Failed to load OCR Engine'));
+    document.head.appendChild(s);
+  });
+
   // Heuristic Smart Resume Parser
-  const parseResumeTextIntoState = (rawText) => {
+  const parseResumeTextIntoState = (rawText, originalFileName = '') => {
     const trimmed = (rawText || '').trim();
     if (trimmed.length < 15) {
       alert(
-        '⚠️ Document se selectable text extract nahi ho paya.\n\n' +
-        'Karan:\n' +
-        '• File Canva ya scanner se bani Image-only PDF ho sakti hai.\n' +
-        '• Word file me text shapes ya boxes ke andar ho sakta hai.\n\n' +
-        'Samadhan: Apne resume ka text copy karein aur neeche diye gaye box me paste kar ke "⚡ Parse & Update Resume" par click karein.'
+        '⚠️ Document se text read nahi ho paya.\n\n' +
+        'Kripya apne resume ka text copy karke neeche diye gaye box me paste karein aur "⚡ Parse & Update Resume" par click karein.'
       );
       if (pasteTextareaRef.current) {
         pasteTextareaRef.current.focus();
@@ -254,24 +263,54 @@ export default function ResumeBuilder() {
     const emailMatch = cleanFullText.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
     const email = emailMatch ? emailMatch[0] : '';
 
-    // 2. Phone extraction
-    const phoneMatch = cleanFullText.match(/(?:\+?\d{1,3}[-.\s]?)?\(?\d{2,4}\)?[-.\s]?\d{3,5}[-.\s]?\d{4}/);
+    // 2. Phone extraction (Supports Indian +91 and International formats)
+    const phoneMatch = cleanFullText.match(/(?:(?:\+|0{0,2})91[\s.-]?)?[6-9]\d{4}[\s.-]?\d{5}|(?:\+?\d{1,3}[-.\s]?)?\(?\d{2,4}\)?[-.\s]?\d{3,5}[-.\s]?\d{4}/);
     const phone = phoneMatch ? phoneMatch[0] : '';
 
-    // 3. LinkedIn & GitHub
-    const linkedinMatch = cleanFullText.match(/(?:linkedin\.com\/in\/|linkedin:\s*)([a-zA-Z0-9_-]+)/i);
-    const linkedin = linkedinMatch ? `linkedin.com/in/${linkedinMatch[1]}` : '';
+    // 3. LinkedIn & GitHub extraction
+const linkedinMatch = cleanFullText.match(
+  /(?:https?:\/\/)?(?:www\.)?linkedin\.com\/in\/([a-zA-Z0-9_.-]+)/i
+);
 
-    const githubMatch = cleanFullText.match(/(?:github\.com\/|github:\s*)([a-zA-Z0-9_-]+)/i);
-    const github = githubMatch ? `github.com/${githubMatch[1]}` : '';
+const linkedin = linkedinMatch
+  ? `linkedin.com/in/${linkedinMatch[1]}`
+  : (cleanFullText.match(/linkedin:\s*([a-zA-Z0-9_.-]+)/i)
+      ? `linkedin.com/in/${RegExp.$1}`
+      : '');
 
-    // 4. Candidate Name: usually the first non-contact line
+const githubMatch = cleanFullText.match(
+  /(?:https?:\/\/)?(?:www\.)?github\.com\/([a-zA-Z0-9_.-]+)/i
+);
+
+const github = githubMatch
+  ? `github.com/${githubMatch[1]}`
+  : (cleanFullText.match(/github:\s*([a-zA-Z0-9_.-]+)/i)
+      ? `github.com/${RegExp.$1}`
+      : '');
+
+    // 4. Candidate Name: checks first non-contact lines OR falls back to file name
     let fullName = '';
     for (let i = 0; i < Math.min(lines.length, 6); i++) {
       const line = lines[i];
       if (!line.includes('@') && !line.includes('http') && !line.match(/\d{5,}/) && line.length > 2 && line.length < 35) {
-        fullName = line;
-        break;
+        // Strip out words like 'Resume' or 'CV'
+        const candidateClean = line.replace(/resume|curriculum|vitae|cv/gi, '').trim();
+        if (candidateClean.length > 2) {
+          fullName = candidateClean;
+          break;
+        }
+      }
+    }
+
+    // Smart fallback to clean file name if text didn't clearly provide name (e.g. Ankit_Kumar_jain_Resume.pdf)
+    if (!fullName && originalFileName) {
+      const cleanFromFilename = originalFileName
+        .replace(/\.[^/.]+$/, "")
+        .replace(/resume|cv|biodata|profile/gi, "")
+        .replace(/[_-]+/g, " ")
+        .trim();
+      if (cleanFromFilename.length > 2 && cleanFromFilename.length < 35) {
+        fullName = cleanFromFilename.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
       }
     }
 
@@ -285,11 +324,11 @@ export default function ResumeBuilder() {
 
     lines.forEach((line) => {
       const lower = line.toLowerCase();
-      if (lower.includes('work experience') || lower.includes('experience') || lower.includes('employment history')) {
+      if (lower.includes('work experience') || lower.includes('experience') || lower.includes('employment history') || lower.includes('internship')) {
         currentSection = 'experience';
-      } else if (lower.includes('education') || lower.includes('academic') || lower.includes('qualifications')) {
+      } else if (lower.includes('education') || lower.includes('academic') || lower.includes('qualifications') || lower.includes('degree')) {
         currentSection = 'education';
-      } else if (lower.includes('skills') || lower.includes('technologies') || lower.includes('technical stack')) {
+      } else if (lower.includes('skills') || lower.includes('technologies') || lower.includes('technical stack') || lower.includes('core competencies')) {
         currentSection = 'skills';
       } else if (lower.includes('projects') || lower.includes('key projects') || lower.includes('academic projects')) {
         currentSection = 'projects';
@@ -341,6 +380,7 @@ export default function ResumeBuilder() {
             title: "Extracted Project",
             tech: "Key Technologies",
             duration: "Recent",
+            link: "",
             description: projectsArr.slice(0, 4).join(' ')
           },
           ...prev.projects
@@ -367,7 +407,7 @@ export default function ResumeBuilder() {
     try {
       const fileName = file.name.toLowerCase();
 
-      // Case 1: JSON File (Direct restore)
+      // Case 1: JSON Direct Restore
       if (fileName.endsWith('.json')) {
         const text = await file.text();
         const parsed = JSON.parse(text);
@@ -382,7 +422,7 @@ export default function ResumeBuilder() {
       // Case 2: Plain Text / Markdown
       if (fileName.endsWith('.txt') || fileName.endsWith('.md')) {
         const text = await file.text();
-        parseResumeTextIntoState(text);
+        parseResumeTextIntoState(text, file.name);
         return;
       }
 
@@ -392,15 +432,31 @@ export default function ResumeBuilder() {
         const mammoth = await loadMammoth();
         const result = await mammoth.extractRawText({ arrayBuffer });
         const docxText = result && result.value ? result.value : '';
-        parseResumeTextIntoState(docxText);
+        parseResumeTextIntoState(docxText, file.name);
         return;
       }
 
-      // Case 4: PDF Document (.pdf) - Enhanced text extraction
+      // Case 4: Image File Directly (.png, .jpg, .jpeg) via OCR
+      if (fileName.endsWith('.png') || fileName.endsWith('.jpg') || fileName.endsWith('.jpeg')) {
+        setImportStatusMsg('🔍 Image file detect hui! AI OCR se text scan ho raha hai...');
+        const tesseract = await loadTesseract();
+        const { data: { text } } = await tesseract.recognize(file, 'eng');
+        parseResumeTextIntoState(text, file.name);
+        return;
+      }
+
+      // Case 5: PDF Document (.pdf) - With CMaps & Auto OCR Fallback
       if (fileName.endsWith('.pdf')) {
         const arrayBuffer = await file.arrayBuffer();
         const pdfjsLib = await loadPdfJs();
-        const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
+        
+        // CMap support allows reading subsetted fonts from Word/Mac/Canva
+        const loadingTask = pdfjsLib.getDocument({ 
+          data: new Uint8Array(arrayBuffer),
+          cMapUrl: 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/cmaps/',
+          cMapPacked: true,
+          standardFontDataUrl: 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/standard_fonts/',
+        });
         const pdf = await loadingTask.promise;
         let fullPdfText = '';
 
@@ -408,20 +464,51 @@ export default function ResumeBuilder() {
           const page = await pdf.getPage(i);
           const textContent = await page.getTextContent();
           
-          // Safe filtering: check for actual text items and prevent undefined
-          const pageText = (textContent.items || [])
-            .map((item) => (item && typeof item.str === 'string' ? item.str : ''))
-            .filter((str) => str.trim().length > 0)
-            .join(' ');
+          let lastY;
+          let pageText = '';
+          for (const item of (textContent.items || [])) {
+            if (item && item.str) {
+              // Line break on change of vertical height
+              if (lastY !== undefined && Math.abs(item.transform[5] - lastY) > 5) {
+                pageText += '\n';
+              } else if (pageText.length > 0 && !pageText.endsWith(' ') && !pageText.endsWith('\n')) {
+                pageText += ' ';
+              }
+              pageText += item.str;
+              lastY = item.transform[5];
+            }
+          }
 
           fullPdfText += pageText + '\n';
         }
 
-        parseResumeTextIntoState(fullPdfText);
+        // AUTO OCR FALLBACK: Agar PDF Canva / Scanned / Flattened Image ho to AI OCR se text extract karein
+        if (fullPdfText.trim().length < 20) {
+          setImportStatusMsg('🔍 Image/Canva PDF detect hua! AI OCR Text Scanner start ho raha hai...');
+          const tesseract = await loadTesseract();
+          let ocrFullText = '';
+
+          for (let i = 1; i <= Math.min(pdf.numPages, 3); i++) {
+            setImportStatusMsg(`📖 Page ${i}/${pdf.numPages} ko AI OCR se scan kiya ja raha hai...`);
+            const page = await pdf.getPage(i);
+            const viewport = page.getViewport({ scale: 2.0 }); // 2x scale for sharp OCR accuracy
+            const canvas = document.createElement('canvas');
+            canvas.width = viewport.width;
+            canvas.height = viewport.height;
+            const ctx = canvas.getContext('2d');
+            await page.render({ canvasContext: ctx, viewport }).promise;
+
+            const { data: { text } } = await tesseract.recognize(canvas, 'eng');
+            ocrFullText += text + '\n';
+          }
+          fullPdfText = ocrFullText;
+        }
+
+        parseResumeTextIntoState(fullPdfText, file.name);
         return;
       }
 
-      alert('Kripya PDF (.pdf), Word (.docx), Text (.txt), ya JSON (.json) format ki file upload karein.');
+      alert('Kripya PDF (.pdf), Word (.docx), Image (.png, .jpg), Text (.txt), ya JSON (.json) file upload karein.');
     } catch (err) {
       console.error('File parsing error:', err);
       alert('Document read karne me dikkat aayi. Kripya Text copy-paste karke try karein.');
@@ -571,7 +658,7 @@ export default function ResumeBuilder() {
   const addProject = () => {
     setResumeData((prev) => ({
       ...prev,
-      projects: [{ id: `proj-${Date.now()}`, title: '', tech: '', duration: '', description: '' }, ...prev.projects]
+      projects: [{ id: `proj-${Date.now()}`, title: '', tech: '', duration: '', link: '', description: '' }, ...prev.projects]
     }));
   };
 
@@ -582,61 +669,154 @@ export default function ResumeBuilder() {
     }));
   };
 
-  // ================= ATS SCORE CHECKER =================
+  // ================= ATS SCORE CHECKER WITH DETAILED REASONS =================
   const calculateAtsScore = () => {
-    let score = 25;
+    let score = 20;
     const checks = [];
 
-    score += 15;
-    checks.push({ pass: true, msg: "Reverse-Chronological Order: Latest experiences & projects placed at the top." });
+    score += 10;
+    checks.push({ 
+      pass: true, 
+      title: "Reverse-Chronological Layout", 
+      msg: "Latest experiences & projects are placed at the top.",
+      reason: "ATS algorithms rank resumes higher when recent roles appear first, verifying immediate relevance."
+    });
 
-    if (resumeData.personalInfo.fullName.trim().length > 2) { 
+    if (resumeData.personalInfo.fullName && resumeData.personalInfo.fullName.trim().length > 2) { 
       score += 10; 
-      checks.push({ pass: true, msg: "Full Name provided clearly." }); 
+      checks.push({ 
+        pass: true, 
+        title: "Candidate Identification", 
+        msg: "Full Name provided clearly.",
+        reason: "Parsed correctly by recruiter databases into primary applicant records."
+      }); 
     } else {
-      checks.push({ pass: false, msg: "Add a valid Full Name." });
+      checks.push({ 
+        pass: false, 
+        title: "Missing Full Name", 
+        msg: "Candidate name is missing or too short.",
+        reason: "ATS cannot index an applicant without a recognized name header, leading to instant filtering."
+      });
     }
 
-    if (resumeData.personalInfo.email.includes('@')) { 
+    if (resumeData.personalInfo.email && resumeData.personalInfo.email.includes('@')) { 
       score += 10; 
-      checks.push({ pass: true, msg: "Professional Email format is valid." }); 
+      checks.push({ 
+        pass: true, 
+        title: "Contact Email", 
+        msg: "Professional Email format is valid.",
+        reason: "Automated communication systems use this for invitation triggers."
+      }); 
     } else {
-      checks.push({ pass: false, msg: "Add a professional Email address." });
+      checks.push({ 
+        pass: false, 
+        title: "Missing/Invalid Email", 
+        msg: "Add a valid email address.",
+        reason: "Without a valid email, automated screening software cannot dispatch interview links."
+      });
+    }
+
+    if (resumeData.personalInfo.phone && resumeData.personalInfo.phone.trim().length > 6) { 
+      score += 10; 
+      checks.push({ 
+        pass: true, 
+        title: "Direct Phone Number", 
+        msg: "Phone number is provided.",
+        reason: "Essential for recruiter screen calls and SMS notifications."
+      }); 
+    } else {
+      checks.push({ 
+        pass: false, 
+        title: "Missing Phone Number", 
+        msg: "Add your contact phone number.",
+        reason: "Recruiters filter out candidates who cannot be reached immediately for quick phone screens."
+      });
     }
 
     if (resumeData.personalInfo.linkedin && resumeData.personalInfo.linkedin.trim().length > 5) { 
       score += 10; 
-      checks.push({ pass: true, msg: "LinkedIn Profile URL included." }); 
+      checks.push({ 
+        pass: true, 
+        title: "LinkedIn Profile", 
+        msg: "LinkedIn Profile URL included.",
+        reason: "Recruiters cross-check mutual connections, endorsements, and career history."
+      }); 
     } else {
-      checks.push({ pass: false, msg: "Add LinkedIn link for automated recruiter parsing." });
+      checks.push({ 
+        pass: false, 
+        title: "LinkedIn Missing", 
+        msg: "Add LinkedIn link for automated recruiter verification.",
+        reason: "Over 85% of MNC ATS bots look for a LinkedIn link to confirm genuine identity."
+      });
     }
 
     if (resumeData.personalInfo.address && resumeData.personalInfo.address.trim().length > 3) { 
-      score += 5; 
-      checks.push({ pass: true, msg: "Location (City, Country) specified." }); 
+      score += 10; 
+      checks.push({ 
+        pass: true, 
+        title: "Location Specified", 
+        msg: "Location (City, Country) specified.",
+        reason: "Matches geo-location filters for remote or on-site hiring preferences."
+      }); 
     } else {
-      checks.push({ pass: false, msg: "Add your Location/City." });
+      checks.push({ 
+        pass: false, 
+        title: "Missing Location", 
+        msg: "Add your Location / City.",
+        reason: "Recruiters often search by city/radius; without a location your resume is excluded from localized queries."
+      });
     }
 
-    if (resumeData.summary.length > 50) { 
+    if (resumeData.summary && resumeData.summary.length > 50) { 
       score += 10; 
-      checks.push({ pass: true, msg: "Professional Summary is comprehensive (>50 chars)." }); 
+      checks.push({ 
+        pass: true, 
+        title: "Executive Summary", 
+        msg: "Professional Summary is comprehensive (>50 chars).",
+        reason: "Provides the top keywords matching the job description in the initial 6-second scan."
+      }); 
     } else {
-      checks.push({ pass: false, msg: "Expand your summary to at least 50 characters." });
+      checks.push({ 
+        pass: false, 
+        title: "Summary Too Short", 
+        msg: "Expand your summary to at least 50 characters.",
+        reason: "Short summaries lack keyword density, lowering your ranking in keyword relevance search."
+      });
     }
 
     const hasNumbersInExp = resumeData.experience.some(e => /\d+|%|\$/.test(e.description));
     if (resumeData.experience.length > 0 && resumeData.experience[0].description.length > 20) {
       score += 10;
-      checks.push({ pass: true, msg: "Work experience includes descriptive bullet points." });
+      checks.push({ 
+        pass: true, 
+        title: "Action-Driven Experience", 
+        msg: "Work experience includes descriptive bullet points.",
+        reason: "Action verbs (e.g., 'Developed', 'Optimized') match high-scoring ATS keyword lexicons."
+      });
+
       if (hasNumbersInExp) {
-        score += 5;
-        checks.push({ pass: true, msg: "Quantifiable metrics (numbers, %, metrics) detected in experience." });
+        score += 10;
+        checks.push({ 
+          pass: true, 
+          title: "Quantifiable Impact", 
+          msg: "Quantifiable metrics (numbers, %, metrics) detected in experience.",
+          reason: "Resumes with measurable results (e.g. '35%', '5+ members') rank in the top 5% of candidate shortlists."
+        });
       } else {
-        checks.push({ pass: false, msg: "Tip: Add numbers/metrics (e.g., 'improved by 35%') to rank higher." });
+        checks.push({ 
+          pass: false, 
+          title: "Missing Quantifiable Metrics", 
+          msg: "Tip: Add numbers/metrics (e.g., 'improved by 35%') to rank higher.",
+          reason: "Without numbers, ATS and hiring managers view claims as generic duties rather than actual achievements."
+        });
       }
     } else {
-      checks.push({ pass: false, msg: "Add work experience bullet points." });
+      checks.push({ 
+        pass: false, 
+        title: "Experience Bullets Missing", 
+        msg: "Add work experience bullet points.",
+        reason: "Empty or thin work descriptions give ATS zero skills to index against the job description."
+      });
     }
 
     return { score: Math.min(score, 100), checks };
@@ -646,7 +826,7 @@ export default function ResumeBuilder() {
 
   const ensurePdfTools = async () => {
     const getHtml2Canvas = () => new Promise((resolve, reject) => {
-      if (typeof window !== 'undefined' && typeof window.html2canvas === 'function') {
+      if (typeof window !== 'undefined' && window.html2canvas === 'function') {
         return resolve(window.html2canvas);
       }
       const s = document.createElement('script');
@@ -672,6 +852,7 @@ export default function ResumeBuilder() {
     return Promise.all([getHtml2Canvas(), getJsPDF()]);
   };
 
+  // MULTI-PAGE SMART PDF GENERATOR (KABHI TEXT CUT NAHI HOTA)
   const handleDownloadPDF = async () => {
     if (!resumeRef.current) return;
     setIsExporting(true);
@@ -685,23 +866,46 @@ export default function ResumeBuilder() {
       exportContainer.style.top = '0px';
       exportContainer.style.left = '0px';
       exportContainer.style.width = '794px';
-      exportContainer.style.height = '1122px';
       exportContainer.style.zIndex = '-99999';
       exportContainer.style.backgroundColor = '#ffffff';
-      exportContainer.style.overflow = 'hidden';
 
       clone.style.margin = '0';
       clone.style.transform = 'none';
       clone.style.boxShadow = 'none';
+      clone.style.height = 'auto';
+      clone.style.minHeight = '1122px';
       exportContainer.appendChild(clone);
       document.body.appendChild(exportContainer);
 
-      const canvas = await html2canvasFn(clone, { scale: 2, useCORS: true, allowTaint: true, width: 794, height: 1122 });
+      const canvas = await html2canvasFn(clone, { 
+        scale: 2, 
+        useCORS: true, 
+        allowTaint: true, 
+        width: 794 
+      });
       document.body.removeChild(exportContainer);
 
       const imgData = canvas.toDataURL('image/jpeg', 0.98);
       const pdf = new jsPdfClass({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-      pdf.addImage(imgData, 'JPEG', 0, 0, 210, 297, undefined, 'FAST');
+      
+      const imgWidth = 210; 
+      const pageHeight = 297; 
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      let heightLeft = imgHeight;
+      let position = 0;
+
+      // First Page
+      pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight, undefined, 'FAST');
+      heightLeft -= pageHeight;
+
+      // Automatically adds Page 2, Page 3 if content is longer
+      while (heightLeft > 2) {
+        position = position - pageHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight, undefined, 'FAST');
+        heightLeft -= pageHeight;
+      }
+
       pdf.save(`${(resumeData.personalInfo.fullName || 'Resume').replace(/\s+/g, '_')}_Resume.pdf`);
     } catch (err) {
       console.error(err);
@@ -732,7 +936,9 @@ export default function ResumeBuilder() {
           <h3>Experience</h3>
           ${resumeData.experience.map(e => `<div><b>${e.role}</b> at ${e.company} (${e.duration})<br/>${e.description}</div>`).join('')}
           <h3>Education</h3>
-          ${resumeData.education.map(ed => `<div><b>${ed.degree}</b> - ${ed.institution} (${ed.duration})</div>`).join('')}
+          ${resumeData.education.map(ed => `<div><b>${ed.degree}</b> - ${ed.institution} ${ed.location ? `(${ed.location})` : ''} (${ed.duration})</div>`).join('')}
+          <h3>Projects</h3>
+          ${resumeData.projects.map(p => `<div><b>${p.title}</b> ${p.link ? `(${p.link})` : ''}<br/>${p.description}</div>`).join('')}
         </body></html>
       `;
       const blob = new Blob(['\ufeff' + htmlContent], { type: 'application/msword' });
@@ -754,15 +960,14 @@ export default function ResumeBuilder() {
 
   const handleNativePrint = () => window.print();
 
+  // Multi-page friendly canvas style
   const a4CanvasStyle = {
     width: '794px',
-    height: '1122px',
     minHeight: '1122px',
-    maxHeight: '1122px',
+    height: 'auto',
     backgroundColor: '#ffffff',
     color: '#000000',
     boxSizing: 'border-box',
-    overflow: 'hidden',
     position: 'relative',
     fontFamily: selectedFont
   };
@@ -822,7 +1027,15 @@ export default function ResumeBuilder() {
           {resumeData.projects.map((proj) => (
             <div key={proj.id} style={{ marginBottom: '6px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11.5px' }}>
-                <strong>{proj.title} {proj.tech ? <span style={{ fontWeight: 'normal', fontSize: '10px', color: '#475569' }}>| {proj.tech}</span> : ''}</strong>
+                <div>
+                  <strong>{proj.title}</strong>
+                  {proj.tech ? <span style={{ fontWeight: 'normal', fontSize: '10px', color: '#475569' }}> | {proj.tech}</span> : ''}
+                  {proj.link && (
+                    <span style={{ marginLeft: '6px', fontSize: '10px', color: '#2563eb' }}>
+                      [<a href={proj.link.startsWith('http') ? proj.link : `https://${proj.link}`} target="_blank" rel="noreferrer" style={{ color: '#2563eb', textDecoration: 'none' }}>🔗 Link</a>]
+                    </span>
+                  )}
+                </div>
                 <strong>{proj.duration}</strong>
               </div>
               <div style={{ fontSize: '10.5px', lineHeight: '1.4', paddingLeft: '8px' }}>{proj.description}</div>
@@ -837,7 +1050,10 @@ export default function ResumeBuilder() {
           {resumeData.education.map((edu) => (
             <div key={edu.id} style={{ marginBottom: '6px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11.5px' }}><strong>{edu.institution}</strong><strong>{edu.duration}</strong></div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10.5px', fontStyle: 'italic', color: '#333333' }}><span>{edu.degree} {edu.grade ? `(${edu.grade})` : ''}</span><span>{edu.location}</span></div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10.5px', fontStyle: 'italic', color: '#333333' }}>
+                <span>{edu.degree} {edu.grade ? `(${edu.grade})` : ''}</span>
+                <span>{edu.location}</span>
+              </div>
             </div>
           ))}
         </div>
@@ -903,7 +1119,14 @@ export default function ResumeBuilder() {
           {resumeData.projects.map(proj => (
             <div key={proj.id} style={{ marginBottom: '6px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10.5px' }}>
-                <strong>{proj.title}</strong>
+                <div>
+                  <strong>{proj.title}</strong>
+                  {proj.link && (
+                    <span style={{ marginLeft: '6px', fontSize: '9.5px', color: accentColor }}>
+                      [<a href={proj.link.startsWith('http') ? proj.link : `https://${proj.link}`} target="_blank" rel="noreferrer" style={{ color: accentColor, textDecoration: 'none' }}>Link</a>]
+                    </span>
+                  )}
+                </div>
                 <span style={{ color: '#64748b', fontSize: '9.5px' }}>{proj.duration}</span>
               </div>
               <div style={{ fontSize: '9.5px', color: '#334155' }}>{proj.description}</div>
@@ -917,7 +1140,7 @@ export default function ResumeBuilder() {
           <div style={{ fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', color: accentColor, borderBottom: '1px solid #cbd5e1', marginBottom: '6px', paddingBottom: '2px' }}>Education</div>
           {resumeData.education.map(ed => (
             <div key={ed.id} style={{ marginBottom: '4px', display: 'flex', justifyContent: 'space-between', fontSize: '10px' }}>
-              <span><strong>{ed.degree}</strong>, {ed.institution}</span>
+              <span><strong>{ed.degree}</strong>, {ed.institution} {ed.location ? `(${ed.location})` : ''}</span>
               <span style={{ color: '#64748b' }}>{ed.duration}</span>
             </div>
           ))}
@@ -986,7 +1209,7 @@ export default function ResumeBuilder() {
         .zoom-btn { background: #0e192d; border: 1px solid #1a273f; color: #cbd5e1; border-radius: 6px; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
         .canvas-scroll-viewport { flex: 1; overflow-y: auto; overflow-x: auto; padding: 16px; display: flex; justify-content: center; align-items: flex-start; }
         .canvas-scale-wrapper { display: flex; justify-content: center; transform-origin: top center; transition: all 0.2s ease-out; margin: 0 auto; }
-        .canvas-shadow { box-shadow: 0 20px 45px rgba(0, 0, 0, 0.75); border-radius: 3px; }
+        .canvas-shadow { box-shadow: 0 20px 45px rgba(0, 0, 0, 0.75); border-radius: 3px; position: relative; }
         
         /* Modal Styles */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.75); backdrop-filter: blur(4px); z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 20px; }
@@ -1003,10 +1226,10 @@ export default function ResumeBuilder() {
           .preview-container.mobile-active { display: flex; }
         }
         @media print {
-          .top-navbar, .mobile-mode-bar, .resume-hero, .editor-container, .preview-topbar, .zoom-controls, .modal-overlay { display: none !important; }
+          .top-navbar, .mobile-mode-bar, .resume-hero, .editor-container, .preview-topbar, .zoom-controls, .modal-overlay, .page-break-line { display: none !important; }
           .app-wrapper, .main-workspace, .preview-container, .canvas-scroll-viewport { display: block !important; background: transparent !important; border: none !important; margin: 0 !important; padding: 0 !important; height: auto !important; width: 100% !important; }
-          .canvas-scale-wrapper { transform: none !important; width: 210mm !important; height: 297mm !important; }
-          .canvas-shadow { box-shadow: none !important; width: 210mm !important; height: 297mm !important; }
+          .canvas-scale-wrapper { transform: none !important; width: 100% !important; height: auto !important; }
+          .canvas-shadow { box-shadow: none !important; width: 100% !important; height: auto !important; }
         }
       `}</style>
 
@@ -1024,15 +1247,15 @@ export default function ResumeBuilder() {
               type="button"
             >
               <UploadCloud size={14} />
-              <span>📥 Import Doc (PDF/Word/TXT)</span>
+              <span>📥 Import Doc (PDF/Word/Images)</span>
             </button>
           </div>
         </header>
 
         <section className={`resume-hero ${mobileView === 'preview' ? 'hide-on-preview' : ''}`}>
-          <span className="resume-hero-badge"><Sparkles size={12} /> ATS Optimizer & Smart Doc Importer</span>
+          <span className="resume-hero-badge"><Sparkles size={12} /> AI ATS Optimizer & Smart Doc Importer</span>
           <h1>Free ATS-Friendly Resume Builder</h1>
-          <p>Import existing resumes from PDF, Word, or TXT, reorder projects seamlessly, and guarantee top-tier ATS screening results.</p>
+          <p>Import existing resumes from PDF (including Canva/Scanned), Word, or Images, reorder projects, and get guaranteed top ATS screening.</p>
 
           <div className="action-group">
             <select value={selectedTemplate} onChange={(e) => setSelectedTemplate(e.target.value)} className="custom-select">
@@ -1149,7 +1372,7 @@ export default function ResumeBuilder() {
                 </>
               )}
 
-              {/* ============ WORK EXPERIENCE WITH SHIFTING & TOP ADD ============ */}
+              {/* ============ WORK EXPERIENCE ============ */}
               {activeTab === 'experience' && (
                 <>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -1207,7 +1430,7 @@ export default function ResumeBuilder() {
                       </div>
                       <div className="form-row" style={{ marginBottom: '6px' }}>
                         <input className="form-input" placeholder="Duration (e.g. 2023 - Present)" value={exp.duration} onChange={(e) => handleExpChange(exp.id, 'duration', e.target.value)} />
-                        <input className="form-input" placeholder="Location" value={exp.location} onChange={(e) => handleExpChange(exp.id, 'location', e.target.value)} />
+                        <input className="form-input" placeholder="Location (e.g. New York, USA)" value={exp.location} onChange={(e) => handleExpChange(exp.id, 'location', e.target.value)} />
                       </div>
                       <textarea className="form-textarea" rows={3} placeholder="Key Achievements & Responsibilities" value={exp.description} onChange={(e) => handleExpChange(exp.id, 'description', e.target.value)} />
                       
@@ -1284,7 +1507,10 @@ export default function ResumeBuilder() {
               {activeTab === 'education' && (
                 <>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div className="form-label">Education</div>
+                    <div>
+                      <div className="form-label">Education</div>
+                      <div style={{ fontSize: '10px', color: '#64748b' }}>Degrees & academic qualifications</div>
+                    </div>
                     <button onClick={addEducation} className="custom-btn custom-btn-primary" style={{ padding: '5px 10px', fontSize: '11px' }} type="button">
                       <Plus size={11} /> + Add Degree (Top)
                     </button>
@@ -1324,11 +1550,18 @@ export default function ResumeBuilder() {
                         </div>
                       </div>
 
-                      <div className="form-field" style={{ marginBottom: '6px' }}><input className="form-input" placeholder="Institution / University" value={edu.institution} onChange={(e) => handleEduChange(edu.id, 'institution', e.target.value)} /></div>
-                      <div className="form-field" style={{ marginBottom: '6px' }}><input className="form-input" placeholder="Degree / Course" value={edu.degree} onChange={(e) => handleEduChange(edu.id, 'degree', e.target.value)} /></div>
+                      <div className="form-field" style={{ marginBottom: '6px' }}>
+                        <input className="form-input" placeholder="Institution / University Name" value={edu.institution} onChange={(e) => handleEduChange(edu.id, 'institution', e.target.value)} />
+                      </div>
+                      <div className="form-field" style={{ marginBottom: '6px' }}>
+                        <input className="form-input" placeholder="Degree / Course (e.g. B.Tech in Computer Science)" value={edu.degree} onChange={(e) => handleEduChange(edu.id, 'degree', e.target.value)} />
+                      </div>
+                      <div className="form-field" style={{ marginBottom: '6px' }}>
+                        <input className="form-input" placeholder="Institution Location (City, State/Country)" value={edu.location || ''} onChange={(e) => handleEduChange(edu.id, 'location', e.target.value)} />
+                      </div>
                       <div className="form-row">
                         <input className="form-input" placeholder="Duration (e.g. 2020 - 2024)" value={edu.duration} onChange={(e) => handleEduChange(edu.id, 'duration', e.target.value)} />
-                        <input className="form-input" placeholder="Grade / GPA" value={edu.grade} onChange={(e) => handleEduChange(edu.id, 'grade', e.target.value)} />
+                        <input className="form-input" placeholder="Grade / GPA / Percentage" value={edu.grade} onChange={(e) => handleEduChange(edu.id, 'grade', e.target.value)} />
                       </div>
                     </div>
                   ))}
@@ -1400,33 +1633,43 @@ export default function ResumeBuilder() {
                         <input className="form-input" placeholder="Project Title" value={proj.title} onChange={(e) => handleProjChange(proj.id, 'title', e.target.value)} />
                         <input className="form-input" placeholder="Tech Stack (e.g. Next.js, Node.js)" value={proj.tech} onChange={(e) => handleProjChange(proj.id, 'tech', e.target.value)} />
                       </div>
+                      
+                      {/* Project Link Input */}
                       <div className="form-row" style={{ marginBottom: '6px' }}>
+                        <input className="form-input" placeholder="Project Live Demo / GitHub Link (e.g. https://myproject.com)" value={proj.link || ''} onChange={(e) => handleProjChange(proj.id, 'link', e.target.value)} />
                         <input className="form-input" placeholder="Duration (e.g. Jan 2024 - Apr 2024)" value={proj.duration} onChange={(e) => handleProjChange(proj.id, 'duration', e.target.value)} />
                       </div>
+
                       <textarea className="form-textarea" rows={3} placeholder="Project Description & Achievements" value={proj.description} onChange={(e) => handleProjChange(proj.id, 'description', e.target.value)} />
                     </div>
                   ))}
                 </>
               )}
 
-              {/* ============ ATS CHECK TAB ============ */}
+              {/* ============ ATS CHECK TAB WITH DETAILED REASONS ============ */}
               {activeTab === 'atsScore' && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                   <div style={{ background: '#060b14', border: '1px solid #1a273f', padding: '16px', borderRadius: '10px', textAlign: 'center' }}>
                     <div style={{ fontSize: '12px', color: '#94a3b8', textTransform: 'uppercase', marginBottom: '4px' }}>ATS Match & Screening Score</div>
-                    <div style={{ fontSize: '32px', fontWeight: 'bold', color: atsResult.score >= 85 ? '#22c55e' : '#f59e0b' }}>{atsResult.score}%</div>
-                    <p style={{ fontSize: '11px', color: '#94a3b8', margin: '6px 0 0 0' }}>
+                    <div style={{ fontSize: '36px', fontWeight: 'bold', color: atsResult.score >= 85 ? '#22c55e' : '#f59e0b' }}>{atsResult.score}%</div>
+                    <p style={{ fontSize: '11.5px', color: '#94a3b8', margin: '6px 0 0 0' }}>
                       {atsResult.score >= 85 
-                        ? '🚀 Top-Ranked! Reverse chronological order and structure guarantee high ATS placement.' 
-                        : '⚠️ Complete missing details to guarantee top recruiter search ranking.'}
+                        ? '🚀 Top-Ranked! Reverse chronological order and complete credentials guarantee high ATS placement.' 
+                        : '⚠️ Complete missing details below to improve automated recruiter search ranking.'}
                     </p>
                   </div>
                   
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                     {atsResult.checks.map((check, idx) => (
-                      <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '8px', background: '#060b14', padding: '10px 12px', borderRadius: '8px', border: '1px solid #1a273f', fontSize: '11.5px' }}>
-                        {check.pass ? <CheckCircle size={16} color="#22c55e" /> : <AlertTriangle size={16} color="#f59e0b" />}
-                        <span style={{ color: check.pass ? '#e2e8f0' : '#cbd5e1' }}>{check.msg}</span>
+                      <div key={idx} style={{ background: '#060b14', padding: '10px 12px', borderRadius: '8px', border: `1px solid ${check.pass ? '#1a273f' : 'rgba(245, 158, 11, 0.3)'}`, fontSize: '11.5px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                          {check.pass ? <CheckCircle size={16} color="#22c55e" /> : <AlertTriangle size={16} color="#f59e0b" />}
+                          <strong style={{ color: check.pass ? '#22c55e' : '#f59e0b' }}>{check.title}</strong>
+                        </div>
+                        <div style={{ color: '#e2e8f0', marginLeft: '24px', fontWeight: '500' }}>{check.msg}</div>
+                        <div style={{ color: '#94a3b8', marginLeft: '24px', marginTop: '3px', fontSize: '10.5px', fontStyle: 'italic', lineHeight: 1.4 }}>
+                          <b>Reason / Impact:</b> {check.reason}
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -1450,7 +1693,7 @@ export default function ResumeBuilder() {
 
           <section ref={previewWrapperRef} className={`preview-container ${mobileView === 'preview' ? 'mobile-active' : ''}`}>
             <div className="preview-topbar">
-              <span style={{ fontWeight: '600', color: '#e2e8f0' }}>Live A4 Preview</span>
+              <span style={{ fontWeight: '600', color: '#e2e8f0' }}>Live A4 Preview (Multi-Page Auto Flow)</span>
               <div className="zoom-controls">
                 <button onClick={() => setPreviewScale((s) => Math.max(s - 0.05, 0.3))} className="zoom-btn" type="button"><ZoomOut size={13} /></button>
                 <span style={{ fontWeight: '700', minWidth: '38px', textAlign: 'center' }}>{Math.round(previewScale * 100)}%</span>
@@ -1460,9 +1703,28 @@ export default function ResumeBuilder() {
             </div>
 
             <div className="canvas-scroll-viewport">
-              <div className="canvas-scale-wrapper" style={{ width: `${794 * previewScale}px`, height: `${1122 * previewScale}px` }}>
-                <div style={{ transform: `scale(${previewScale})`, transformOrigin: 'top center', width: '794px', height: '1122px' }}>
-                  <div ref={resumeRef} className="canvas-shadow" style={{ width: '794px', height: '1122px', backgroundColor: '#ffffff', overflow: 'hidden' }}>
+              <div className="canvas-scale-wrapper" style={{ width: `${794 * previewScale}px` }}>
+                <div style={{ transform: `scale(${previewScale})`, transformOrigin: 'top center', width: '794px' }}>
+                  <div ref={resumeRef} className="canvas-shadow" style={{ width: '794px', minHeight: '1122px', height: 'auto', backgroundColor: '#ffffff', overflow: 'visible' }}>
+                    {/* Visual Page 1 cutoff guide line for user reference */}
+                    <div 
+                      className="page-break-line"
+                      style={{ 
+                        position: 'absolute', 
+                        top: '1122px', 
+                        left: 0, 
+                        width: '100%', 
+                        borderBottom: '2px dashed #94a3b8', 
+                        color: '#64748b', 
+                        fontSize: '10px', 
+                        textAlign: 'center', 
+                        zIndex: 99, 
+                        pointerEvents: 'none' 
+                      }}
+                    >
+                      <span style={{ background: '#e2e8f0', padding: '1px 8px', borderRadius: '4px' }}>--- End of Page 1 (A4 Page Break) ---</span>
+                    </div>
+
                     {selectedTemplate === 'ankit_harvard' && renderAnkitHarvardATS()}
                     {selectedTemplate === 'classic_ats' && renderClassicATS()}
                     {selectedTemplate === 'novoresume_clean' && renderNovoresumeClean()}
@@ -1499,7 +1761,7 @@ export default function ResumeBuilder() {
               </div>
 
               <p style={{ fontSize: '11.5px', color: '#94a3b8', margin: '0 0 16px 0', lineHeight: '1.4' }}>
-                Apna purana resume upload karein. System apne aap text read karke <b>Full Name, Experience, Skills & Contacts</b> auto-fill kar dega.
+                Apna purana resume upload karein. System text read karke <b>Full Name, Experience, Skills & Contacts</b> auto-fill kar dega.
               </p>
 
               {/* File Dropzone */}
@@ -1508,23 +1770,23 @@ export default function ResumeBuilder() {
                   type="file" 
                   ref={fileInputRef} 
                   onChange={handleDocumentUpload} 
-                  accept=".pdf,.docx,.txt,.json" 
+                  accept=".pdf,.docx,.txt,.json,.png,.jpg,.jpeg" 
                   style={{ display: 'none' }} 
                 />
                 <UploadCloud size={28} color="#38bdf8" style={{ margin: '0 auto 8px auto', display: 'block' }} />
                 <div style={{ fontSize: '13px', fontWeight: 'bold', color: '#f8fafc' }}>Click to Upload Resume File</div>
-                <div style={{ fontSize: '11px', color: '#64748b', marginTop: '4px' }}>Supports <b>PDF (.pdf), Word (.docx), Text (.txt), JSON (.json)</b></div>
+                <div style={{ fontSize: '11px', color: '#64748b', marginTop: '4px' }}>Supports <b>PDF (.pdf), Word (.docx), Images (.png, .jpg), Text (.txt), JSON (.json)</b></div>
               </div>
 
               {/* Status Message */}
               {isParsingDoc && (
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginTop: '12px', fontSize: '12px', color: '#38bdf8' }}>
                   <Loader2 size={16} className="animate-spin" />
-                  <span>Document ko analyze aur extract kiya jaa raha hai...</span>
+                  <span>{importStatusMsg || 'Document ko analyze kiya ja raha hai...'}</span>
                 </div>
               )}
 
-              {importStatusMsg && (
+              {importStatusMsg && !isParsingDoc && (
                 <div style={{ textAlign: 'center', marginTop: '12px', fontSize: '12px', color: '#22c55e', fontWeight: 'bold' }}>
                   {importStatusMsg}
                 </div>
