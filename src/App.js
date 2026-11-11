@@ -1277,7 +1277,7 @@ if (!href || href === '#' || /^\s*javascript:/i.test(href)) return;
                         title={`Open ${proj.link}`}
                         style={{ color: '#2563eb', fontWeight: 'bold', textDecoration: 'underline' }}
                       >
-                        🔗 Live Link
+                      {proj.link.replace(/^https?:\/\/(www\.)?/, '')}
                       </a>
                     </span>
                   )}
