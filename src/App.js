@@ -1869,7 +1869,6 @@ const githubMatch = cleanFullText.match(
                         pointerEvents: 'none' 
                       }}
                     >
-                      <span style={{ background: '#e2e8f0', padding: '1px 8px', borderRadius: '4px' }}>--- End of Page 1 (A4 Page Break) ---</span>
                     </div>
 
                     {selectedTemplate === 'ankit_harvard' && renderAnkitHarvardATS()}
