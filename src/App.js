@@ -1227,7 +1227,7 @@ export default function ResumeBuilder() {
               <img src="/logo.png" alt="Logo" className="brand-logo-img" onError={(e)=>{e.target.style.display='none'}} />
             </div>
 
-            <button 
+            {/* <button 
               onClick={() => setIsImportModalOpen(true)}
               className="custom-btn"
               style={{ background: '#1e3a8a', borderColor: '#3b82f6', color: '#ffffff' }}
@@ -1235,7 +1235,7 @@ export default function ResumeBuilder() {
             >
               <UploadCloud size={14} />
               <span>📥 Import Doc (PDF/Word/Images)</span>
-            </button>
+            </button> */}
           </div>
         </header>
 
